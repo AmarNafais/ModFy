@@ -534,62 +534,183 @@ export default function Admin() {
                     {/* Size and Color Configuration */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="product-sizes">Available Sizes</Label>
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-                              <label key={size} className="flex items-center space-x-1 text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={productForm.sizes.includes(size)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setProductForm({
-                                        ...productForm,
-                                        sizes: [...productForm.sizes, size]
-                                      });
-                                    } else {
-                                      setProductForm({
-                                        ...productForm,
-                                        sizes: productForm.sizes.filter(s => s !== size)
-                                      });
-                                    }
-                                  }}
-                                  data-testid={`checkbox-size-${size.toLowerCase()}`}
-                                />
-                                <span>{size}</span>
-                              </label>
-                            ))}
+                        <Label>Available Sizes</Label>
+                        <div className="space-y-3">
+                          {/* Selected sizes display */}
+                          <div className="flex flex-wrap gap-2 min-h-[32px] p-2 border rounded-md bg-gray-50">
+                            {productForm.sizes.length > 0 ? (
+                              productForm.sizes.map((size, index) => (
+                                <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-black text-white text-xs rounded">
+                                  {size}
+                                  <button
+                                    type="button"
+                                    onClick={() => setProductForm({
+                                      ...productForm,
+                                      sizes: productForm.sizes.filter(s => s !== size)
+                                    })}
+                                    className="ml-1 hover:text-gray-300"
+                                    data-testid={`button-remove-size-${size.toLowerCase()}`}
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 text-sm">No sizes selected</span>
+                            )}
+                          </div>
+                          
+                          {/* Add common sizes */}
+                          <Select onValueChange={(size) => {
+                            if (!productForm.sizes.includes(size)) {
+                              setProductForm({
+                                ...productForm,
+                                sizes: [...productForm.sizes, size]
+                              });
+                            }
+                          }}>
+                            <SelectTrigger data-testid="select-add-size">
+                              <SelectValue placeholder="Add common size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size => 
+                                !productForm.sizes.includes(size)
+                              ).map((size) => (
+                                <SelectItem key={size} value={size}>
+                                  {size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          {/* Add custom size */}
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Add custom size"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  const value = (e.target as HTMLInputElement).value.trim();
+                                  if (value && !productForm.sizes.includes(value)) {
+                                    setProductForm({
+                                      ...productForm,
+                                      sizes: [...productForm.sizes, value]
+                                    });
+                                    (e.target as HTMLInputElement).value = '';
+                                  }
+                                }
+                              }}
+                              data-testid="input-custom-size"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
+                                const value = input.value.trim();
+                                if (value && !productForm.sizes.includes(value)) {
+                                  setProductForm({
+                                    ...productForm,
+                                    sizes: [...productForm.sizes, value]
+                                  });
+                                  input.value = '';
+                                }
+                              }}
+                              data-testid="button-add-custom-size"
+                            >
+                              Add
+                            </Button>
                           </div>
                         </div>
                       </div>
+                      
                       <div>
-                        <Label htmlFor="product-colors">Available Colors</Label>
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue'].map((color) => (
-                              <label key={color} className="flex items-center space-x-1 text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={productForm.colors.includes(color)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setProductForm({
-                                        ...productForm,
-                                        colors: [...productForm.colors, color]
-                                      });
-                                    } else {
-                                      setProductForm({
-                                        ...productForm,
-                                        colors: productForm.colors.filter(c => c !== color)
-                                      });
-                                    }
-                                  }}
-                                  data-testid={`checkbox-color-${color.toLowerCase()}`}
-                                />
-                                <span>{color}</span>
-                              </label>
-                            ))}
+                        <Label>Available Colors</Label>
+                        <div className="space-y-3">
+                          {/* Selected colors display */}
+                          <div className="flex flex-wrap gap-2 min-h-[32px] p-2 border rounded-md bg-gray-50">
+                            {productForm.colors.length > 0 ? (
+                              productForm.colors.map((color, index) => (
+                                <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-black text-white text-xs rounded">
+                                  {color}
+                                  <button
+                                    type="button"
+                                    onClick={() => setProductForm({
+                                      ...productForm,
+                                      colors: productForm.colors.filter(c => c !== color)
+                                    })}
+                                    className="ml-1 hover:text-gray-300"
+                                    data-testid={`button-remove-color-${color.toLowerCase()}`}
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 text-sm">No colors selected</span>
+                            )}
+                          </div>
+                          
+                          {/* Add common colors */}
+                          <Select onValueChange={(color) => {
+                            if (!productForm.colors.includes(color)) {
+                              setProductForm({
+                                ...productForm,
+                                colors: [...productForm.colors, color]
+                              });
+                            }
+                          }}>
+                            <SelectTrigger data-testid="select-add-color">
+                              <SelectValue placeholder="Add common color" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue', 'Red', 'Green', 'Brown', 'Beige'].filter(color => 
+                                !productForm.colors.includes(color)
+                              ).map((color) => (
+                                <SelectItem key={color} value={color}>
+                                  {color}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          {/* Add custom color */}
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Add custom color"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  const value = (e.target as HTMLInputElement).value.trim();
+                                  if (value && !productForm.colors.includes(value)) {
+                                    setProductForm({
+                                      ...productForm,
+                                      colors: [...productForm.colors, value]
+                                    });
+                                    (e.target as HTMLInputElement).value = '';
+                                  }
+                                }
+                              }}
+                              data-testid="input-custom-color"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
+                                const value = input.value.trim();
+                                if (value && !productForm.colors.includes(value)) {
+                                  setProductForm({
+                                    ...productForm,
+                                    colors: [...productForm.colors, value]
+                                  });
+                                  input.value = '';
+                                }
+                              }}
+                              data-testid="button-add-custom-color"
+                            >
+                              Add
+                            </Button>
                           </div>
                         </div>
                       </div>
