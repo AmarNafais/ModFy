@@ -8,14 +8,41 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, Users, ShoppingBag, Package, FileText, Settings } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus } from "lucide-react";
 import { Redirect } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Admin() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  
+  // Product form state
+  const [productForm, setProductForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    categoryId: '',
+    material: '',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Black', 'White'],
+    images: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'],
+    stockQuantity: '50',
+    isFeatured: false,
+  });
+
+  // Category form state
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+  });
 
   // Redirect if not admin
   useEffect(() => {
@@ -77,6 +104,63 @@ export default function Admin() {
       toast({
         title: "Error",
         description: "Failed to update order status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: (productData: any) =>
+      apiRequest("/api/admin/products", "POST", productData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsProductDialogOpen(false);
+      setProductForm({
+        name: '',
+        description: '',
+        price: '',
+        categoryId: '',
+        material: '',
+        sizes: ['S', 'M', 'L', 'XL'],
+        colors: ['Black', 'White'],
+        images: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'],
+        stockQuantity: '50',
+        isFeatured: false,
+      });
+      toast({
+        title: "Product Created",
+        description: "Product created successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create product.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (categoryData: any) =>
+      apiRequest("/api/admin/categories", "POST", categoryData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/product-types"] });
+      setIsCategoryDialogOpen(false);
+      setCategoryForm({
+        name: '',
+        description: '',
+        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+      });
+      toast({
+        title: "Category Created",
+        description: "Category created successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create category.",
         variant: "destructive",
       });
     },
@@ -270,11 +354,131 @@ export default function Admin() {
         {/* Products Tab */}
         <TabsContent value="products">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
                 Products Management
               </CardTitle>
+              <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2" data-testid="button-create-product">
+                    <Plus className="w-4 h-4" />
+                    Create Product
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Create New Product</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="product-name">Product Name</Label>
+                        <Input
+                          id="product-name"
+                          value={productForm.name}
+                          onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                          placeholder="Enter product name"
+                          data-testid="input-product-name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="product-price">Price ($)</Label>
+                        <Input
+                          id="product-price"
+                          type="number"
+                          step="0.01"
+                          value={productForm.price}
+                          onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                          placeholder="0.00"
+                          data-testid="input-product-price"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="product-description">Description</Label>
+                      <Textarea
+                        id="product-description"
+                        value={productForm.description}
+                        onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                        placeholder="Enter product description"
+                        data-testid="textarea-product-description"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="product-category">Category</Label>
+                        <Select
+                          value={productForm.categoryId}
+                          onValueChange={(value) => setProductForm({ ...productForm, categoryId: value })}
+                        >
+                          <SelectTrigger data-testid="select-product-category">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.isArray(categories) && categories.map((category: any) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="product-material">Material</Label>
+                        <Input
+                          id="product-material"
+                          value={productForm.material}
+                          onChange={(e) => setProductForm({ ...productForm, material: e.target.value })}
+                          placeholder="e.g., Premium Cotton"
+                          data-testid="input-product-material"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="product-stock">Stock Quantity</Label>
+                        <Input
+                          id="product-stock"
+                          type="number"
+                          value={productForm.stockQuantity}
+                          onChange={(e) => setProductForm({ ...productForm, stockQuantity: e.target.value })}
+                          placeholder="50"
+                          data-testid="input-product-stock"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2 pt-6">
+                        <input
+                          type="checkbox"
+                          id="product-featured"
+                          checked={productForm.isFeatured}
+                          onChange={(e) => setProductForm({ ...productForm, isFeatured: e.target.checked })}
+                          data-testid="checkbox-product-featured"
+                        />
+                        <Label htmlFor="product-featured">Featured Product</Label>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsProductDialogOpen(false)}
+                        data-testid="button-cancel-product"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => createProductMutation.mutate(productForm)}
+                        disabled={createProductMutation.isPending}
+                        data-testid="button-submit-product"
+                      >
+                        {createProductMutation.isPending ? 'Creating...' : 'Create Product'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               <Table>
@@ -364,11 +568,74 @@ export default function Admin() {
         {/* Product Types Tab */}
         <TabsContent value="product-types">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
                 Product Types (Categories)
               </CardTitle>
+              <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2" data-testid="button-create-category">
+                    <Plus className="w-4 h-4" />
+                    Create Category
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Create New Category</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div>
+                      <Label htmlFor="category-name">Category Name</Label>
+                      <Input
+                        id="category-name"
+                        value={categoryForm.name}
+                        onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                        placeholder="Enter category name"
+                        data-testid="input-category-name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="category-description">Description</Label>
+                      <Textarea
+                        id="category-description"
+                        value={categoryForm.description}
+                        onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                        placeholder="Enter category description"
+                        data-testid="textarea-category-description"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="category-image">Image URL</Label>
+                      <Input
+                        id="category-image"
+                        value={categoryForm.imageUrl}
+                        onChange={(e) => setCategoryForm({ ...categoryForm, imageUrl: e.target.value })}
+                        placeholder="https://example.com/image.jpg"
+                        data-testid="input-category-image"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCategoryDialogOpen(false)}
+                        data-testid="button-cancel-category"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => createCategoryMutation.mutate(categoryForm)}
+                        disabled={createCategoryMutation.isPending}
+                        data-testid="button-submit-category"
+                      >
+                        {createCategoryMutation.isPending ? 'Creating...' : 'Create Category'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               <Table>

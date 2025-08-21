@@ -307,6 +307,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/products", requireAdmin, async (req, res) => {
+    try {
+      const { name, description, price, categoryId, material, sizes, colors, images, stockQuantity, isFeatured } = req.body;
+      
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      
+      const product = await storage.createProduct({
+        name,
+        slug,
+        description,
+        price,
+        categoryId,
+        material,
+        sizes: Array.isArray(sizes) ? sizes : [],
+        colors: Array.isArray(colors) ? colors : [],
+        images: Array.isArray(images) ? images : [],
+        stockQuantity: parseInt(stockQuantity) || 0,
+        isFeatured: Boolean(isFeatured),
+        isActive: true,
+      });
+      
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.post("/api/admin/categories", requireAdmin, async (req, res) => {
+    try {
+      const { name, description, imageUrl } = req.body;
+      
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      
+      const category = await storage.createCategory({
+        name,
+        slug,
+        description,
+        imageUrl,
+        isActive: true,
+      });
+      
+      res.status(201).json(category);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
