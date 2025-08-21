@@ -39,6 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         firstName: user.firstName || undefined,
         lastName: user.lastName || undefined,
+        role: user.role || "customer",
       };
 
       // Return user without password
@@ -79,6 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         firstName: user.firstName || undefined,
         lastName: user.lastName || undefined,
+        role: user.role || "customer",
       };
 
       // Return user without password
@@ -249,6 +251,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error clearing cart:", error);
       res.status(400).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Admin routes
+  const requireAdmin = (req: any, res: any, next: any) => {
+    if (!req.session?.user || req.session.user.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  };
+
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const users = Array.from((storage as any).users.values());
+      res.json(users.map(user => ({ ...user, password: undefined })));
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/orders", requireAdmin, async (req, res) => {
+    try {
+      const orders = await storage.getOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const order = await storage.updateOrderStatus(id, status);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  app.get("/api/admin/product-types", requireAdmin, async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching product types:", error);
+      res.status(500).json({ message: "Failed to fetch product types" });
     }
   });
 

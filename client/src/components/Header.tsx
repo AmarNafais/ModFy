@@ -30,29 +30,26 @@ export default function Header({ onCartOpen }: HeaderProps) {
         <div className="flex items-center justify-between h-16">
           {/* Left Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/collections" data-testid="link-collections">
-              <a className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/collections') ? 'text-gray-900' : ''}`}>
-                COLLECTIONS
-              </a>
+            <Link href="/collections" data-testid="link-collections" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/collections') ? 'text-gray-900' : ''}`}>
+              COLLECTIONS
             </Link>
-            <Link href="/shop" data-testid="link-shop">
-              <a className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/shop') ? 'text-gray-900' : ''}`}>
-                SHOP
-              </a>
+            <Link href="/shop" data-testid="link-shop" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/shop') ? 'text-gray-900' : ''}`}>
+              SHOP
             </Link>
-            <Link href="/about" data-testid="link-about">
-              <a className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/about') ? 'text-gray-900' : ''}`}>
-                ABOUT
-              </a>
+            <Link href="/about" data-testid="link-about" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/about') ? 'text-gray-900' : ''}`}>
+              ABOUT
             </Link>
+            {user?.role === 'admin' && (
+              <Link href="/admin" data-testid="link-admin" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/admin') ? 'text-gray-900' : ''}`}>
+                ADMIN
+              </Link>
+            )}
           </div>
 
           {/* Brand Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" data-testid="link-home">
-              <a>
-                <h1 className="text-xl font-light tracking-wider">MODFY</h1>
-              </a>
+            <Link href="/" data-testid="link-home" className="text-xl font-light tracking-wider">
+              MODFY
             </Link>
           </div>
 

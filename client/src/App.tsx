@@ -10,6 +10,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import Collections from "@/pages/Collections";
 import About from "@/pages/About";
 import Auth from "@/pages/Auth";
+import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/products/:slug" component={ProductDetail} />
       <Route path="/about" component={About} />
       <Route path="/auth" component={Auth} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

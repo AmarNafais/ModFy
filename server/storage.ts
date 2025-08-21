@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type ProductWithCategory, type CartItemWithProduct } from "@shared/schema";
+import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems } from "@shared/schema";
 import bcrypt from 'bcryptjs';
 import { randomUUID } from "crypto";
 
@@ -11,6 +11,12 @@ export interface IStorage {
   // Auth operations
   registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User>;
   authenticateUser(email: string, password: string): Promise<User | null>;
+  
+  // Order operations
+  getOrders(): Promise<OrderWithItems[]>;
+  getOrder(id: string): Promise<OrderWithItems | undefined>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -44,6 +50,8 @@ export class MemStorage implements IStorage {
   private products: Map<string, Product>;
   private collections: Map<string, Collection>;
   private cartItems: Map<string, CartItem>;
+  private orders: Map<string, Order>;
+  private orderItems: Map<string, OrderItem>;
 
   constructor() {
     this.users = new Map();
@@ -51,6 +59,8 @@ export class MemStorage implements IStorage {
     this.products = new Map();
     this.collections = new Map();
     this.cartItems = new Map();
+    this.orders = new Map();
+    this.orderItems = new Map();
     this.seedData();
   }
 
@@ -391,6 +401,149 @@ export class MemStorage implements IStorage {
     ];
 
     products.forEach(prod => this.products.set(prod.id, prod));
+
+    // Seed admin user
+    this.createAdminUser();
+
+    // Seed sample orders
+    this.seedOrders();
+  }
+
+  private async createAdminUser() {
+    const adminExists = await this.getUserByEmail("admin@modfy.lk");
+    if (!adminExists) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash("Password123", saltRounds);
+      
+      const adminUser: User = {
+        id: "admin-user-id",
+        email: "admin@modfy.lk",
+        password: hashedPassword,
+        firstName: "Admin",
+        lastName: "User",
+        role: "admin",
+        isEmailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      this.users.set(adminUser.id, adminUser);
+    }
+  }
+
+  private seedOrders() {
+    const sampleOrders: Order[] = [
+      {
+        id: "order-1",
+        userId: null, // Guest order
+        orderNumber: "ORD-001",
+        status: "delivered",
+        totalAmount: "96.00",
+        shippingAddress: {
+          firstName: "John",
+          lastName: "Doe", 
+          address: "123 Main St",
+          city: "Colombo",
+          country: "Sri Lanka",
+          zipCode: "10001"
+        },
+        paymentStatus: "paid",
+        notes: "Fast delivery requested",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      },
+      {
+        id: "order-2", 
+        userId: null,
+        orderNumber: "ORD-002",
+        status: "shipped",
+        totalAmount: "155.00",
+        shippingAddress: {
+          firstName: "Jane",
+          lastName: "Smith",
+          address: "456 Park Ave",
+          city: "Kandy",
+          country: "Sri Lanka", 
+          zipCode: "20000"
+        },
+        paymentStatus: "paid",
+        notes: null,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+      },
+      {
+        id: "order-3",
+        userId: null,
+        orderNumber: "ORD-003", 
+        status: "pending",
+        totalAmount: "72.00",
+        shippingAddress: {
+          firstName: "Mike",
+          lastName: "Johnson",
+          address: "789 Oak St",
+          city: "Galle",
+          country: "Sri Lanka",
+          zipCode: "80000"
+        },
+        paymentStatus: "pending",
+        notes: null,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      }
+    ];
+
+    const sampleOrderItems: OrderItem[] = [
+      // Order 1 items
+      {
+        id: "item-1",
+        orderId: "order-1", 
+        productId: "prod-1",
+        size: "L",
+        color: "Black",
+        quantity: 2,
+        unitPrice: "48.00",
+        totalPrice: "96.00",
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      },
+      // Order 2 items  
+      {
+        id: "item-2",
+        orderId: "order-2",
+        productId: "prod-2", 
+        size: "M",
+        color: "Navy",
+        quantity: 1,
+        unitPrice: "42.00",
+        totalPrice: "42.00",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      },
+      {
+        id: "item-3",
+        orderId: "order-2",
+        productId: "prod-3",
+        size: "L", 
+        color: "Black",
+        quantity: 2,
+        unitPrice: "55.00",
+        totalPrice: "110.00",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      },
+      // Order 3 items
+      {
+        id: "item-4",
+        orderId: "order-3",
+        productId: "prod-4",
+        size: "M",
+        color: "Gray", 
+        quantity: 1,
+        unitPrice: "72.00",
+        totalPrice: "72.00", 
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      }
+    ];
+
+    sampleOrders.forEach(order => this.orders.set(order.id, order));
+    sampleOrderItems.forEach(item => this.orderItems.set(item.id, item));
   }
 
   // User operations
@@ -409,6 +562,7 @@ export class MemStorage implements IStorage {
       id,
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
+      role: insertUser.role || "customer",
       isEmailVerified: insertUser.isEmailVerified ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -641,6 +795,91 @@ export class MemStorage implements IStorage {
       .map(([id, _]) => id);
 
     itemsToDelete.forEach(id => this.cartItems.delete(id));
+  }
+
+  // Order operations
+  async getOrders(): Promise<OrderWithItems[]> {
+    const orders = Array.from(this.orders.values());
+    return orders.map(order => ({
+      ...order,
+      user: order.userId ? this.users.get(order.userId) || null : null,
+      items: Array.from(this.orderItems.values())
+        .filter(item => item.orderId === order.id)
+        .map(item => ({
+          ...item,
+          product: this.products.get(item.productId!)!
+        }))
+    }));
+  }
+
+  async getOrder(id: string): Promise<OrderWithItems | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+
+    return {
+      ...order,
+      user: order.userId ? this.users.get(order.userId) || null : null,
+      items: Array.from(this.orderItems.values())
+        .filter(item => item.orderId === id)
+        .map(item => ({
+          ...item,
+          product: this.products.get(item.productId!)!
+        }))
+    };
+  }
+
+  async createOrder(insertOrder: InsertOrder): Promise<Order> {
+    const id = randomUUID();
+    const order: Order = {
+      ...insertOrder,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.orders.set(id, order);
+    return order;
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+
+    const updatedOrder = { ...order, status, updatedAt: new Date() };
+    this.orders.set(id, updatedOrder);
+    return updatedOrder;
+  }
+
+  // Auth operations
+  async registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User> {
+    // Check if user already exists
+    const existingUser = await this.getUserByEmail(userData.email);
+    if (existingUser) {
+      throw new Error("User already exists");
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+
+    // Create user
+    return this.createUser({
+      email: userData.email,
+      password: hashedPassword,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      role: "customer",
+      isEmailVerified: false,
+    });
+  }
+
+  async authenticateUser(email: string, password: string): Promise<User | null> {
+    const user = await this.getUserByEmail(email);
+    if (!user) return null;
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) return null;
+
+    return user;
   }
 }
 

@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
+  role: text("role").default("customer"), // customer, admin
   isEmailVerified: boolean("is_email_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -72,6 +73,38 @@ export const cartItems = pgTable("cart_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  orderNumber: text("order_number").notNull().unique(),
+  status: text("status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  shippingAddress: jsonb("shipping_address").$type<{
+    firstName: string;
+    lastName: string;
+    address: string;
+    city: string;
+    country: string;
+    zipCode: string;
+  }>(),
+  paymentStatus: text("payment_status").default("pending"), // pending, paid, failed
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").references(() => orders.id),
+  productId: varchar("product_id").references(() => products.id),
+  size: text("size"),
+  color: text("color"),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -114,6 +147,17 @@ export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   updatedAt: true,
 });
 
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -132,10 +176,21 @@ export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+
 export type ProductWithCategory = Product & {
   category: Category | null;
 };
 
 export type CartItemWithProduct = CartItem & {
   product: Product;
+};
+
+export type OrderWithItems = Order & {
+  user: User | null;
+  items: (OrderItem & { product: Product })[];
 };
