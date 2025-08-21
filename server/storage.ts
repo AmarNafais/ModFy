@@ -29,6 +29,7 @@ export interface IStorage {
   getProduct(id: string): Promise<ProductWithCategory | undefined>;
   getProductBySlug(slug: string): Promise<ProductWithCategory | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
+  deleteProduct(id: string): Promise<boolean>;
 
   // Collection operations
   getCollections(): Promise<Collection[]>;
@@ -697,6 +698,16 @@ export class MemStorage implements IStorage {
     };
     this.products.set(id, product);
     return product;
+  }
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const product = this.products.get(id);
+    if (!product) {
+      return false;
+    }
+    
+    this.products.delete(id);
+    return true;
   }
 
   // Collection operations

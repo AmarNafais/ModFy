@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus, Upload } from "lucide-react";
+import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus, Upload, Trash2 } from "lucide-react";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
@@ -143,6 +143,25 @@ export default function Admin() {
       toast({
         title: "Error",
         description: "Failed to create category.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (productId: string) =>
+      apiRequest("DELETE", `/api/admin/products/${productId}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Product Deleted",
+        description: "Product deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete product.",
         variant: "destructive",
       });
     },
@@ -596,6 +615,7 @@ export default function Admin() {
                     <TableHead>Stock</TableHead>
                     <TableHead>Featured</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -622,6 +642,17 @@ export default function Admin() {
                         <Badge variant={product.isActive ? "default" : "secondary"} data-testid={`badge-active-${product.id}`}>
                           {product.isActive ? 'Active' : 'Inactive'}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteProductMutation.mutate(product.id)}
+                          disabled={deleteProductMutation.isPending}
+                          data-testid={`button-delete-product-${product.id}`}
+                        >
+                          {deleteProductMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
