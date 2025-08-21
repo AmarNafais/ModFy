@@ -10,7 +10,7 @@ import ProductDetail from "@/pages/ProductDetail";
 import Collections from "@/pages/Collections";
 import About from "@/pages/About";
 import Auth from "@/pages/Auth";
-import Admin from "@/pages/Admin";
+import Admin from "@/pages/AdminFixed";
 import NotFound from "@/pages/not-found";
 
 function Router() {

@@ -18,13 +18,14 @@ import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 
 export default function Admin() {
+  // All hooks must be called in the same order every time
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   
-  // Product form state
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
@@ -38,68 +39,42 @@ export default function Admin() {
     isFeatured: false,
   });
 
-  // Category form state
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     description: '',
     imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
   });
 
-  // All queries need to be called consistently
+  const isAdmin = Boolean(!isLoading && user && (user as any).role === 'admin');
+
   const { data: users = [] } = useQuery({
     queryKey: ["/api/admin/users"],
-    enabled: Boolean(!isLoading && user && (user as any).role === 'admin'),
+    enabled: isAdmin,
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/admin/orders"],
-    enabled: Boolean(!isLoading && user && (user as any).role === 'admin'),
+    enabled: isAdmin,
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
-    enabled: Boolean(!isLoading && user && (user as any).role === 'admin'),
+    enabled: isAdmin,
   });
 
   const { data: collections = [] } = useQuery({
     queryKey: ["/api/collections"],
-    enabled: Boolean(!isLoading && user && (user as any).role === 'admin'),
+    enabled: isAdmin,
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/admin/product-types"],
-    enabled: Boolean(!isLoading && user && (user as any).role === 'admin'),
+    enabled: isAdmin,
   });
-
-  // Auth check effect
-  useEffect(() => {
-    if (!isLoading && (!user || (user as any).role !== 'admin')) {
-      toast({
-        title: "Access Denied",
-        description: "Admin access required to view this page.",
-        variant: "destructive",
-      });
-    }
-  }, [user, isLoading, toast]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading admin dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || (user as any).role !== 'admin') {
-    return <Redirect to="/" />;
-  }
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
-      apiRequest(`/api/admin/orders/${orderId}/status`, "PATCH", { status }),
+      apiRequest("PATCH", `/api/admin/orders/${orderId}/status`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
       toast({
@@ -118,7 +93,7 @@ export default function Admin() {
 
   const createProductMutation = useMutation({
     mutationFn: (productData: any) =>
-      apiRequest("/api/admin/products", "POST", productData),
+      apiRequest("POST", "/api/admin/products", productData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setIsProductDialogOpen(false);
@@ -148,18 +123,53 @@ export default function Admin() {
     },
   });
 
+  const createCategoryMutation = useMutation({
+    mutationFn: (categoryData: any) =>
+      apiRequest("POST", "/api/admin/categories", categoryData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/product-types"] });
+      setIsCategoryDialogOpen(false);
+      setCategoryForm({
+        name: '',
+        description: '',
+        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+      });
+      toast({
+        title: "Category Created",
+        description: "Category created successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create category.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // All useEffect calls after state hooks
+  useEffect(() => {
+    if (!isLoading && (!user || (user as any).role !== 'admin')) {
+      toast({
+        title: "Access Denied",
+        description: "Admin access required to view this page.",
+        variant: "destructive",
+      });
+    }
+  }, [user, isLoading, toast]);
+
+  // Functions that depend on state
   const handleImageUpload = async (result: any) => {
     try {
       if (result.successful && result.successful.length > 0) {
         const uploadedFile = result.successful[0];
         const uploadURL = uploadedFile.uploadURL;
         
-        // Process the uploaded image to get the public URL
-        const response = await apiRequest("/api/admin/process-image", "POST", { uploadURL });
+        const response = await apiRequest("POST", "/api/admin/process-image", { uploadURL });
         const data = await response.json();
         const { imageUrl } = data;
         
-        // Add the new image to the form
         setProductForm(prev => ({
           ...prev,
           images: [...prev.images, imageUrl]
@@ -187,31 +197,6 @@ export default function Admin() {
     }));
   };
 
-  const createCategoryMutation = useMutation({
-    mutationFn: (categoryData: any) =>
-      apiRequest("/api/admin/categories", "POST", categoryData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/product-types"] });
-      setIsCategoryDialogOpen(false);
-      setCategoryForm({
-        name: '',
-        description: '',
-        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-      });
-      toast({
-        title: "Category Created",
-        description: "Category created successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create category.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "delivered": return "default";
@@ -235,6 +220,22 @@ export default function Admin() {
   const handleStatusChange = (orderId: string, status: string) => {
     updateOrderStatusMutation.mutate({ orderId, status });
   };
+
+  // Early returns after all hooks
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || (user as any).role !== 'admin') {
+    return <Redirect to="/" />;
+  }
 
   // Calculate stats
   const totalUsers = Array.isArray(users) ? users.length : 0;
@@ -263,62 +264,73 @@ export default function Admin() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-light">{totalUsers}</p>
-              </div>
-              <Users className="w-8 h-8 text-gray-400" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalUsers}</div>
+            <p className="text-xs text-muted-foreground">Registered customers</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                <p className="text-2xl font-light">{totalOrders}</p>
-              </div>
-              <ShoppingBag className="w-8 h-8 text-gray-400" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalOrders}</div>
+            <p className="text-xs text-muted-foreground">All time orders</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Products</p>
-                <p className="text-2xl font-light">{totalProducts}</p>
-              </div>
-              <Package className="w-8 h-8 text-gray-400" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalProducts}</div>
+            <p className="text-xs text-muted-foreground">In catalog</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-light">${totalRevenue.toFixed(2)}</p>
-              </div>
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Paid orders</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
+      {/* Main Tabs */}
       <Tabs defaultValue="orders" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="collections">Collections</TabsTrigger>
-          <TabsTrigger value="product-types">Product Types</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="orders" className="flex items-center gap-2" data-testid="tab-orders">
+            <ShoppingBag className="w-4 h-4" />
+            Orders
+          </TabsTrigger>
+          <TabsTrigger value="products" className="flex items-center gap-2" data-testid="tab-products">
+            <Package className="w-4 h-4" />
+            Products
+          </TabsTrigger>
+          <TabsTrigger value="collections" className="flex items-center gap-2" data-testid="tab-collections">
+            <FileText className="w-4 h-4" />
+            Collections
+          </TabsTrigger>
+          <TabsTrigger value="product-types" className="flex items-center gap-2" data-testid="tab-product-types">
+            <Settings className="w-4 h-4" />
+            Product Types
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2" data-testid="tab-users">
+            <Users className="w-4 h-4" />
+            Users
+          </TabsTrigger>
         </TabsList>
 
         {/* Orders Tab */}
@@ -336,46 +348,41 @@ export default function Admin() {
                   <TableRow>
                     <TableHead>Order #</TableHead>
                     <TableHead>Customer</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Payment</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Payment</TableHead>
+                    <TableHead>Amount</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {Array.isArray(orders) && orders.map((order: any) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-mono text-sm">
+                    <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
+                      <TableCell className="font-medium" data-testid={`text-order-number-${order.id}`}>
                         {order.orderNumber}
                       </TableCell>
-                      <TableCell>
-                        {order.shippingAddress 
-                          ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`
-                          : 'Guest Customer'
-                        }
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        ${order.totalAmount}
+                      <TableCell data-testid={`text-customer-${order.id}`}>
+                        {order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getPaymentBadgeVariant(order.paymentStatus)}>
-                          {order.paymentStatus}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(order.status)}>
+                        <Badge variant={getStatusBadgeVariant(order.status)} data-testid={`badge-status-${order.id}`}>
                           {order.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        <Badge variant={getPaymentBadgeVariant(order.paymentStatus)} data-testid={`badge-payment-${order.id}`}>
+                          {order.paymentStatus}
+                        </Badge>
+                      </TableCell>
+                      <TableCell data-testid={`text-amount-${order.id}`}>${order.totalAmount}</TableCell>
+                      <TableCell data-testid={`text-date-${order.id}`}>
                         {new Date(order.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <Select
                           defaultValue={order.status}
-                          onValueChange={(status) => handleStatusChange(order.id, status)}
-                          data-testid={`select-order-status-${order.id}`}
+                          onValueChange={(value) => handleStatusChange(order.id, value)}
+                          data-testid={`select-status-${order.id}`}
                         >
                           <SelectTrigger className="w-32">
                             <SelectValue />
@@ -535,12 +542,18 @@ export default function Admin() {
                           maxNumberOfFiles={1}
                           maxFileSize={5242880} // 5MB
                           onGetUploadParameters={async () => {
-                            const response = await apiRequest("/api/objects/upload", "POST", {});
-                            const data = await response.json();
-                            return {
-                              method: "PUT" as const,
-                              url: data.uploadURL,
-                            };
+                            try {
+                              const response = await apiRequest("POST", "/api/objects/upload", {});
+                              const data = await response.json();
+                              console.log("Upload parameters response:", data);
+                              return {
+                                method: "PUT" as const,
+                                url: data.uploadURL,
+                              };
+                            } catch (error) {
+                              console.error("Failed to get upload parameters:", error);
+                              throw error;
+                            }
                           }}
                           onComplete={handleImageUpload}
                           buttonClassName="w-full"
@@ -581,30 +594,34 @@ export default function Admin() {
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Stock</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead>Featured</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.category?.name || 'No Category'}</TableCell>
-                      <TableCell>${product.price}</TableCell>
-                      <TableCell>{product.stockQuantity}</TableCell>
-                      <TableCell>
-                        <Badge variant={product.isActive ? "default" : "secondary"}>
-                          {product.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
+                  {Array.isArray(products) && products.map((product: any) => (
+                    <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
+                      <TableCell className="font-medium" data-testid={`text-product-name-${product.id}`}>
+                        {product.name}
+                      </TableCell>
+                      <TableCell data-testid={`text-product-category-${product.id}`}>
+                        {product.category?.name || 'N/A'}
+                      </TableCell>
+                      <TableCell data-testid={`text-product-price-${product.id}`}>
+                        ${product.price}
+                      </TableCell>
+                      <TableCell data-testid={`text-product-stock-${product.id}`}>
+                        {product.stockQuantity}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.isFeatured ? "default" : "outline"}>
+                        <Badge variant={product.isFeatured ? "default" : "secondary"} data-testid={`badge-featured-${product.id}`}>
                           {product.isFeatured ? 'Featured' : 'Regular'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(product.createdAt).toLocaleDateString()}
+                        <Badge variant={product.isActive ? "default" : "secondary"} data-testid={`badge-active-${product.id}`}>
+                          {product.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -619,7 +636,7 @@ export default function Admin() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
+                <FileText className="w-5 h-5" />
                 Collections Management
               </CardTitle>
             </CardHeader>
@@ -628,27 +645,25 @@ export default function Admin() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
                     <TableHead>Season</TableHead>
                     <TableHead>Year</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead>Description</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {collections.map((collection) => (
-                    <TableRow key={collection.id}>
-                      <TableCell className="font-medium">{collection.name}</TableCell>
-                      <TableCell>{collection.description}</TableCell>
-                      <TableCell>{collection.season}</TableCell>
-                      <TableCell>{collection.year}</TableCell>
-                      <TableCell>
-                        <Badge variant={collection.isActive ? "default" : "secondary"}>
-                          {collection.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
+                  {Array.isArray(collections) && collections.map((collection: any) => (
+                    <TableRow key={collection.id} data-testid={`row-collection-${collection.id}`}>
+                      <TableCell className="font-medium" data-testid={`text-collection-name-${collection.id}`}>
+                        {collection.name}
                       </TableCell>
-                      <TableCell>
-                        {new Date(collection.createdAt).toLocaleDateString()}
+                      <TableCell data-testid={`text-collection-season-${collection.id}`}>
+                        {collection.season}
+                      </TableCell>
+                      <TableCell data-testid={`text-collection-year-${collection.id}`}>
+                        {collection.year}
+                      </TableCell>
+                      <TableCell data-testid={`text-collection-description-${collection.id}`}>
+                        {collection.description}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -735,25 +750,23 @@ export default function Admin() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Slug</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
-                      <TableCell className="font-mono text-sm text-gray-600">{category.slug}</TableCell>
-                      <TableCell>{category.description}</TableCell>
-                      <TableCell>
-                        <Badge variant={category.isActive ? "default" : "secondary"}>
-                          {category.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
+                  {Array.isArray(categories) && categories.map((category: any) => (
+                    <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
+                      <TableCell className="font-medium" data-testid={`text-category-name-${category.id}`}>
+                        {category.name}
+                      </TableCell>
+                      <TableCell data-testid={`text-category-description-${category.id}`}>
+                        {category.description}
                       </TableCell>
                       <TableCell>
-                        {new Date(category.createdAt).toLocaleDateString()}
+                        <Badge variant={category.isActive ? "default" : "secondary"} data-testid={`badge-category-active-${category.id}`}>
+                          {category.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -776,34 +789,31 @@ export default function Admin() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Email</TableHead>
                     <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Email Verified</TableHead>
-                    <TableHead>Registered</TableHead>
+                    <TableHead>Created At</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.email}</TableCell>
-                      <TableCell>
-                        {user.firstName || user.lastName 
-                          ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
-                          : 'No name provided'
-                        }
+                  {Array.isArray(users) && users.map((user: any) => (
+                    <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
+                      <TableCell className="font-medium" data-testid={`text-user-name-${user.id}`}>
+                        {user.firstName} {user.lastName}
                       </TableCell>
+                      <TableCell data-testid={`text-user-email-${user.id}`}>{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant={user.role === 'admin' ? "default" : "outline"}>
+                        <Badge variant={user.role === 'admin' ? "default" : "secondary"} data-testid={`badge-user-role-${user.id}`}>
                           {user.role}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.isEmailVerified ? "default" : "destructive"}>
+                        <Badge variant={user.isEmailVerified ? "default" : "destructive"} data-testid={`badge-email-verified-${user.id}`}>
                           {user.isEmailVerified ? 'Verified' : 'Unverified'}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-testid={`text-user-created-${user.id}`}>
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
