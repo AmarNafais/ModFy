@@ -5,6 +5,7 @@ import { insertCartItemSchema, signupSchema, loginSchema, users } from "@shared/
 import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
 import { sendWelcomeEmail, testEmailConnection } from "./emailService";
 import { db } from "./db";
+import { ObjectStorageService } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
@@ -354,6 +355,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  // Object Storage routes for image uploads
+  app.post("/api/objects/upload", requireAdmin, async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Serve public objects endpoint
+  app.get("/public-objects/:filePath(*)", async (req, res) => {
+    const filePath = req.params.filePath;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const file = await objectStorageService.searchPublicObject(filePath);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error searching for public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Process uploaded image and convert to public URL
+  app.post("/api/admin/process-image", requireAdmin, async (req, res) => {
+    try {
+      const { uploadURL } = req.body;
+      
+      if (!uploadURL) {
+        return res.status(400).json({ error: "Upload URL is required" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+      
+      // Return the public URL for the image
+      const publicURL = `/objects${objectPath}`;
+      
+      res.json({ imageUrl: publicURL });
+    } catch (error) {
+      console.error("Error processing image:", error);
+      res.status(500).json({ error: "Failed to process image" });
     }
   });
 

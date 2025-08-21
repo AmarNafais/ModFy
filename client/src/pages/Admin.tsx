@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus } from "lucide-react";
+import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus, Upload } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 
@@ -146,6 +147,44 @@ export default function Admin() {
       });
     },
   });
+
+  const handleImageUpload = async (result: any) => {
+    try {
+      if (result.successful && result.successful.length > 0) {
+        const uploadedFile = result.successful[0];
+        const uploadURL = uploadedFile.uploadURL;
+        
+        // Process the uploaded image to get the public URL
+        const response = await apiRequest("/api/admin/process-image", "POST", { uploadURL });
+        const { imageUrl } = response;
+        
+        // Add the new image to the form
+        setProductForm(prev => ({
+          ...prev,
+          images: [...prev.images, imageUrl]
+        }));
+        
+        toast({
+          title: "Image Uploaded",
+          description: "Product image uploaded successfully.",
+        });
+      }
+    } catch (error) {
+      console.error("Error processing image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process uploaded image.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeImage = (indexToRemove: number) => {
+    setProductForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove)
+    }));
+  };
 
   const createCategoryMutation = useMutation({
     mutationFn: (categoryData: any) =>
@@ -464,6 +503,52 @@ export default function Admin() {
                         <Label htmlFor="product-featured">Featured Product</Label>
                       </div>
                     </div>
+                    
+                    {/* Product Images Section */}
+                    <div>
+                      <Label>Product Images</Label>
+                      <div className="space-y-4">
+                        {/* Current Images */}
+                        <div className="grid grid-cols-3 gap-4">
+                          {productForm.images.map((image, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={image}
+                                alt={`Product ${index + 1}`}
+                                className="w-full h-20 object-cover rounded-md border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                data-testid={`button-remove-image-${index}`}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Upload New Image Button */}
+                        <ObjectUploader
+                          maxNumberOfFiles={1}
+                          maxFileSize={5242880} // 5MB
+                          onGetUploadParameters={async () => {
+                            const response = await apiRequest("/api/objects/upload", "POST");
+                            return {
+                              method: "PUT" as const,
+                              url: response.uploadURL,
+                            };
+                          }}
+                          onComplete={handleImageUpload}
+                          buttonClassName="w-full"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Product Image
+                        </ObjectUploader>
+                      </div>
+                    </div>
+                    
                     <div className="flex gap-2 pt-4">
                       <Button
                         type="button"
