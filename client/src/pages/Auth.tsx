@@ -210,33 +210,24 @@ export default function Auth() {
                       )}
                     />
                   </div>
-                  <FormField
-                    control={signupForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email"
-                            placeholder="Enter your email"
-                            data-testid="input-signup-email"
-                            autoComplete="email"
-                            disabled={signupMutation.isPending}
-                            value={field.value || ''}
-                            onChange={(e) => {
-                              console.log('Email input change:', e.target.value);
-                              field.onChange(e.target.value);
-                            }}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                            ref={field.ref}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                  <div>
+                    <label htmlFor="signup-email" className="block text-sm font-medium mb-2">Email</label>
+                    <input
+                      id="signup-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      data-testid="input-signup-email"
+                      autoComplete="email"
+                      disabled={signupMutation.isPending}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...signupForm.register('email')}
+                    />
+                    {signupForm.formState.errors.email && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {signupForm.formState.errors.email.message}
+                      </p>
                     )}
-                  />
+                  </div>
                   <FormField
                     control={signupForm.control}
                     name="password"
