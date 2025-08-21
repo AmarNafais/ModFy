@@ -221,9 +221,13 @@ export default function Auth() {
                             {...field}
                             type="email"
                             placeholder="Enter your email"
-                            data-testid="input-email"
+                            data-testid="input-signup-email"
                             autoComplete="email"
                             disabled={signupMutation.isPending}
+                            onChange={(e) => {
+                              console.log('Email input change:', e.target.value);
+                              field.onChange(e);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
