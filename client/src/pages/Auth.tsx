@@ -26,6 +26,7 @@ export default function Auth() {
       firstName: "",
       lastName: "",
     },
+    mode: "onChange",
   });
 
   const loginForm = useForm<LoginData>({
@@ -34,6 +35,7 @@ export default function Auth() {
       email: "",
       password: "",
     },
+    mode: "onChange",
   });
 
   const signupMutation = useMutation({
@@ -131,6 +133,8 @@ export default function Auth() {
                             type="email"
                             placeholder="Enter your email"
                             data-testid="input-email"
+                            autoComplete="email"
+                            disabled={loginMutation.isPending}
                           />
                         </FormControl>
                         <FormMessage />
@@ -149,6 +153,8 @@ export default function Auth() {
                             type="password"
                             placeholder="Enter your password"
                             data-testid="input-password"
+                            autoComplete="current-password"
+                            disabled={loginMutation.isPending}
                           />
                         </FormControl>
                         <FormMessage />
@@ -216,6 +222,8 @@ export default function Auth() {
                             type="email"
                             placeholder="Enter your email"
                             data-testid="input-email"
+                            autoComplete="email"
+                            disabled={signupMutation.isPending}
                           />
                         </FormControl>
                         <FormMessage />
@@ -234,6 +242,8 @@ export default function Auth() {
                             type="password"
                             placeholder="Create a secure password (min. 8 characters)"
                             data-testid="input-password"
+                            autoComplete="new-password"
+                            disabled={signupMutation.isPending}
                           />
                         </FormControl>
                         <FormMessage />
