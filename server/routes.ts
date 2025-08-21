@@ -260,13 +260,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/wishlist", async (req, res) => {
     try {
       const sessionId = req.session.id;
-      const userId = (req as any).user?.id;
+      const userId = req.session.userId; // Use userId from session instead
       
-      if (!sessionId && !userId) {
-        return res.json([]);
+      if (!userId) {
+        return res.json([]); // Only return items if user is authenticated
       }
 
-      const wishlistItems = await storage.getWishlistItems(userId, sessionId);
+      const wishlistItems = await storage.getWishlistItems(userId, null);
       res.json(wishlistItems);
     } catch (error) {
       console.error("Error fetching wishlist:", error);
@@ -276,11 +276,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/wishlist", async (req, res) => {
     try {
-      const sessionId = req.session.id;
-      const userId = (req as any).user?.id;
+      const userId = req.session.userId;
       
-      if (!sessionId && !userId) {
-        return res.status(401).json({ message: "Session required" });
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
       }
 
       const { productId } = req.body;
@@ -290,8 +289,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const wishlistItem = await storage.addToWishlist({
         productId,
-        userId: userId || null,
-        sessionId: sessionId || null,
+        userId: userId,
+        sessionId: null, // Don't use sessionId for authenticated users
       });
       
       res.status(201).json(wishlistItem);
@@ -303,15 +302,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/wishlist/:productId", async (req, res) => {
     try {
-      const sessionId = req.session.id;
-      const userId = (req as any).user?.id;
+      const userId = req.session.userId;
       const { productId } = req.params;
       
-      if (!sessionId && !userId) {
-        return res.status(401).json({ message: "Session required" });
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
       }
 
-      await storage.removeFromWishlist(productId, userId, sessionId);
+      await storage.removeFromWishlist(productId, userId, null);
       res.status(204).send();
     } catch (error) {
       console.error("Error removing from wishlist:", error);
