@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { WishlistItemWithProduct, InsertWishlistItem } from "@shared/schema";
 
 export function useWishlist() {
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -17,8 +17,20 @@ export function useWishlist() {
 
   // Add to wishlist mutation
   const addToWishlistMutation = useMutation({
-    mutationFn: async (data: { productId: string }) =>
-      apiRequest("POST", "/api/wishlist", data),
+    mutationFn: async (data: { productId: string }) => {
+      if (!isAuthenticated) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to add items to your wishlist",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 1000);
+        throw new Error("Authentication required");
+      }
+      return apiRequest("POST", "/api/wishlist", data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wishlist"] });
       toast({
@@ -26,19 +38,33 @@ export function useWishlist() {
         description: "Product has been added to your wishlist.",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to add to wishlist. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      if (error.message !== "Authentication required") {
+        toast({
+          title: "Error",
+          description: "Failed to add to wishlist. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
   // Remove from wishlist mutation
   const removeFromWishlistMutation = useMutation({
-    mutationFn: async (productId: string) =>
-      apiRequest("DELETE", `/api/wishlist/${productId}`),
+    mutationFn: async (productId: string) => {
+      if (!isAuthenticated) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to manage your wishlist",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 1000);
+        throw new Error("Authentication required");
+      }
+      return apiRequest("DELETE", `/api/wishlist/${productId}`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wishlist"] });
       toast({
@@ -46,12 +72,14 @@ export function useWishlist() {
         description: "Product has been removed from your wishlist.",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to remove from wishlist. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      if (error.message !== "Authentication required") {
+        toast({
+          title: "Error",
+          description: "Failed to remove from wishlist. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

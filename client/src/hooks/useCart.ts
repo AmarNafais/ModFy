@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { type CartItemWithProduct, type InsertCartItem } from "@shared/schema";
 
 function getSessionId(): string {
@@ -15,6 +17,8 @@ function getSessionId(): string {
 export function useCart() {
   const [sessionId] = useState(getSessionId);
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   const { data: cartItems = [], isLoading } = useQuery<CartItemWithProduct[]>({
     queryKey: ['/api/cart', sessionId],
@@ -23,6 +27,18 @@ export function useCart() {
 
   const addToCartMutation = useMutation({
     mutationFn: async (item: Omit<InsertCartItem, 'sessionId'>) => {
+      if (!isAuthenticated) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to add items to your cart",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 1000);
+        throw new Error("Authentication required");
+      }
+      
       return await apiRequest('POST', '/api/cart', {
         ...item,
         sessionId,
@@ -30,6 +46,19 @@ export function useCart() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart', sessionId] });
+      toast({
+        title: "Added to cart",
+        description: "Item has been added to your cart",
+      });
+    },
+    onError: (error: any) => {
+      if (error.message !== "Authentication required") {
+        toast({
+          title: "Error",
+          description: "Failed to add item to cart",
+          variant: "destructive",
+        });
+      }
     },
   });
 
