@@ -5,13 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 import type { WishlistItemWithProduct, InsertWishlistItem } from "@shared/schema";
 
 export function useWishlist() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get wishlist items
+  // Get wishlist items - only fetch when authenticated
   const { data: wishlistItems = [], isLoading } = useQuery<WishlistItemWithProduct[]>({
-    queryKey: ["/api/wishlist"],
+    queryKey: ["/api/wishlist", user?.id],
+    enabled: isAuthenticated && !!user,
     retry: false,
   });
 
@@ -32,7 +33,7 @@ export function useWishlist() {
       return apiRequest("POST", "/api/wishlist", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wishlist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlist", user?.id] });
       toast({
         title: "Added to wishlist",
         description: "Product has been added to your wishlist.",
@@ -66,7 +67,7 @@ export function useWishlist() {
       return apiRequest("DELETE", `/api/wishlist/${productId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wishlist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlist", user?.id] });
       toast({
         title: "Removed from wishlist",
         description: "Product has been removed from your wishlist.",
