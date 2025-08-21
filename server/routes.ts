@@ -42,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: user.firstName || undefined,
         lastName: user.lastName || undefined,
         role: user.role || "customer",
-      };
+      } as any;
 
       // Return user without password
       const { password, ...userResponse } = user;
@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: user.firstName || undefined,
         lastName: user.lastName || undefined,
         role: user.role || "customer",
-      };
+      } as any;
 
       // Return user without password
       const { password: _, ...userResponse } = user;
@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/wishlist", async (req, res) => {
     try {
       const sessionId = req.session.id;
-      const userId = req.user?.id;
+      const userId = (req as any).user?.id;
       
       if (!sessionId && !userId) {
         return res.json([]);
@@ -277,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/wishlist", async (req, res) => {
     try {
       const sessionId = req.session.id;
-      const userId = req.user?.id;
+      const userId = (req as any).user?.id;
       
       if (!sessionId && !userId) {
         return res.status(401).json({ message: "Session required" });
@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/wishlist/:productId", async (req, res) => {
     try {
       const sessionId = req.session.id;
-      const userId = req.user?.id;
+      const userId = (req as any).user?.id;
       const { productId } = req.params;
       
       if (!sessionId && !userId) {
