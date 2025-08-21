@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCartItemSchema, signupSchema, loginSchema } from "@shared/schema";
+import { insertCartItemSchema, signupSchema, loginSchema, users } from "@shared/schema";
 import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
 import { sendWelcomeEmail, testEmailConnection } from "./emailService";
+import { db } from "./db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
@@ -264,8 +265,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
-      const users = Array.from((storage as any).users.values());
-      res.json(users.map(user => ({ ...user, password: undefined })));
+      const allUsers = await db.select().from(users);
+      res.json(allUsers.map(user => ({ ...user, password: undefined })));
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to fetch users" });

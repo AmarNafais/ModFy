@@ -44,7 +44,33 @@ export default function Admin() {
     imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
   });
 
-  // Redirect if not admin
+  // All queries need to be called consistently
+  const { data: users = [] } = useQuery({
+    queryKey: ["/api/admin/users"],
+    enabled: !isLoading && user && (user as any).role === 'admin',
+  });
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ["/api/admin/orders"],
+    enabled: !isLoading && user && (user as any).role === 'admin',
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+    enabled: !isLoading && user && (user as any).role === 'admin',
+  });
+
+  const { data: collections = [] } = useQuery({
+    queryKey: ["/api/collections"],
+    enabled: !isLoading && user && (user as any).role === 'admin',
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/admin/product-types"],
+    enabled: !isLoading && user && (user as any).role === 'admin',
+  });
+
+  // Auth check effect
   useEffect(() => {
     if (!isLoading && (!user || (user as any).role !== 'admin')) {
       toast({
@@ -69,26 +95,6 @@ export default function Admin() {
   if (!user || (user as any).role !== 'admin') {
     return <Redirect to="/" />;
   }
-
-  const { data: users = [] } = useQuery({
-    queryKey: ["/api/admin/users"],
-  });
-
-  const { data: orders = [] } = useQuery({
-    queryKey: ["/api/admin/orders"],
-  });
-
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products"],
-  });
-
-  const { data: collections = [] } = useQuery({
-    queryKey: ["/api/collections"],
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["/api/admin/product-types"],
-  });
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
