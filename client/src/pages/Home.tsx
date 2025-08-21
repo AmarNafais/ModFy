@@ -56,7 +56,7 @@ export default function Home() {
                 <Link href={`/collections/${collections[0].slug}`}>
                   <a>
                     <img 
-                      src={collections[0].imageUrl} 
+                      src={collections[0].imageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'} 
                       alt={collections[0].name}
                       className="w-full h-96 lg:h-full object-cover mb-4" 
                     />
@@ -75,7 +75,7 @@ export default function Home() {
                 <Link href={`/collections/${collection.slug}`}>
                   <a>
                     <img 
-                      src={collection.imageUrl} 
+                      src={collection.imageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'} 
                       alt={collection.name}
                       className="w-full h-80 object-cover mb-4" 
                     />

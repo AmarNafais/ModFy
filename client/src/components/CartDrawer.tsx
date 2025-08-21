@@ -75,7 +75,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex space-x-4" data-testid={`cart-item-${item.id}`}>
                     <img 
-                      src={item.product.images[0]} 
+                      src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'} 
                       alt={item.product.name} 
                       className="w-16 h-20 object-cover" 
                     />

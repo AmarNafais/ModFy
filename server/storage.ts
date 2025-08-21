@@ -56,6 +56,8 @@ export class MemStorage implements IStorage {
       { id: "cat-2", name: "Briefs", slug: "briefs", description: "Classic briefs for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", isActive: true, createdAt: new Date() },
       { id: "cat-3", name: "Trunks", slug: "trunks", description: "Modern trunks with sleek design", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400", isActive: true, createdAt: new Date() },
       { id: "cat-4", name: "Performance", slug: "performance", description: "Athletic performance underwear", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400", isActive: true, createdAt: new Date() },
+      { id: "cat-5", name: "Luxury", slug: "luxury", description: "Premium luxury innerwear collection", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", isActive: true, createdAt: new Date() },
+      { id: "cat-6", name: "Thermal", slug: "thermal", description: "Temperature-regulating thermal collection", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", isActive: true, createdAt: new Date() },
     ];
 
     categories.forEach(cat => this.categories.set(cat.id, cat));
@@ -64,8 +66,11 @@ export class MemStorage implements IStorage {
     const collections = [
       { id: "col-1", name: "Essentials 2024", slug: "essentials-2024", description: "Premium basics for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
       { id: "col-2", name: "Luxury Series", slug: "luxury-series", description: "Premium comfort with luxury materials", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-3", name: "Performance Collection", slug: "performance", description: "Active comfort for the modern man", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-3", name: "Performance Collection", slug: "performance-collection", description: "Active comfort for the modern man", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
       { id: "col-4", name: "Summer 2024", slug: "summer-2024", description: "Breathable fabrics for warm weather", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600", isActive: true, season: "Summer", year: 2024, createdAt: new Date() },
+      { id: "col-5", name: "Executive Line", slug: "executive-line", description: "Professional-grade comfort for the workplace", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-6", name: "Travel Essentials", slug: "travel-essentials", description: "Comfort that travels with you", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-7", name: "Winter Warmth", slug: "winter-warmth", description: "Thermal comfort for cold seasons", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", isActive: true, season: "Winter", year: 2024, createdAt: new Date() },
     ];
 
     collections.forEach(col => this.collections.set(col.id, col));
@@ -207,6 +212,176 @@ export class MemStorage implements IStorage {
         stockQuantity: 80,
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      {
+        id: "prod-9",
+        name: "Micro Mesh Brief",
+        slug: "micro-mesh-brief",
+        description: "Ultra-lightweight micro mesh briefs providing exceptional breathability for active days.",
+        price: "46.00",
+        categoryId: "cat-2",
+        material: "Micro Mesh",
+        sizes: ["S", "M", "L", "XL"],
+        colors: ["Black", "Navy", "White", "Gray"],
+        images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
+        isActive: true,
+        isFeatured: true,
+        stockQuantity: 95,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-10",
+        name: "Executive Boxer Brief",
+        slug: "executive-boxer-brief",
+        description: "Premium executive-grade boxer briefs designed for the discerning professional.",
+        price: "65.00",
+        categoryId: "cat-1",
+        material: "Egyptian Cotton",
+        sizes: ["S", "M", "L", "XL", "XXL"],
+        colors: ["Black", "Navy", "Charcoal", "White"],
+        images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600"],
+        isActive: true,
+        isFeatured: true,
+        stockQuantity: 70,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-11",
+        name: "Sport Performance Trunk",
+        slug: "sport-performance-trunk",
+        description: "High-performance trunks engineered for athletes with moisture management technology.",
+        price: "58.00",
+        categoryId: "cat-3",
+        material: "Performance Blend",
+        sizes: ["S", "M", "L", "XL", "XXL"],
+        colors: ["Black", "Navy", "Gray", "Red"],
+        images: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
+        isActive: true,
+        isFeatured: false,
+        stockQuantity: 110,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-12",
+        name: "Thermal Insulation Brief",
+        slug: "thermal-insulation-brief",
+        description: "Thermal-regulating briefs designed to maintain optimal body temperature in all conditions.",
+        price: "54.00",
+        categoryId: "cat-2",
+        material: "Thermal Tech",
+        sizes: ["S", "M", "L", "XL"],
+        colors: ["Black", "Navy", "Gray"],
+        images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
+        isActive: true,
+        isFeatured: false,
+        stockQuantity: 85,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-13",
+        name: "Luxury Cashmere Boxer",
+        slug: "luxury-cashmere-boxer",
+        description: "Exquisite cashmere blend boxer briefs representing the pinnacle of luxury comfort.",
+        price: "125.00",
+        categoryId: "cat-1",
+        material: "Cashmere Blend",
+        sizes: ["S", "M", "L", "XL"],
+        colors: ["Black", "Navy", "Charcoal"],
+        images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
+        isActive: true,
+        isFeatured: true,
+        stockQuantity: 25,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-14",
+        name: "Seamless Comfort Brief",
+        slug: "seamless-comfort-brief",
+        description: "Revolutionary seamless construction briefs providing invisible comfort under any garment.",
+        price: "44.00",
+        categoryId: "cat-2",
+        material: "Seamless Tech",
+        sizes: ["S", "M", "L", "XL"],
+        colors: ["Black", "White", "Navy", "Beige"],
+        images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
+        isActive: true,
+        isFeatured: false,
+        stockQuantity: 130,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-15",
+        name: "Travel Essential Trunk",
+        slug: "travel-essential-trunk",
+        description: "Versatile travel trunks with antimicrobial properties for extended wear during travel.",
+        price: "52.00",
+        categoryId: "cat-3",
+        material: "Travel Tech",
+        sizes: ["S", "M", "L", "XL"],
+        colors: ["Black", "Navy", "Gray", "Olive"],
+        images: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600"],
+        isActive: true,
+        isFeatured: false,
+        stockQuantity: 75,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-16",
+        name: "Heritage Cotton Brief",
+        slug: "heritage-cotton-brief",
+        description: "Classic heritage cotton briefs celebrating traditional craftsmanship with modern comfort.",
+        price: "42.00",
+        categoryId: "cat-2",
+        material: "Heritage Cotton",
+        sizes: ["S", "M", "L", "XL", "XXL"],
+        colors: ["White", "Black", "Gray", "Navy"],
+        images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
+        isActive: true,
+        isFeatured: false,
+        stockQuantity: 105,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-17",
+        name: "Ultra Performance Boxer",
+        slug: "ultra-performance-boxer",
+        description: "Maximum performance boxer briefs with advanced compression and support technology.",
+        price: "72.00",
+        categoryId: "cat-4",
+        material: "Ultra Tech",
+        sizes: ["S", "M", "L", "XL", "XXL"],
+        colors: ["Black", "Navy", "Red", "Gray"],
+        images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
+        isActive: true,
+        isFeatured: true,
+        stockQuantity: 60,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: "prod-18",
+        name: "Comfort Zone Trunk",
+        slug: "comfort-zone-trunk",
+        description: "Ultimate comfort trunks designed for all-day wear with superior fit and feel.",
+        price: "48.00",
+        categoryId: "cat-3",
+        material: "Comfort Cotton",
+        sizes: ["S", "M", "L", "XL"],
+        colors: ["Black", "White", "Navy", "Gray", "Burgundy"],
+        images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
+        isActive: true,
+        isFeatured: false,
+        stockQuantity: 90,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ];
 
@@ -227,6 +402,8 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -252,6 +429,9 @@ export class MemStorage implements IStorage {
     const category: Category = {
       ...insertCategory,
       id,
+      description: insertCategory.description || null,
+      imageUrl: insertCategory.imageUrl || null,
+      isActive: insertCategory.isActive ?? true,
       createdAt: new Date(),
     };
     this.categories.set(id, category);
@@ -305,6 +485,15 @@ export class MemStorage implements IStorage {
     const product: Product = {
       ...insertProduct,
       id,
+      description: insertProduct.description || null,
+      categoryId: insertProduct.categoryId || null,
+      material: insertProduct.material || null,
+      sizes: insertProduct.sizes as string[] || [],
+      colors: insertProduct.colors as string[] || [],
+      images: insertProduct.images as string[] || [],
+      isActive: insertProduct.isActive ?? true,
+      isFeatured: insertProduct.isFeatured ?? false,
+      stockQuantity: insertProduct.stockQuantity ?? 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -330,6 +519,11 @@ export class MemStorage implements IStorage {
     const collection: Collection = {
       ...insertCollection,
       id,
+      description: insertCollection.description || null,
+      imageUrl: insertCollection.imageUrl || null,
+      isActive: insertCollection.isActive ?? true,
+      season: insertCollection.season || null,
+      year: insertCollection.year || null,
       createdAt: new Date(),
     };
     this.collections.set(id, collection);
@@ -359,7 +553,7 @@ export class MemStorage implements IStorage {
 
     if (existingItem) {
       // Update quantity
-      existingItem.quantity += insertCartItem.quantity;
+      existingItem.quantity += insertCartItem.quantity || 1;
       existingItem.updatedAt = new Date();
       this.cartItems.set(existingItem.id, existingItem);
       return existingItem;
@@ -369,6 +563,10 @@ export class MemStorage implements IStorage {
     const cartItem: CartItem = {
       ...insertCartItem,
       id,
+      productId: insertCartItem.productId || null,
+      size: insertCartItem.size || null,
+      color: insertCartItem.color || null,
+      quantity: insertCartItem.quantity || 1,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

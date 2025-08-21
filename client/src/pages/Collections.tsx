@@ -84,7 +84,7 @@ export default function Collections() {
                 <a className="group block">
                   <div className={`aspect-[4/5] ${index === 0 ? 'lg:aspect-[4/6]' : ''} overflow-hidden mb-6`}>
                     <img 
-                      src={collection.imageUrl} 
+                      src={collection.imageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'} 
                       alt={collection.name}
                       className="w-full h-full object-cover group-hover:opacity-95 transition-opacity" 
                     />

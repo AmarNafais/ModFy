@@ -79,16 +79,16 @@ export default function ProductDetail() {
           <div>
             <div className="aspect-[3/4] mb-4">
               <img 
-                src={product.images[selectedImageIndex]} 
+                src={product.images?.[selectedImageIndex] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'} 
                 alt={product.name}
                 className="w-full h-full object-cover"
                 data-testid="product-main-image"
               />
             </div>
             
-            {product.images.length > 1 && (
+            {(product.images?.length || 0) > 1 && (
               <div className="grid grid-cols-4 gap-2">
-                {product.images.map((image, index) => (
+                {product.images?.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}

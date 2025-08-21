@@ -11,7 +11,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <a className="group cursor-pointer block">
         <div className="aspect-[3/4] overflow-hidden mb-4">
           <img 
-            src={product.images[0]} 
+            src={product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'} 
             alt={product.name}
             className="w-full h-full object-cover group-hover:opacity-95 transition-opacity" 
           />
