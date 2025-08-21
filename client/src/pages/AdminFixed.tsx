@@ -645,13 +645,14 @@ export default function Admin() {
                       </TableCell>
                       <TableCell>
                         <Button
-                          variant="destructive"
+                          variant="ghost"
                           size="sm"
                           onClick={() => deleteProductMutation.mutate(product.id)}
                           disabled={deleteProductMutation.isPending}
                           data-testid={`button-delete-product-${product.id}`}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          {deleteProductMutation.isPending ? 'Deleting...' : 'Delete'}
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
