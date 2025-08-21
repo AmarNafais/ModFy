@@ -531,6 +531,70 @@ export default function Admin() {
                       </div>
                     </div>
                     
+                    {/* Size and Color Configuration */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="product-sizes">Available Sizes</Label>
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
+                              <label key={size} className="flex items-center space-x-1 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={productForm.sizes.includes(size)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setProductForm({
+                                        ...productForm,
+                                        sizes: [...productForm.sizes, size]
+                                      });
+                                    } else {
+                                      setProductForm({
+                                        ...productForm,
+                                        sizes: productForm.sizes.filter(s => s !== size)
+                                      });
+                                    }
+                                  }}
+                                  data-testid={`checkbox-size-${size.toLowerCase()}`}
+                                />
+                                <span>{size}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="product-colors">Available Colors</Label>
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue'].map((color) => (
+                              <label key={color} className="flex items-center space-x-1 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={productForm.colors.includes(color)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setProductForm({
+                                        ...productForm,
+                                        colors: [...productForm.colors, color]
+                                      });
+                                    } else {
+                                      setProductForm({
+                                        ...productForm,
+                                        colors: productForm.colors.filter(c => c !== color)
+                                      });
+                                    }
+                                  }}
+                                  data-testid={`checkbox-color-${color.toLowerCase()}`}
+                                />
+                                <span>{color}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
                     {/* Product Images Section */}
                     <div>
                       <Label>Product Images</Label>
