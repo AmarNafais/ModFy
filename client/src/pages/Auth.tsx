@@ -218,16 +218,19 @@ export default function Auth() {
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input 
-                            {...field}
                             type="email"
                             placeholder="Enter your email"
                             data-testid="input-signup-email"
                             autoComplete="email"
                             disabled={signupMutation.isPending}
+                            value={field.value || ''}
                             onChange={(e) => {
                               console.log('Email input change:', e.target.value);
-                              field.onChange(e);
+                              field.onChange(e.target.value);
                             }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
                           />
                         </FormControl>
                         <FormMessage />
