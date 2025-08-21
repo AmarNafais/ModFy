@@ -692,8 +692,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: wishlistItems.id,
         userId: wishlistItems.userId,
-        sessionId: wishlistItems.sessionId,
-        productId: wishlistItems.productId,
+          productId: wishlistItems.productId,
         createdAt: wishlistItems.createdAt,
         product: products,
       })
@@ -706,7 +705,6 @@ export class DatabaseStorage implements IStorage {
       .map(item => ({
         id: item.id,
         userId: item.userId,
-        sessionId: item.sessionId,
         productId: item.productId,
         createdAt: item.createdAt,
         product: item.product!,
@@ -740,7 +738,6 @@ export class DatabaseStorage implements IStorage {
         id: randomUUID(),
         productId: insertWishlistItem.productId,
         userId: insertWishlistItem.userId,
-        sessionId: null, // No longer use session ID
       })
       .returning();
 

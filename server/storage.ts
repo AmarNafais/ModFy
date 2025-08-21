@@ -849,7 +849,6 @@ export class MemStorage implements IStorage {
       id,
       productId: insertWishlistItem.productId,
       userId: insertWishlistItem.userId,
-      sessionId: null,
       createdAt: new Date(),
     };
     this.wishlistItems.set(id, wishlistItem);
@@ -908,6 +907,7 @@ export class MemStorage implements IStorage {
     const order: Order = {
       ...insertOrder,
       id,
+      status: insertOrder.status || "pending",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -924,38 +924,6 @@ export class MemStorage implements IStorage {
     return updatedOrder;
   }
 
-  // Auth operations
-  async registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User> {
-    // Check if user already exists
-    const existingUser = await this.getUserByEmail(userData.email);
-    if (existingUser) {
-      throw new Error("User already exists");
-    }
-
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-
-    // Create user
-    return this.createUser({
-      email: userData.email,
-      password: hashedPassword,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      role: "customer",
-      isEmailVerified: false,
-    });
-  }
-
-  async authenticateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.getUserByEmail(email);
-    if (!user) return null;
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return null;
-
-    return user;
-  }
 }
 
 import { DatabaseStorage } from "./dbStorage";

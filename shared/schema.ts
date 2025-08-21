@@ -107,9 +107,8 @@ export const orderItems = pgTable("order_items", {
 
 export const wishlistItems = pgTable("wishlist_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id),
-  sessionId: text("session_id"),
-  productId: varchar("product_id").references(() => products.id),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
