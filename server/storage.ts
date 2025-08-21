@@ -45,9 +45,9 @@ export interface IStorage {
   clearCart(sessionId: string): Promise<void>;
 
   // Wishlist operations
-  getWishlistItems(userId?: string, sessionId?: string): Promise<WishlistItemWithProduct[]>;
+  getWishlistItems(userId: string): Promise<WishlistItemWithProduct[]>;
   addToWishlist(wishlistItem: InsertWishlistItem): Promise<WishlistItem>;
-  removeFromWishlist(productId: string, userId?: string, sessionId?: string): Promise<void>;
+  removeFromWishlist(productId: string, userId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -816,13 +816,11 @@ export class MemStorage implements IStorage {
   }
 
   // Wishlist operations
-  async getWishlistItems(userId?: string, sessionId?: string): Promise<WishlistItemWithProduct[]> {
+  async getWishlistItems(userId: string): Promise<WishlistItemWithProduct[]> {
+    if (!userId) return [];
+
     const wishlistItems = Array.from(this.wishlistItems.values())
-      .filter(item => {
-        if (userId && item.userId === userId) return true;
-        if (sessionId && item.sessionId === sessionId) return true;
-        return false;
-      });
+      .filter(item => item.userId === userId);
 
     return wishlistItems.map(item => ({
       ...item,
@@ -831,17 +829,16 @@ export class MemStorage implements IStorage {
   }
 
   async addToWishlist(insertWishlistItem: InsertWishlistItem): Promise<WishlistItem> {
-    // Check if item already exists
+    if (!insertWishlistItem.userId || !insertWishlistItem.productId) {
+      throw new Error('User ID and Product ID are required');
+    }
+
+    // Check if item already exists for this user
     const existingItem = Array.from(this.wishlistItems.values())
-      .find(item => {
-        if (insertWishlistItem.userId && item.userId === insertWishlistItem.userId) {
-          return item.productId === insertWishlistItem.productId;
-        }
-        if (insertWishlistItem.sessionId && item.sessionId === insertWishlistItem.sessionId) {
-          return item.productId === insertWishlistItem.productId;
-        }
-        return false;
-      });
+      .find(item => 
+        item.userId === insertWishlistItem.userId &&
+        item.productId === insertWishlistItem.productId
+      );
 
     if (existingItem) {
       return existingItem;
@@ -849,25 +846,26 @@ export class MemStorage implements IStorage {
 
     const id = randomUUID();
     const wishlistItem: WishlistItem = {
-      ...insertWishlistItem,
       id,
-      productId: insertWishlistItem.productId || null,
-      userId: insertWishlistItem.userId || null,
-      sessionId: insertWishlistItem.sessionId || null,
+      productId: insertWishlistItem.productId,
+      userId: insertWishlistItem.userId,
+      sessionId: null,
       createdAt: new Date(),
     };
     this.wishlistItems.set(id, wishlistItem);
     return wishlistItem;
   }
 
-  async removeFromWishlist(productId: string, userId?: string, sessionId?: string): Promise<void> {
+  async removeFromWishlist(productId: string, userId: string): Promise<void> {
+    if (!userId || !productId) {
+      throw new Error('User ID and Product ID are required');
+    }
+
     const itemToDelete = Array.from(this.wishlistItems.entries())
-      .find(([_, item]) => {
-        if (item.productId !== productId) return false;
-        if (userId && item.userId === userId) return true;
-        if (sessionId && item.sessionId === sessionId) return true;
-        return false;
-      });
+      .find(([_, item]) => 
+        item.productId === productId &&
+        item.userId === userId
+      );
 
     if (itemToDelete) {
       this.wishlistItems.delete(itemToDelete[0]);

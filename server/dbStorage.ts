@@ -683,17 +683,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Wishlist operations
-  async getWishlistItems(userId?: string, sessionId?: string): Promise<WishlistItemWithProduct[]> {
-    const conditions = [];
-    
-    if (userId) {
-      conditions.push(eq(wishlistItems.userId, userId));
-    }
-    if (sessionId) {
-      conditions.push(eq(wishlistItems.sessionId, sessionId));
-    }
-    
-    if (conditions.length === 0) {
+  async getWishlistItems(userId: string): Promise<WishlistItemWithProduct[]> {
+    if (!userId) {
       return [];
     }
 
@@ -708,7 +699,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(wishlistItems)
       .leftJoin(products, eq(wishlistItems.productId, products.id))
-      .where(conditions.length === 1 ? conditions[0] : and(...conditions));
+      .where(eq(wishlistItems.userId, userId));
 
     return wishlistData
       .filter(item => item.product)
@@ -723,20 +714,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addToWishlist(insertWishlistItem: InsertWishlistItem): Promise<WishlistItem> {
-    // Check if item already exists
-    const conditions = [eq(wishlistItems.productId, insertWishlistItem.productId!)];
-    
-    if (insertWishlistItem.userId) {
-      conditions.push(eq(wishlistItems.userId, insertWishlistItem.userId));
-    }
-    if (insertWishlistItem.sessionId) {
-      conditions.push(eq(wishlistItems.sessionId, insertWishlistItem.sessionId));
+    if (!insertWishlistItem.userId || !insertWishlistItem.productId) {
+      throw new Error('User ID and Product ID are required');
     }
 
+    // Check if item already exists for this user
     const [existing] = await db
       .select()
       .from(wishlistItems)
-      .where(and(...conditions))
+      .where(
+        and(
+          eq(wishlistItems.productId, insertWishlistItem.productId),
+          eq(wishlistItems.userId, insertWishlistItem.userId)
+        )
+      )
       .limit(1);
 
     if (existing) {
@@ -746,26 +737,28 @@ export class DatabaseStorage implements IStorage {
     const [wishlistItem] = await db
       .insert(wishlistItems)
       .values({
-        ...insertWishlistItem,
         id: randomUUID(),
+        productId: insertWishlistItem.productId,
+        userId: insertWishlistItem.userId,
+        sessionId: null, // No longer use session ID
       })
       .returning();
 
     return wishlistItem;
   }
 
-  async removeFromWishlist(productId: string, userId?: string, sessionId?: string): Promise<void> {
-    const conditions = [eq(wishlistItems.productId, productId)];
-    
-    if (userId) {
-      conditions.push(eq(wishlistItems.userId, userId));
-    }
-    if (sessionId) {
-      conditions.push(eq(wishlistItems.sessionId, sessionId));
+  async removeFromWishlist(productId: string, userId: string): Promise<void> {
+    if (!userId || !productId) {
+      throw new Error('User ID and Product ID are required');
     }
 
     await db
       .delete(wishlistItems)
-      .where(and(...conditions));
+      .where(
+        and(
+          eq(wishlistItems.productId, productId),
+          eq(wishlistItems.userId, userId)
+        )
+      );
   }
 }

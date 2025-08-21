@@ -259,17 +259,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wishlist routes
   app.get("/api/wishlist", async (req, res) => {
     try {
-      const sessionId = req.session.id;
-      const userId = req.session.userId; // Use userId from session instead
+      const userId = req.session.userId;
       
-      console.log('Wishlist GET - sessionId:', sessionId, 'userId:', userId);
+      console.log('Wishlist GET - userId:', userId);
       
       if (!userId) {
         console.log('No userId found, returning empty array');
         return res.json([]); // Only return items if user is authenticated
       }
 
-      const wishlistItems = await storage.getWishlistItems(userId, undefined);
+      const wishlistItems = await storage.getWishlistItems(userId);
       console.log('Found wishlist items:', wishlistItems.length);
       res.json(wishlistItems);
     } catch (error) {
@@ -294,7 +293,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const wishlistItem = await storage.addToWishlist({
         productId,
         userId: userId,
-        sessionId: undefined, // Don't use sessionId for authenticated users
       });
       
       res.status(201).json(wishlistItem);
@@ -313,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      await storage.removeFromWishlist(productId, userId, undefined);
+      await storage.removeFromWishlist(productId, userId);
       res.status(204).send();
     } catch (error) {
       console.error("Error removing from wishlist:", error);
