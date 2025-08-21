@@ -24,7 +24,7 @@ export default function Collections() {
           {/* Collection Header */}
           <div className="text-center mb-16">
             <h1 className="text-4xl font-light tracking-wide mb-4" data-testid="collection-title">
-              {selectedCollection.name.toUpperCase()}
+              {selectedCollection.name?.toUpperCase() || ''}
             </h1>
             <p className="text-gray-600 font-light max-w-2xl mx-auto" data-testid="collection-description">
               {selectedCollection.description}
@@ -91,7 +91,7 @@ export default function Collections() {
                   </div>
                   <div className="text-center">
                     <h2 className="text-xl font-light tracking-wide mb-2" data-testid={`collection-name-${collection.id}`}>
-                      {collection.name.toUpperCase()}
+                      {collection.name?.toUpperCase() || ''}
                     </h2>
                     <p className="text-sm text-gray-600 font-light mb-3" data-testid={`collection-desc-${collection.id}`}>
                       {collection.description}
