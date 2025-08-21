@@ -1,9 +1,122 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCartItemSchema } from "@shared/schema";
+import { insertCartItemSchema, signupSchema, loginSchema } from "@shared/schema";
+import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
+import { sendWelcomeEmail, testEmailConnection } from "./emailService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize session middleware
+  app.use(sessionConfig);
+  app.use(addUserToRequest);
+  
+  // Test email connection on startup
+  await testEmailConnection();
+
+  // Auth routes
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const validatedData = signupSchema.parse(req.body);
+      
+      // Register the user
+      const user = await storage.registerUser(validatedData);
+      
+      // Send welcome email
+      const emailSent = await sendWelcomeEmail({
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+      });
+
+      if (!emailSent) {
+        console.error('Failed to send welcome email to:', user.email);
+      }
+
+      // Log the user in immediately
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+      };
+
+      // Return user without password
+      const { password, ...userResponse } = user;
+      res.status(201).json(userResponse);
+    } catch (error: any) {
+      console.error("Error during signup:", error);
+      if (error.message === 'User with this email already exists') {
+        return res.status(409).json({ message: "An account with this email already exists" });
+      }
+      if (error.issues) {
+        // Zod validation errors
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: error.issues.map((issue: any) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          }))
+        });
+      }
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = loginSchema.parse(req.body);
+      
+      const user = await storage.authenticateUser(email, password);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Log the user in
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+      };
+
+      // Return user without password
+      const { password: _, ...userResponse } = user;
+      res.json(userResponse);
+    } catch (error: any) {
+      console.error("Error during login:", error);
+      if (error.issues) {
+        // Zod validation errors
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: error.issues.map((issue: any) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          }))
+        });
+      }
+      res.status(500).json({ message: "Failed to login" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
+  app.get("/api/auth/user", (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    res.json(req.session.user);
+  });
+
   // Categories routes
   app.get("/api/categories", async (_req, res) => {
     try {

@@ -1,16 +1,25 @@
 import { Link, useLocation } from "wouter";
-import { Search, User, ShoppingBag, Menu } from "lucide-react";
+import { Search, User, ShoppingBag, Menu, LogOut } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   onCartOpen: () => void;
-  onLoginOpen: () => void;
 }
 
-export default function Header({ onCartOpen, onLoginOpen }: HeaderProps) {
+export default function Header({ onCartOpen }: HeaderProps) {
   const [location] = useLocation();
   const { itemCount } = useCart();
+  const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => location === path;
@@ -55,13 +64,44 @@ export default function Header({ onCartOpen, onLoginOpen }: HeaderProps) {
             >
               <Search size={18} />
             </button>
-            <button 
-              className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors"
-              onClick={onLoginOpen}
-              data-testid="button-login"
-            >
-              <User size={18} />
-            </button>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors p-0 h-auto"
+                    data-testid="button-user-menu"
+                  >
+                    <User size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5 text-sm font-medium">
+                    {user?.firstName} {user?.lastName}
+                  </div>
+                  <div className="px-2 py-1.5 text-sm text-gray-600">
+                    {user?.email}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={logout}
+                    disabled={isLoggingOut}
+                    className="text-red-600 focus:text-red-600"
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {isLoggingOut ? 'Signing out...' : 'Sign out'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/auth">
+                <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors" data-testid="link-login">
+                  <User size={18} />
+                </a>
+              </Link>
+            )}
             <button 
               className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
               onClick={onCartOpen}

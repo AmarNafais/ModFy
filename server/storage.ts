@@ -1,4 +1,5 @@
 import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type ProductWithCategory, type CartItemWithProduct } from "@shared/schema";
+import bcrypt from 'bcryptjs';
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -6,6 +7,10 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  // Auth operations
+  registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User>;
+  authenticateUser(email: string, password: string): Promise<User | null>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -404,10 +409,49 @@ export class MemStorage implements IStorage {
       id,
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
+      isEmailVerified: insertUser.isEmailVerified ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.users.set(id, user);
+    return user;
+  }
+
+  // Auth operations
+  async registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User> {
+    // Check if user already exists
+    const existingUser = await this.getUserByEmail(userData.email);
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
+
+    // Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+
+    // Create the user
+    const user = await this.createUser({
+      email: userData.email,
+      password: hashedPassword,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      isEmailVerified: false,
+    });
+
+    return user;
+  }
+
+  async authenticateUser(email: string, password: string): Promise<User | null> {
+    const user = await this.getUserByEmail(email);
+    if (!user) {
+      return null;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return null;
+    }
+
     return user;
   }
 
