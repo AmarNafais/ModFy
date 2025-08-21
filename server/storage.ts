@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems } from "@shared/schema";
+import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type WishlistItem, type InsertWishlistItem, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems, type WishlistItemWithProduct } from "@shared/schema";
 import bcrypt from 'bcryptjs';
 import { randomUUID } from "crypto";
 
@@ -43,6 +43,11 @@ export interface IStorage {
   updateCartItem(id: string, updates: Partial<CartItem>): Promise<CartItem | undefined>;
   removeFromCart(id: string): Promise<void>;
   clearCart(sessionId: string): Promise<void>;
+
+  // Wishlist operations
+  getWishlistItems(userId?: string, sessionId?: string): Promise<WishlistItemWithProduct[]>;
+  addToWishlist(wishlistItem: InsertWishlistItem): Promise<WishlistItem>;
+  removeFromWishlist(productId: string, userId?: string, sessionId?: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -51,6 +56,7 @@ export class MemStorage implements IStorage {
   private products: Map<string, Product>;
   private collections: Map<string, Collection>;
   private cartItems: Map<string, CartItem>;
+  private wishlistItems: Map<string, WishlistItem>;
   private orders: Map<string, Order>;
   private orderItems: Map<string, OrderItem>;
 
@@ -60,6 +66,7 @@ export class MemStorage implements IStorage {
     this.products = new Map();
     this.collections = new Map();
     this.cartItems = new Map();
+    this.wishlistItems = new Map();
     this.orders = new Map();
     this.orderItems = new Map();
     this.seedData();
@@ -806,6 +813,65 @@ export class MemStorage implements IStorage {
       .map(([id, _]) => id);
 
     itemsToDelete.forEach(id => this.cartItems.delete(id));
+  }
+
+  // Wishlist operations
+  async getWishlistItems(userId?: string, sessionId?: string): Promise<WishlistItemWithProduct[]> {
+    const wishlistItems = Array.from(this.wishlistItems.values())
+      .filter(item => {
+        if (userId && item.userId === userId) return true;
+        if (sessionId && item.sessionId === sessionId) return true;
+        return false;
+      });
+
+    return wishlistItems.map(item => ({
+      ...item,
+      product: this.products.get(item.productId!) as Product,
+    })).filter(item => item.product);
+  }
+
+  async addToWishlist(insertWishlistItem: InsertWishlistItem): Promise<WishlistItem> {
+    // Check if item already exists
+    const existingItem = Array.from(this.wishlistItems.values())
+      .find(item => {
+        if (insertWishlistItem.userId && item.userId === insertWishlistItem.userId) {
+          return item.productId === insertWishlistItem.productId;
+        }
+        if (insertWishlistItem.sessionId && item.sessionId === insertWishlistItem.sessionId) {
+          return item.productId === insertWishlistItem.productId;
+        }
+        return false;
+      });
+
+    if (existingItem) {
+      return existingItem;
+    }
+
+    const id = randomUUID();
+    const wishlistItem: WishlistItem = {
+      ...insertWishlistItem,
+      id,
+      productId: insertWishlistItem.productId || null,
+      userId: insertWishlistItem.userId || null,
+      sessionId: insertWishlistItem.sessionId || null,
+      createdAt: new Date(),
+    };
+    this.wishlistItems.set(id, wishlistItem);
+    return wishlistItem;
+  }
+
+  async removeFromWishlist(productId: string, userId?: string, sessionId?: string): Promise<void> {
+    const itemToDelete = Array.from(this.wishlistItems.entries())
+      .find(([_, item]) => {
+        if (item.productId !== productId) return false;
+        if (userId && item.userId === userId) return true;
+        if (sessionId && item.sessionId === sessionId) return true;
+        return false;
+      });
+
+    if (itemToDelete) {
+      this.wishlistItems.delete(itemToDelete[0]);
+    }
   }
 
   // Order operations

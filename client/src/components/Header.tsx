@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { Search, User, ShoppingBag, Menu, LogOut } from "lucide-react";
+import { Search, User, ShoppingBag, Menu, LogOut, Heart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
+import { useWishlist } from "@/hooks/useWishlist";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,7 @@ interface HeaderProps {
 export default function Header({ onCartOpen }: HeaderProps) {
   const [location] = useLocation();
   const { itemCount } = useCart();
+  const { itemCount: wishlistCount } = useWishlist();
   const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -94,11 +96,22 @@ export default function Header({ onCartOpen }: HeaderProps) {
               </DropdownMenu>
             ) : (
               <Link href="/auth">
-                <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors" data-testid="link-login">
+                <button className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors" data-testid="link-login">
                   <User size={18} />
-                </a>
+                </button>
               </Link>
             )}
+            <button 
+              className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
+              data-testid="button-wishlist"
+            >
+              <Heart size={18} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-luxury-black text-luxury-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
             <button 
               className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
               onClick={onCartOpen}

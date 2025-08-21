@@ -9,6 +9,7 @@ import {
   collections,
   collectionProducts,
   cartItems,
+  wishlistItems,
   orders,
   orderItems,
   type User,
@@ -21,12 +22,15 @@ import {
   type InsertCollection,
   type CartItem,
   type InsertCartItem,
+  type WishlistItem,
+  type InsertWishlistItem,
   type Order,
   type InsertOrder,
   type OrderItem,
   type InsertOrderItem,
   type ProductWithCategory,
   type CartItemWithProduct,
+  type WishlistItemWithProduct,
   type OrderWithItems
 } from "@shared/schema";
 import type { IStorage } from "./storage";
@@ -676,5 +680,92 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return updatedOrder;
+  }
+
+  // Wishlist operations
+  async getWishlistItems(userId?: string, sessionId?: string): Promise<WishlistItemWithProduct[]> {
+    const conditions = [];
+    
+    if (userId) {
+      conditions.push(eq(wishlistItems.userId, userId));
+    }
+    if (sessionId) {
+      conditions.push(eq(wishlistItems.sessionId, sessionId));
+    }
+    
+    if (conditions.length === 0) {
+      return [];
+    }
+
+    const wishlistData = await db
+      .select({
+        id: wishlistItems.id,
+        userId: wishlistItems.userId,
+        sessionId: wishlistItems.sessionId,
+        productId: wishlistItems.productId,
+        createdAt: wishlistItems.createdAt,
+        product: products,
+      })
+      .from(wishlistItems)
+      .leftJoin(products, eq(wishlistItems.productId, products.id))
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions));
+
+    return wishlistData
+      .filter(item => item.product)
+      .map(item => ({
+        id: item.id,
+        userId: item.userId,
+        sessionId: item.sessionId,
+        productId: item.productId,
+        createdAt: item.createdAt,
+        product: item.product!,
+      }));
+  }
+
+  async addToWishlist(insertWishlistItem: InsertWishlistItem): Promise<WishlistItem> {
+    // Check if item already exists
+    const conditions = [eq(wishlistItems.productId, insertWishlistItem.productId!)];
+    
+    if (insertWishlistItem.userId) {
+      conditions.push(eq(wishlistItems.userId, insertWishlistItem.userId));
+    }
+    if (insertWishlistItem.sessionId) {
+      conditions.push(eq(wishlistItems.sessionId, insertWishlistItem.sessionId));
+    }
+
+    const [existing] = await db
+      .select()
+      .from(wishlistItems)
+      .where(and(...conditions))
+      .limit(1);
+
+    if (existing) {
+      return existing;
+    }
+
+    const [wishlistItem] = await db
+      .insert(wishlistItems)
+      .values({
+        ...insertWishlistItem,
+        id: randomUUID(),
+      })
+      .returning();
+
+    return wishlistItem;
+  }
+
+  async removeFromWishlist(productId: string, userId?: string, sessionId?: string): Promise<void> {
+    const conditions = [eq(wishlistItems.productId, productId)];
+    
+    if (userId) {
+      conditions.push(eq(wishlistItems.userId, userId));
+    }
+    if (sessionId) {
+      conditions.push(eq(wishlistItems.sessionId, sessionId));
+    }
+
+    await db
+      .delete(wishlistItems)
+      .where(and(...conditions));
   }
 }

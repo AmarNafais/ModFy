@@ -256,6 +256,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wishlist routes
+  app.get("/api/wishlist", async (req, res) => {
+    try {
+      const sessionId = req.session.id;
+      const userId = req.user?.id;
+      
+      if (!sessionId && !userId) {
+        return res.json([]);
+      }
+
+      const wishlistItems = await storage.getWishlistItems(userId, sessionId);
+      res.json(wishlistItems);
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+      res.status(500).json({ message: "Failed to fetch wishlist" });
+    }
+  });
+
+  app.post("/api/wishlist", async (req, res) => {
+    try {
+      const sessionId = req.session.id;
+      const userId = req.user?.id;
+      
+      if (!sessionId && !userId) {
+        return res.status(401).json({ message: "Session required" });
+      }
+
+      const { productId } = req.body;
+      if (!productId) {
+        return res.status(400).json({ message: "Product ID is required" });
+      }
+
+      const wishlistItem = await storage.addToWishlist({
+        productId,
+        userId: userId || null,
+        sessionId: sessionId || null,
+      });
+      
+      res.status(201).json(wishlistItem);
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      res.status(400).json({ message: "Failed to add to wishlist" });
+    }
+  });
+
+  app.delete("/api/wishlist/:productId", async (req, res) => {
+    try {
+      const sessionId = req.session.id;
+      const userId = req.user?.id;
+      const { productId } = req.params;
+      
+      if (!sessionId && !userId) {
+        return res.status(401).json({ message: "Session required" });
+      }
+
+      await storage.removeFromWishlist(productId, userId, sessionId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      res.status(400).json({ message: "Failed to remove from wishlist" });
+    }
+  });
+
   // Admin routes
   const requireAdmin = (req: any, res: any, next: any) => {
     if (!req.session?.user || req.session.user.role !== "admin") {
