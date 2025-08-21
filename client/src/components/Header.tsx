@@ -41,7 +41,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
             <Link href="/about" data-testid="link-about" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/about') ? 'text-gray-900' : ''}`}>
               ABOUT
             </Link>
-            {user?.role === 'admin' && (
+            {(user as any)?.role === 'admin' && (
               <Link href="/admin" data-testid="link-admin" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/admin') ? 'text-gray-900' : ''}`}>
                 ADMIN
               </Link>
@@ -101,17 +101,19 @@ export default function Header({ onCartOpen }: HeaderProps) {
                 </button>
               </Link>
             )}
-            <button 
-              className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
-              data-testid="button-wishlist"
-            >
-              <Heart size={18} />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-luxury-black text-luxury-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {wishlistCount}
-                </span>
-              )}
-            </button>
+            <Link href="/wishlist">
+              <button 
+                className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
+                data-testid="button-wishlist"
+              >
+                <Heart size={18} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-luxury-black text-luxury-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+            </Link>
             <button 
               className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
               onClick={onCartOpen}
