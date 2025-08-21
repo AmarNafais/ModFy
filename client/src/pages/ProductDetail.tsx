@@ -22,7 +22,7 @@ export default function ProductDetail() {
   const { toast } = useToast();
 
   const { data: product, isLoading } = useQuery<ProductWithCategory>({
-    queryKey: ['/api/products', slug],
+    queryKey: [`/api/products/${slug}`],
     enabled: !!slug,
   });
 
@@ -110,6 +110,7 @@ export default function ProductDetail() {
                 alt={product.name}
                 className="w-full h-full object-cover rounded-sm"
                 data-testid="product-main-image"
+                key={selectedImageIndex}
               />
               
               {/* Navigation arrows */}
