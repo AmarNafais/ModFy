@@ -262,11 +262,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionId = req.session.id;
       const userId = req.session.userId; // Use userId from session instead
       
+      console.log('Wishlist GET - sessionId:', sessionId, 'userId:', userId);
+      
       if (!userId) {
+        console.log('No userId found, returning empty array');
         return res.json([]); // Only return items if user is authenticated
       }
 
-      const wishlistItems = await storage.getWishlistItems(userId, null);
+      const wishlistItems = await storage.getWishlistItems(userId, undefined);
+      console.log('Found wishlist items:', wishlistItems.length);
       res.json(wishlistItems);
     } catch (error) {
       console.error("Error fetching wishlist:", error);
@@ -290,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const wishlistItem = await storage.addToWishlist({
         productId,
         userId: userId,
-        sessionId: null, // Don't use sessionId for authenticated users
+        sessionId: undefined, // Don't use sessionId for authenticated users
       });
       
       res.status(201).json(wishlistItem);
@@ -309,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      await storage.removeFromWishlist(productId, userId, null);
+      await storage.removeFromWishlist(productId, userId, undefined);
       res.status(204).send();
     } catch (error) {
       console.error("Error removing from wishlist:", error);
