@@ -18,10 +18,7 @@ export function useWishlist() {
   // Add to wishlist mutation
   const addToWishlistMutation = useMutation({
     mutationFn: async (data: { productId: string }) =>
-      apiRequest("/api/wishlist", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
+      apiRequest("POST", "/api/wishlist", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wishlist"] });
       toast({
@@ -41,9 +38,7 @@ export function useWishlist() {
   // Remove from wishlist mutation
   const removeFromWishlistMutation = useMutation({
     mutationFn: async (productId: string) =>
-      apiRequest(`/api/wishlist/${productId}`, {
-        method: "DELETE",
-      }),
+      apiRequest("DELETE", `/api/wishlist/${productId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wishlist"] });
       toast({

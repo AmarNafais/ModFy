@@ -298,7 +298,7 @@ export default function ProductDetail() {
             <div className="space-y-3">
               <Button
                 onClick={handleAddToCart}
-                disabled={isAddingToCart || !selectedSize || !selectedColor || (product.stockQuantity && product.stockQuantity <= 0)}
+                disabled={isAddingToCart || !selectedSize || !selectedColor || (product.stockQuantity !== null && product.stockQuantity <= 0)}
                 className="w-full bg-luxury-black text-white hover:bg-gray-800 py-3 text-sm font-medium tracking-wide transition-colors"
                 data-testid="button-add-to-cart"
               >
