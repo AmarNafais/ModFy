@@ -34,7 +34,7 @@ export default function Admin() {
     material: '',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Black', 'White'],
-    images: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'],
+    images: [],
     stockQuantity: '50',
     isFeatured: false,
   });
@@ -105,7 +105,7 @@ export default function Admin() {
         material: '',
         sizes: ['S', 'M', 'L', 'XL'],
         colors: ['Black', 'White'],
-        images: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'],
+        images: [],
         stockQuantity: '50',
         isFeatured: false,
       });
