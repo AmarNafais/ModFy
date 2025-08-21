@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error serving object:", error);
-      if (error.message === "Object not found") {
+      if (error instanceof Error && error.message === "Object not found") {
         return res.status(404).json({ error: "Image not found" });
       }
       return res.status(500).json({ error: "Internal server error" });

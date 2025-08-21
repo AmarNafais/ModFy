@@ -108,9 +108,9 @@ export class DatabaseStorage implements IStorage {
           price: "48.00",
           categoryId: "cat-1",
           material: "Premium Cotton",
-          sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
-          colors: JSON.stringify(["Black", "White", "Navy", "Gray"]),
-          images: JSON.stringify(["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"]),
+          sizes: ["S", "M", "L", "XL", "XXL"],
+          colors: ["Black", "White", "Navy", "Gray"],
+          images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
           stockQuantity: 120,
           isFeatured: true,
         },
@@ -122,9 +122,9 @@ export class DatabaseStorage implements IStorage {
           price: "42.00",
           categoryId: "cat-2",
           material: "Organic Cotton",
-          sizes: JSON.stringify(["S", "M", "L", "XL"]),
-          colors: JSON.stringify(["Black", "White", "Navy"]),
-          images: JSON.stringify(["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"]),
+          sizes: ["S", "M", "L", "XL"],
+          colors: ["Black", "White", "Navy"],
+          images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
           stockQuantity: 85,
           isFeatured: true,
         },
@@ -136,9 +136,9 @@ export class DatabaseStorage implements IStorage {
           price: "55.00",
           categoryId: "cat-3",
           material: "Technical Blend",
-          sizes: JSON.stringify(["S", "M", "L", "XL", "XXL"]),
-          colors: JSON.stringify(["Black", "Navy", "Gray", "White"]),
-          images: JSON.stringify(["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"]),
+          sizes: ["S", "M", "L", "XL", "XXL"],
+          colors: ["Black", "Navy", "Gray", "White"],
+          images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
           stockQuantity: 95,
           isFeatured: true,
         },
@@ -153,14 +153,14 @@ export class DatabaseStorage implements IStorage {
           orderNumber: "ORD-001",
           status: "delivered",
           totalAmount: "96.00",
-          shippingAddress: JSON.stringify({
+          shippingAddress: {
             firstName: "John",
             lastName: "Doe",
             address: "123 Main St",
             city: "Colombo",
             country: "Sri Lanka",
             zipCode: "10001"
-          }),
+          },
           paymentStatus: "paid",
           notes: "Fast delivery requested",
           createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -171,14 +171,14 @@ export class DatabaseStorage implements IStorage {
           orderNumber: "ORD-002",
           status: "shipped",
           totalAmount: "155.00",
-          shippingAddress: JSON.stringify({
+          shippingAddress: {
             firstName: "Jane",
             lastName: "Smith",
             address: "456 Park Ave",
             city: "Kandy",
             country: "Sri Lanka",
             zipCode: "20000"
-          }),
+          },
           paymentStatus: "paid",
           createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
           updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -467,9 +467,9 @@ export class DatabaseStorage implements IStorage {
     const productData = {
       ...product,
       id,
-      sizes: typeof product.sizes === 'string' ? product.sizes : JSON.stringify(product.sizes || []),
-      colors: typeof product.colors === 'string' ? product.colors : JSON.stringify(product.colors || []),
-      images: typeof product.images === 'string' ? product.images : JSON.stringify(product.images || []),
+      sizes: Array.isArray(product.sizes) ? product.sizes : (typeof product.sizes === 'string' ? JSON.parse(product.sizes) : []),
+      colors: Array.isArray(product.colors) ? product.colors : (typeof product.colors === 'string' ? JSON.parse(product.colors) : []),
+      images: Array.isArray(product.images) ? product.images : (typeof product.images === 'string' ? JSON.parse(product.images) : []),
     };
 
     const [newProduct] = await db.insert(products).values(productData).returning();
@@ -594,7 +594,7 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(products, eq(orderItems.productId, products.id))
         .where(eq(orderItems.orderId, order.id));
 
-      const user = order.userId ? await this.getUser(order.userId) : null;
+      const user = order.userId ? (await this.getUser(order.userId)) ?? null : null;
 
       result.push({
         ...order,
@@ -638,7 +638,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, id));
 
-    const user = order.userId ? await this.getUser(order.userId) : null;
+    const user = order.userId ? (await this.getUser(order.userId)) ?? null : null;
 
     return {
       ...order,
@@ -663,9 +663,9 @@ export class DatabaseStorage implements IStorage {
     const orderData = {
       ...insertOrder,
       id,
-      shippingAddress: typeof insertOrder.shippingAddress === 'string' 
-        ? insertOrder.shippingAddress 
-        : JSON.stringify(insertOrder.shippingAddress),
+      shippingAddress: typeof insertOrder.shippingAddress === 'object' && insertOrder.shippingAddress !== null
+        ? insertOrder.shippingAddress
+        : (typeof insertOrder.shippingAddress === 'string' ? JSON.parse(insertOrder.shippingAddress) : null),
     };
 
     const [order] = await db.insert(orders).values(orderData).returning();
