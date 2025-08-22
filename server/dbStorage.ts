@@ -10,6 +10,7 @@ import {
   collectionProducts,
   cartItems,
   wishlistItems,
+  userProfiles,
   orders,
   orderItems,
   type User,
@@ -24,6 +25,8 @@ import {
   type InsertCartItem,
   type WishlistItem,
   type InsertWishlistItem,
+  type UserProfile,
+  type InsertUserProfile,
   type Order,
   type InsertOrder,
   type OrderItem,
@@ -153,14 +156,15 @@ export class DatabaseStorage implements IStorage {
           orderNumber: "ORD-001",
           status: "delivered",
           totalAmount: "96.00",
-          shippingAddress: {
-            firstName: "John",
-            lastName: "Doe",
-            address: "123 Main St",
+          deliveryAddress: {
+            fullName: "John Doe",
+            phoneNumber: "+94771234567",
+            addressLine1: "123 Main St",
+            addressLine2: "",
             city: "Colombo",
-            country: "Sri Lanka",
-            zipCode: "10001"
-          },
+            postalCode: "10001"
+          } as const,
+          phoneNumber: "+94771234567",
           paymentStatus: "paid",
           notes: "Fast delivery requested",
           createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -171,14 +175,15 @@ export class DatabaseStorage implements IStorage {
           orderNumber: "ORD-002",
           status: "shipped",
           totalAmount: "155.00",
-          shippingAddress: {
-            firstName: "Jane",
-            lastName: "Smith",
-            address: "456 Park Ave",
+          deliveryAddress: {
+            fullName: "Jane Smith",
+            phoneNumber: "+94771234568",
+            addressLine1: "456 Park Ave",
+            addressLine2: "",
             city: "Kandy",
-            country: "Sri Lanka",
-            zipCode: "20000"
+            postalCode: "20000"
           },
+          phoneNumber: "+94771234568",
           paymentStatus: "paid",
           createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
           updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -684,9 +689,8 @@ export class DatabaseStorage implements IStorage {
     const orderData = {
       ...insertOrder,
       id,
-      shippingAddress: typeof insertOrder.shippingAddress === 'object' && insertOrder.shippingAddress !== null
-        ? insertOrder.shippingAddress
-        : (typeof insertOrder.shippingAddress === 'string' ? JSON.parse(insertOrder.shippingAddress) : null),
+      deliveryAddress: insertOrder.deliveryAddress,
+      phoneNumber: insertOrder.phoneNumber,
     };
 
     const [order] = await db.insert(orders).values(orderData).returning();
@@ -778,5 +782,37 @@ export class DatabaseStorage implements IStorage {
           eq(wishlistItems.userId, userId)
         )
       );
+  }
+
+  async getUserProfile(userId: string): Promise<UserProfile | undefined> {
+    const profile = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1);
+    return profile[0];
+  }
+
+  async createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
+    const existingProfile = await this.getUserProfile(profile.userId);
+    
+    if (existingProfile) {
+      const [updatedProfile] = await db
+        .update(userProfiles)
+        .set({ ...profile, updatedAt: new Date() })
+        .where(eq(userProfiles.userId, profile.userId))
+        .returning();
+      return updatedProfile;
+    } else {
+      const [newProfile] = await db
+        .insert(userProfiles)
+        .values(profile)
+        .returning();
+      return newProfile;
+    }
+  }
+
+  async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
+    const [orderItem] = await db
+      .insert(orderItems)
+      .values(insertOrderItem)
+      .returning();
+    return orderItem;
   }
 }

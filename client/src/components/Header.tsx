@@ -83,6 +83,13 @@ export default function Header({ onCartOpen }: HeaderProps) {
                     {user?.email}
                   </div>
                   <DropdownMenuSeparator />
+                  <Link href="/profile">
+                    <DropdownMenuItem data-testid="button-profile">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={logout}
                     disabled={isLoggingOut}

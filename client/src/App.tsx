@@ -11,6 +11,8 @@ import Collections from "@/pages/Collections";
 import About from "@/pages/About";
 import Auth from "@/pages/Auth";
 import Wishlist from "@/pages/Wishlist";
+import Profile from "@/pages/Profile";
+import Checkout from "@/pages/Checkout";
 import Admin from "@/pages/AdminFixed";
 import NotFound from "@/pages/not-found";
 
@@ -25,6 +27,8 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/auth" component={Auth} />
       <Route path="/wishlist" component={Wishlist} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/checkout" component={Checkout} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>

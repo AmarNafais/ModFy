@@ -48,6 +48,14 @@ export interface IStorage {
   getWishlistItems(userId: string): Promise<WishlistItemWithProduct[]>;
   addToWishlist(wishlistItem: InsertWishlistItem): Promise<WishlistItem>;
   removeFromWishlist(productId: string, userId: string): Promise<void>;
+
+  // User profile operations
+  getUserProfile(userId: string): Promise<UserProfile | undefined>;
+  createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+
+  // Order operations
+  createOrder(order: InsertOrder): Promise<Order>;
+  createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
 }
 
 export class MemStorage implements IStorage {
@@ -59,6 +67,7 @@ export class MemStorage implements IStorage {
   private wishlistItems: Map<string, WishlistItem>;
   private orders: Map<string, Order>;
   private orderItems: Map<string, OrderItem>;
+  private userProfiles: Map<string, UserProfile>;
 
   constructor() {
     this.users = new Map();
@@ -69,6 +78,7 @@ export class MemStorage implements IStorage {
     this.wishlistItems = new Map();
     this.orders = new Map();
     this.orderItems = new Map();
+    this.userProfiles = new Map();
     this.seedData();
   }
 
@@ -447,14 +457,15 @@ export class MemStorage implements IStorage {
         orderNumber: "ORD-001",
         status: "delivered",
         totalAmount: "96.00",
-        shippingAddress: {
-          firstName: "John",
-          lastName: "Doe", 
-          address: "123 Main St",
+        deliveryAddress: {
+          fullName: "John Doe",
+          phoneNumber: "+94771234567",
+          addressLine1: "123 Main St",
+          addressLine2: "",
           city: "Colombo",
-          country: "Sri Lanka",
-          zipCode: "10001"
-        },
+          postalCode: "10001"
+        } as const,
+        phoneNumber: "+94771234567",
         paymentStatus: "paid",
         notes: "Fast delivery requested",
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
@@ -466,14 +477,15 @@ export class MemStorage implements IStorage {
         orderNumber: "ORD-002",
         status: "shipped",
         totalAmount: "155.00",
-        shippingAddress: {
-          firstName: "Jane",
-          lastName: "Smith",
-          address: "456 Park Ave",
+        deliveryAddress: {
+          fullName: "Jane Smith",
+          phoneNumber: "+94771234568",
+          addressLine1: "456 Park Ave",
+          addressLine2: "",
           city: "Kandy",
-          country: "Sri Lanka", 
-          zipCode: "20000"
+          postalCode: "20000"
         },
+        phoneNumber: "+94771234568",
         paymentStatus: "paid",
         notes: null,
         createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
@@ -485,14 +497,15 @@ export class MemStorage implements IStorage {
         orderNumber: "ORD-003", 
         status: "pending",
         totalAmount: "72.00",
-        shippingAddress: {
-          firstName: "Mike",
-          lastName: "Johnson",
-          address: "789 Oak St",
+        deliveryAddress: {
+          fullName: "Mike Johnson",
+          phoneNumber: "+94771234569",
+          addressLine1: "789 Oak St",
+          addressLine2: "",
           city: "Galle",
-          country: "Sri Lanka",
-          zipCode: "80000"
+          postalCode: "80000"
         },
+        phoneNumber: "+94771234569",
         paymentStatus: "pending",
         notes: null,
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
@@ -925,7 +938,8 @@ export class MemStorage implements IStorage {
       orderNumber: insertOrder.orderNumber,
       status: insertOrder.status || "pending",
       totalAmount: insertOrder.totalAmount,
-      shippingAddress: insertOrder.shippingAddress || null,
+      deliveryAddress: insertOrder.deliveryAddress,
+      phoneNumber: insertOrder.phoneNumber,
       paymentStatus: insertOrder.paymentStatus || null,
       notes: insertOrder.notes || null,
       createdAt: new Date(),
@@ -942,6 +956,45 @@ export class MemStorage implements IStorage {
     const updatedOrder = { ...order, status, updatedAt: new Date() };
     this.orders.set(id, updatedOrder);
     return updatedOrder;
+  }
+
+  async getUserProfile(userId: string): Promise<UserProfile | undefined> {
+    return Array.from(this.userProfiles.values()).find(profile => profile.userId === userId);
+  }
+
+  async createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
+    const existingProfile = await this.getUserProfile(profile.userId);
+    
+    if (existingProfile) {
+      const updatedProfile: UserProfile = {
+        ...existingProfile,
+        ...profile,
+        updatedAt: new Date(),
+      };
+      this.userProfiles.set(existingProfile.id, updatedProfile);
+      return updatedProfile;
+    } else {
+      const id = randomUUID();
+      const newProfile: UserProfile = {
+        id,
+        ...profile,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.userProfiles.set(id, newProfile);
+      return newProfile;
+    }
+  }
+
+  async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
+    const id = randomUUID();
+    const orderItem: OrderItem = {
+      id,
+      ...insertOrderItem,
+      createdAt: new Date(),
+    };
+    this.orderItems.set(id, orderItem);
+    return orderItem;
   }
 
 }

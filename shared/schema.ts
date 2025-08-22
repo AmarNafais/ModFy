@@ -80,14 +80,15 @@ export const orders = pgTable("orders", {
   orderNumber: text("order_number").notNull().unique(),
   status: text("status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  shippingAddress: jsonb("shipping_address").$type<{
-    firstName: string;
-    lastName: string;
-    address: string;
+  deliveryAddress: jsonb("delivery_address").$type<{
+    fullName: string;
+    phoneNumber: string;
+    addressLine1: string;
+    addressLine2?: string;
     city: string;
-    country: string;
-    zipCode: string;
-  }>(),
+    postalCode: string;
+  }>().notNull(),
+  phoneNumber: text("phone_number").notNull(), // snapshot at order time
   paymentStatus: text("payment_status").default("pending"), // pending, paid, failed
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -111,6 +112,19 @@ export const wishlistItems = pgTable("wishlist_items", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   productId: varchar("product_id").references(() => products.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userProfiles = pgTable("user_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  fullName: text("full_name"),
+  phoneNumber: text("phone_number"),
+  addressLine1: text("address_line_1"),
+  addressLine2: text("address_line_2"),
+  city: text("city"),
+  postalCode: text("postal_code"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Schemas
@@ -171,6 +185,12 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   createdAt: true,
 });
 
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -214,3 +234,6 @@ export type OrderWithItems = Order & {
   user: User | null;
   items: (OrderItem & { product: Product })[];
 };
+
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;

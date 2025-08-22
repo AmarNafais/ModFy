@@ -172,3 +172,155 @@ export async function testEmailConnection(): Promise<boolean> {
     return false;
   }
 }
+
+export async function sendOrderConfirmationEmail(orderData: {
+  orderNumber: string;
+  totalAmount: string;
+  customerName: string;
+  deliveryAddress: {
+    fullName: string;
+    phoneNumber: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    postalCode: string;
+  };
+  items: Array<{
+    productName: string;
+    quantity: number;
+    price: string;
+  }>;
+}): Promise<boolean> {
+  try {
+    const orderConfirmationEmailHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        .email-container {
+          max-width: 600px;
+          margin: 0 auto;
+          font-family: 'Helvetica Neue', Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+        }
+        .header {
+          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+          color: white;
+          padding: 40px 20px;
+          text-align: center;
+        }
+        .logo {
+          font-size: 32px;
+          font-weight: bold;
+          letter-spacing: 2px;
+          margin-bottom: 10px;
+        }
+        .content {
+          padding: 40px 20px;
+          background: #ffffff;
+        }
+        .order-details {
+          background: #f8f9fa;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+        .order-item {
+          border-bottom: 1px solid #e9ecef;
+          padding: 10px 0;
+          display: flex;
+          justify-content: space-between;
+        }
+        .order-item:last-child {
+          border-bottom: none;
+        }
+        .total {
+          font-weight: bold;
+          font-size: 18px;
+          color: #1a1a1a;
+          text-align: right;
+          margin-top: 15px;
+          padding-top: 15px;
+          border-top: 2px solid #1a1a1a;
+        }
+        .address-block {
+          background: #fff;
+          border: 1px solid #e9ecef;
+          padding: 15px;
+          border-radius: 5px;
+          margin: 15px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <div class="logo">MODFY</div>
+          <p style="margin: 0; font-size: 16px; opacity: 0.9;">Premium Men's Innerwear</p>
+        </div>
+        
+        <div class="content">
+          <h1>Order Confirmation - ${orderData.orderNumber}</h1>
+          
+          <p>Hi there,</p>
+          
+          <p>A new order has been received! Details below:</p>
+          
+          <div class="order-details">
+            <h3 style="margin-top: 0;">Order Details</h3>
+            <p><strong>Order Number:</strong> ${orderData.orderNumber}</p>
+            
+            <h4>Items Ordered:</h4>
+            ${orderData.items.map(item => `
+              <div class="order-item">
+                <span>${item.productName} (Qty: ${item.quantity})</span>
+                <span>LKR ${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+              </div>
+            `).join('')}
+            
+            <div class="total">
+              Total: LKR ${orderData.totalAmount}
+            </div>
+          </div>
+          
+          <div class="address-block">
+            <h4>Delivery Address:</h4>
+            <p style="margin: 5px 0;">${orderData.deliveryAddress.fullName}</p>
+            <p style="margin: 5px 0;">${orderData.deliveryAddress.addressLine1}</p>
+            ${orderData.deliveryAddress.addressLine2 ? `<p style="margin: 5px 0;">${orderData.deliveryAddress.addressLine2}</p>` : ''}
+            <p style="margin: 5px 0;">${orderData.deliveryAddress.city}, ${orderData.deliveryAddress.postalCode}</p>
+            <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderData.deliveryAddress.phoneNumber}</p>
+          </div>
+          
+          <p>Please process this order promptly.</p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 30px 20px; text-align: center; color: #888; font-size: 14px;">
+          <p>© 2024 MODFY. All rights reserved.</p>
+          <p>Premium Men's Innerwear - Comfort Redefined</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const mailOptions = {
+      from: {
+        name: 'MODFY - Order System',
+        address: 'amarnafais@gmail.com'
+      },
+      to: "legacyamar999@gmail.com",
+      subject: `New Order Received - ${orderData.orderNumber}`,
+      html: orderConfirmationEmailHTML,
+      text: `New order received: ${orderData.orderNumber} for LKR ${orderData.totalAmount}. Customer: ${orderData.customerName}`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Order confirmation email sent for order ${orderData.orderNumber}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to send order confirmation email:", error);
+    return false;
+  }
+}

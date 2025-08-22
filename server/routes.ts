@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCartItemSchema, signupSchema, loginSchema, users } from "@shared/schema";
+import { insertCartItemSchema, signupSchema, loginSchema, insertUserProfileSchema, insertOrderSchema, users } from "@shared/schema";
 import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
-import { sendWelcomeEmail, testEmailConnection } from "./emailService";
+import { sendWelcomeEmail, testEmailConnection, sendOrderConfirmationEmail } from "./emailService";
 import { db } from "./db";
 import { ObjectStorageService } from "./objectStorage";
 
@@ -523,6 +523,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting product:", error);
       res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+
+  // Profile routes
+  app.get("/api/profile", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const profile = await storage.getUserProfile(userId);
+      res.json(profile || null);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
+  app.post("/api/profile", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const profileData = insertUserProfileSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const profile = await storage.createOrUpdateUserProfile(profileData);
+      res.json(profile);
+    } catch (error: any) {
+      console.error("Error saving profile:", error);
+      if (error.issues) {
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: error.issues.map((issue: any) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          }))
+        });
+      }
+      res.status(500).json({ error: "Failed to save profile" });
+    }
+  });
+
+  // Orders routes
+  app.post("/api/orders", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      
+      // Get cart items to create order items
+      const cartItems = await storage.getCartItems(undefined, userId);
+      
+      if (cartItems.length === 0) {
+        return res.status(400).json({ error: "Cart is empty" });
+      }
+      
+      const orderData = insertOrderSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      // Create the order
+      const order = await storage.createOrder(orderData);
+      
+      // Create order items from cart items
+      for (const cartItem of cartItems) {
+        await storage.createOrderItem({
+          orderId: order.id,
+          productId: cartItem.productId,
+          size: cartItem.size,
+          color: cartItem.color,
+          quantity: cartItem.quantity,
+          unitPrice: cartItem.product.price,
+          totalPrice: (parseFloat(cartItem.product.price) * cartItem.quantity).toFixed(2),
+        });
+      }
+      
+      // Clear the cart after successful order creation
+      await storage.clearCart(undefined, userId);
+      
+      // Send order confirmation email
+      try {
+        await sendOrderConfirmationEmail({
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount,
+          customerName: orderData.deliveryAddress.fullName,
+          deliveryAddress: orderData.deliveryAddress,
+          items: cartItems.map(item => ({
+            productName: item.product.name,
+            quantity: item.quantity,
+            price: item.product.price,
+          })),
+        });
+      } catch (emailError) {
+        console.error("Failed to send order confirmation email:", emailError);
+        // Don't fail the order creation if email fails
+      }
+      
+      res.status(201).json(order);
+    } catch (error: any) {
+      console.error("Error creating order:", error);
+      if (error.issues) {
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: error.issues.map((issue: any) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          }))
+        });
+      }
+      res.status(500).json({ error: "Failed to create order" });
     }
   });
 
