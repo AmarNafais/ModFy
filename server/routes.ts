@@ -169,6 +169,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
+      
+      console.log("Product fetched by slug:", req.params.slug);
+      console.log("Product images from database:", product.images);
+      
       res.json(product);
     } catch (error) {
       console.error("Error fetching product:", error);
@@ -393,9 +397,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { name, description, price, categoryId, material, sizes, colors, images, stockQuantity, isFeatured } = req.body;
       
+      console.log("Creating product with images:", images);
+      console.log("Images array check:", Array.isArray(images), images);
+      
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
-      const product = await storage.createProduct({
+      const productData = {
         name,
         slug,
         description,
@@ -408,7 +415,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stockQuantity: parseInt(stockQuantity) || 0,
         isFeatured: Boolean(isFeatured),
         isActive: true,
-      });
+      };
+      
+      console.log("Product data being sent to storage:", productData);
+      
+      const product = await storage.createProduct(productData);
+      
+      console.log("Created product returned from storage:", product);
       
       res.status(201).json(product);
     } catch (error) {
@@ -422,6 +435,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { name, description, price, categoryId, material, sizes, colors, images, stockQuantity, isFeatured, isActive } = req.body;
+      
+      console.log("Updating product with ID:", id);
+      console.log("Images received for update:", images);
+      console.log("Images array check:", Array.isArray(images), images);
       
       const updates: any = {};
       
@@ -440,7 +457,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isFeatured !== undefined) updates.isFeatured = Boolean(isFeatured);
       if (isActive !== undefined) updates.isActive = Boolean(isActive);
       
+      console.log("Updates object being sent to storage:", updates);
+      
       const product = await storage.updateProduct(id, updates);
+      
+      console.log("Updated product returned from storage:", product);
       
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
