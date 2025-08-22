@@ -1,18 +1,35 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Search, X } from "lucide-react";
 import { type Category, type ProductWithCategory } from "@shared/schema";
 import ProductCard from "@/components/ProductCard";
 
 export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
 
-  const { data: products = [], isLoading } = useQuery<ProductWithCategory[]>({
+  const { data: allProducts = [], isLoading } = useQuery<ProductWithCategory[]>({
     queryKey: ['/api/products', { categoryId: selectedCategory || undefined, isActive: true }],
   });
+
+  // Filter products based on search query
+  const products = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return allProducts;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return allProducts.filter(product => 
+      product.name.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query) ||
+      product.material?.toLowerCase().includes(query) ||
+      product.category?.name.toLowerCase().includes(query)
+    );
+  }, [allProducts, searchQuery]);
 
   return (
     <div className="pt-24 pb-16">
@@ -26,10 +43,49 @@ export default function Shop() {
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="shop-search-input"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products, materials, categories..."
+              className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-luxury-black focus:border-luxury-black text-sm"
+              data-testid="input-search"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                data-testid="button-clear-search"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="mt-2 text-sm text-gray-600">
+              {products.length > 0 ? (
+                <span>Found {products.length} product{products.length !== 1 ? 's' : ''} for "{searchQuery}"</span>
+              ) : (
+                <span>No products found for "{searchQuery}"</span>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
           <button
-            onClick={() => setSelectedCategory("")}
+            onClick={() => {
+              setSelectedCategory("");
+              setSearchQuery(""); // Clear search when changing category
+            }}
             className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${
               selectedCategory === "" 
                 ? "bg-luxury-black text-white" 
@@ -42,7 +98,10 @@ export default function Shop() {
           {categories.map((category) => (
             <button
               key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => {
+                setSelectedCategory(category.id);
+                setSearchQuery(""); // Clear search when changing category
+              }}
               className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${
                 selectedCategory === category.id 
                   ? "bg-luxury-black text-white" 
@@ -63,7 +122,23 @@ export default function Shop() {
         ) : products.length === 0 ? (
           <div className="text-center py-16">
             <h3 className="text-lg font-medium tracking-wide mb-2">NO PRODUCTS FOUND</h3>
-            <p className="text-gray-600 font-light">Try adjusting your filters or browse all products.</p>
+            <p className="text-gray-600 font-light">
+              {searchQuery ? (
+                <>
+                  No products match your search for "{searchQuery}". 
+                  <button 
+                    onClick={() => setSearchQuery("")}
+                    className="ml-1 text-luxury-black underline hover:no-underline"
+                    data-testid="button-clear-search-results"
+                  >
+                    Clear search
+                  </button>
+                  {" "}or try different keywords.
+                </>
+              ) : (
+                "Try adjusting your filters or browse all products."
+              )}
+            </p>
           </div>
         ) : (
           <>

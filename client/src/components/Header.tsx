@@ -57,12 +57,19 @@ export default function Header({ onCartOpen }: HeaderProps) {
 
           {/* Right Navigation */}
           <div className="flex items-center space-x-6">
-            <button 
-              className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors"
-              data-testid="button-search"
-            >
-              <Search size={18} />
-            </button>
+            {location === '/shop' && (
+              <button 
+                className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors"
+                data-testid="button-search"
+                onClick={() => {
+                  // Trigger search focus on shop page
+                  const searchInput = document.getElementById('shop-search-input');
+                  searchInput?.focus();
+                }}
+              >
+                <Search size={18} />
+              </button>
+            )}
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
