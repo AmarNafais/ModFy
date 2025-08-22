@@ -1,6 +1,7 @@
 import { X, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useEffect } from "react";
+import { useLocation } from "wouter";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { cartItems, totalAmount, updateQuantity, removeItem, isLoading } = useCart();
+  const [_, setLocation] = useLocation();
 
   useEffect(() => {
     if (isOpen) {
@@ -128,11 +130,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="border-t border-luxury-muted p-6" data-testid="cart-footer">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-medium">TOTAL</span>
-                <span className="text-lg font-medium" data-testid="cart-total">${totalAmount.toFixed(2)}</span>
+                <span className="text-lg font-medium" data-testid="cart-total">LKR {totalAmount.toFixed(2)}</span>
               </div>
               <button 
                 className="w-full bg-luxury-black text-white py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors"
                 data-testid="button-checkout"
+                onClick={() => {
+                  setLocation('/checkout');
+                  onClose();
+                }}
               >
                 CHECKOUT
               </button>
