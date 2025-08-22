@@ -12,8 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus, Upload, Trash2 } from "lucide-react";
-import { ObjectUploader } from "@/components/ObjectUploader";
+import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus, Trash2 } from "lucide-react";
 import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 
@@ -38,6 +37,8 @@ export default function Admin() {
     stockQuantity: '50',
     isFeatured: false,
   });
+
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   const [categoryForm, setCategoryForm] = useState({
     name: '',
@@ -109,6 +110,7 @@ export default function Admin() {
         stockQuantity: '50',
         isFeatured: false,
       });
+      setNewImageUrl('');
       toast({
         title: "Product Created",
         description: "Product created successfully.",
@@ -179,31 +181,22 @@ export default function Admin() {
   }, [user, isLoading, toast]);
 
   // Functions that depend on state
-  const handleImageUpload = async (result: any) => {
-    try {
-      if (result.successful && result.successful.length > 0) {
-        const uploadedFile = result.successful[0];
-        const uploadURL = uploadedFile.uploadURL;
-        
-        const response = await apiRequest("POST", "/api/admin/process-image", { uploadURL });
-        const data = await response.json();
-        const { imageUrl } = data;
-        
-        setProductForm(prev => ({
-          ...prev,
-          images: [...prev.images, imageUrl]
-        }));
-        
-        toast({
-          title: "Image Uploaded",
-          description: "Product image uploaded successfully.",
-        });
-      }
-    } catch (error) {
-      console.error("Error processing image:", error);
+  const addImageUrl = () => {
+    const url = newImageUrl.trim();
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      setProductForm(prev => ({
+        ...prev,
+        images: [...prev.images, url]
+      }));
+      setNewImageUrl('');
       toast({
-        title: "Error",
-        description: "Failed to process uploaded image.",
+        title: "Image Added",
+        description: "Product image URL added successfully.",
+      });
+    } else {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid image URL starting with http:// or https://",
         variant: "destructive",
       });
     }
@@ -741,30 +734,31 @@ export default function Admin() {
                           ))}
                         </div>
                         
-                        {/* Upload New Image Button */}
-                        <ObjectUploader
-                          maxNumberOfFiles={1}
-                          maxFileSize={5242880} // 5MB
-                          onGetUploadParameters={async () => {
-                            try {
-                              const response = await apiRequest("POST", "/api/objects/upload", {});
-                              const data = await response.json();
-                              console.log("Upload parameters response:", data);
-                              return {
-                                method: "PUT" as const,
-                                url: data.uploadURL,
-                              };
-                            } catch (error) {
-                              console.error("Failed to get upload parameters:", error);
-                              throw error;
-                            }
-                          }}
-                          onComplete={handleImageUpload}
-                          buttonClassName="w-full"
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Product Image
-                        </ObjectUploader>
+                        {/* Add Image URL */}
+                        <div className="flex gap-2">
+                          <Input
+                            type="url"
+                            placeholder="Enter image URL (e.g., https://imgur.com/...jpg)"
+                            value={newImageUrl}
+                            onChange={(e) => setNewImageUrl(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addImageUrl();
+                              }
+                            }}
+                            data-testid="input-image-url"
+                          />
+                          <Button
+                            type="button"
+                            onClick={addImageUrl}
+                            disabled={!newImageUrl.trim()}
+                            data-testid="button-add-image"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Image
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     
