@@ -189,6 +189,7 @@ export async function sendOrderConfirmationEmail(orderData: {
     productName: string;
     quantity: number;
     price: string;
+    imageUrl: string;
   }>;
 }): Promise<boolean> {
   try {
@@ -228,12 +229,26 @@ export async function sendOrderConfirmationEmail(orderData: {
         }
         .order-item {
           border-bottom: 1px solid #e9ecef;
-          padding: 10px 0;
+          padding: 15px 0;
           display: flex;
-          justify-content: space-between;
+          align-items: center;
+          gap: 15px;
         }
         .order-item:last-child {
           border-bottom: none;
+        }
+        .product-image {
+          width: 60px;
+          height: 60px;
+          object-fit: cover;
+          border-radius: 8px;
+          border: 1px solid #e9ecef;
+        }
+        .product-details {
+          flex: 1;
+        }
+        .product-price {
+          text-align: right;
         }
         .total {
           font-weight: bold;
@@ -274,8 +289,15 @@ export async function sendOrderConfirmationEmail(orderData: {
             <h4>Items Ordered:</h4>
             ${orderData.items.map(item => `
               <div class="order-item">
-                <span>${item.productName} (Qty: ${item.quantity})</span>
-                <span>LKR ${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                <img src="${item.imageUrl}" alt="${item.productName}" class="product-image">
+                <div class="product-details">
+                  <strong>${item.productName}</strong><br>
+                  <span style="color: #666; font-size: 14px;">Quantity: ${item.quantity}</span>
+                </div>
+                <div class="product-price">
+                  <strong>LKR ${(parseFloat(item.price) * item.quantity).toFixed(2)}</strong><br>
+                  <span style="color: #666; font-size: 14px;">LKR ${item.price} each</span>
+                </div>
               </div>
             `).join('')}
             

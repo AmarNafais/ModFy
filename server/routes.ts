@@ -605,11 +605,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           orderNumber: order.orderNumber,
           totalAmount: order.totalAmount,
           customerName: orderData.deliveryAddress.fullName,
-          deliveryAddress: orderData.deliveryAddress,
+          deliveryAddress: {
+            fullName: orderData.deliveryAddress.fullName,
+            phoneNumber: orderData.deliveryAddress.phoneNumber,
+            addressLine1: orderData.deliveryAddress.addressLine1,
+            addressLine2: orderData.deliveryAddress.addressLine2 as string | undefined,
+            city: orderData.deliveryAddress.city,
+            postalCode: orderData.deliveryAddress.postalCode,
+          },
           items: cartItems.map(item => ({
             productName: item.product.name,
             quantity: item.quantity,
             price: item.product.price,
+            imageUrl: item.product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
           })),
         });
       } catch (emailError) {

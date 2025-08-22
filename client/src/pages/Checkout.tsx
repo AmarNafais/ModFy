@@ -200,7 +200,14 @@ export default function Checkout() {
           </CardHeader>
           <CardContent className="space-y-4">
             {cartItems.map((item) => (
-              <div key={item.id} className="flex justify-between items-start">
+              <div key={item.id} className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <img 
+                    src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'} 
+                    alt={item.product.name}
+                    className="w-16 h-16 object-cover rounded-lg border"
+                  />
+                </div>
                 <div className="flex-1">
                   <h4 className="font-medium">{item.product.name}</h4>
                   <div className="flex gap-2 mt-1">
