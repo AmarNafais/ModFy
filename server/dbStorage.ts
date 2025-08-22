@@ -507,30 +507,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<boolean> {
     try {
-      // Check if product exists in order items (has been purchased)
-      const orderItemsCount = await db.select().from(orderItems).where(eq(orderItems.productId, id));
+      // Always delete completely - remove all foreign key dependencies first
+      await db.delete(cartItems).where(eq(cartItems.productId, id));
+      await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
+      await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
+      await db.delete(orderItems).where(eq(orderItems.productId, id));
       
-      if (orderItemsCount.length > 0) {
-        // Product has been ordered, so just mark it as inactive instead of deleting
-        const result = await db.update(products)
-          .set({ isActive: false, updatedAt: new Date() })
-          .where(eq(products.id, id));
-        
-        // Remove from carts and wishlists (but keep order history)
-        await db.delete(cartItems).where(eq(cartItems.productId, id));
-        await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
-        await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
-        
-        return result.rowCount > 0;
-      } else {
-        // Product has never been ordered, safe to delete completely
-        await db.delete(cartItems).where(eq(cartItems.productId, id));
-        await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
-        await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
-        
-        const result = await db.delete(products).where(eq(products.id, id));
-        return result.rowCount > 0;
-      }
+      // Now delete the product itself
+      const result = await db.delete(products).where(eq(products.id, id));
+      return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting product:', error);
       throw error;
