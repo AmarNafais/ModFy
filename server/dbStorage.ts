@@ -482,8 +482,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: string): Promise<boolean> {
-    const result = await db.delete(products).where(eq(products.id, id));
-    return result.rowCount > 0;
+    try {
+      // First, remove the product from all carts
+      await db.delete(cartItems).where(eq(cartItems.productId, id));
+      
+      // Remove from wishlists
+      await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
+      
+      // Remove from collections
+      await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
+      
+      // Note: We keep order_items for historical records
+      
+      // Finally, delete the product itself
+      const result = await db.delete(products).where(eq(products.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
   }
 
   // Collection operations
