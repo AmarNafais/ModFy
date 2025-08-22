@@ -9,15 +9,27 @@ export function useCart() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get cart items - works for both authenticated and guest users
+  // Get cart items - only fetch when authenticated
   const { data: cartItems = [], isLoading } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart", user?.id],
+    enabled: isAuthenticated && !!user,
     retry: false,
   });
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async (data: { productId: string; size?: string; color?: string; quantity?: number }) => {
+      if (!isAuthenticated) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to add items to your cart",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 1000);
+        throw new Error("Authentication required");
+      }
       return apiRequest("POST", "/api/cart", data);
     },
     onSuccess: () => {
@@ -28,11 +40,13 @@ export function useCart() {
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to add to cart. Please try again.",
-        variant: "destructive",
-      });
+      if (error.message !== "Authentication required") {
+        toast({
+          title: "Error",
+          description: "Failed to add to cart. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
