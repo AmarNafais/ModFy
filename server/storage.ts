@@ -38,11 +38,11 @@ export interface IStorage {
   createCollection(collection: InsertCollection): Promise<Collection>;
 
   // Cart operations
-  getCartItems(sessionId: string): Promise<CartItemWithProduct[]>;
+  getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]>;
   addToCart(cartItem: InsertCartItem): Promise<CartItem>;
   updateCartItem(id: string, updates: Partial<CartItem>): Promise<CartItem | undefined>;
   removeFromCart(id: string): Promise<void>;
-  clearCart(sessionId: string): Promise<void>;
+  clearCart(sessionId?: string, userId?: string): Promise<void>;
 
   // Wishlist operations
   getWishlistItems(userId: string): Promise<WishlistItemWithProduct[]>;
@@ -747,9 +747,14 @@ export class MemStorage implements IStorage {
   }
 
   // Cart operations
-  async getCartItems(sessionId: string): Promise<CartItemWithProduct[]> {
+  async getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]> {
     const cartItems = Array.from(this.cartItems.values())
-      .filter(item => item.sessionId === sessionId);
+      .filter(item => {
+        if (userId) {
+          return item.userId === userId;
+        }
+        return item.sessionId === sessionId;
+      });
 
     return cartItems.map(item => ({
       ...item,
@@ -760,12 +765,16 @@ export class MemStorage implements IStorage {
   async addToCart(insertCartItem: InsertCartItem): Promise<CartItem> {
     // Check if item already exists
     const existingItem = Array.from(this.cartItems.values())
-      .find(item => 
-        item.sessionId === insertCartItem.sessionId &&
-        item.productId === insertCartItem.productId &&
-        item.size === insertCartItem.size &&
-        item.color === insertCartItem.color
-      );
+      .find(item => {
+        const sameProduct = item.productId === insertCartItem.productId &&
+                          item.size === insertCartItem.size &&
+                          item.color === insertCartItem.color;
+        
+        if (insertCartItem.userId) {
+          return sameProduct && item.userId === insertCartItem.userId;
+        }
+        return sameProduct && item.sessionId === insertCartItem.sessionId;
+      });
 
     if (existingItem) {
       // Update quantity
@@ -777,8 +786,9 @@ export class MemStorage implements IStorage {
 
     const id = randomUUID();
     const cartItem: CartItem = {
-      ...insertCartItem,
       id,
+      sessionId: insertCartItem.sessionId || null,
+      userId: insertCartItem.userId || null,
       productId: insertCartItem.productId || null,
       size: insertCartItem.size || null,
       color: insertCartItem.color || null,
@@ -807,9 +817,14 @@ export class MemStorage implements IStorage {
     this.cartItems.delete(id);
   }
 
-  async clearCart(sessionId: string): Promise<void> {
+  async clearCart(sessionId?: string, userId?: string): Promise<void> {
     const itemsToDelete = Array.from(this.cartItems.entries())
-      .filter(([_, item]) => item.sessionId === sessionId)
+      .filter(([_, item]) => {
+        if (userId) {
+          return item.userId === userId;
+        }
+        return item.sessionId === sessionId;
+      })
       .map(([id, _]) => id);
 
     itemsToDelete.forEach(id => this.cartItems.delete(id));
@@ -905,9 +920,14 @@ export class MemStorage implements IStorage {
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = randomUUID();
     const order: Order = {
-      ...insertOrder,
       id,
+      userId: insertOrder.userId || null,
+      orderNumber: insertOrder.orderNumber,
       status: insertOrder.status || "pending",
+      totalAmount: insertOrder.totalAmount,
+      shippingAddress: insertOrder.shippingAddress || null,
+      paymentStatus: insertOrder.paymentStatus || null,
+      notes: insertOrder.notes || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

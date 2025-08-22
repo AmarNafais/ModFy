@@ -8,7 +8,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { cartItems, total, updateQuantity, removeItem, isLoading } = useCart();
+  const { cartItems, totalAmount, updateQuantity, removeItem, isLoading } = useCart();
 
   useEffect(() => {
     if (isOpen) {
@@ -55,7 +55,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           {/* Free Shipping Banner */}
           <div className="p-4 bg-luxury-gray text-center">
             <p className="text-sm font-light text-gray-600">
-              Spend ${Math.max(0, 75 - total).toFixed(2)} USD more and get free shipping!
+              Spend ${Math.max(0, 75 - totalAmount).toFixed(2)} USD more and get free shipping!
             </p>
           </div>
 
@@ -89,7 +89,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         <div className="flex items-center space-x-2">
                           <button 
                             className="w-6 h-6 border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100"
-                            onClick={() => item.quantity > 1 ? updateQuantity({ id: item.id, quantity: item.quantity - 1 }) : removeItem(item.id)}
+                            onClick={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1) : removeItem(item.id)}
                             data-testid={`button-decrease-${item.id}`}
                           >
                             <Minus size={12} />
@@ -97,7 +97,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <span className="text-sm" data-testid={`quantity-${item.id}`}>{item.quantity}</span>
                           <button 
                             className="w-6 h-6 border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100"
-                            onClick={() => updateQuantity({ id: item.id, quantity: item.quantity + 1 })}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             data-testid={`button-increase-${item.id}`}
                           >
                             <Plus size={12} />
@@ -116,7 +116,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="border-t border-luxury-muted p-6" data-testid="cart-footer">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-medium">TOTAL</span>
-                <span className="text-lg font-medium" data-testid="cart-total">${total.toFixed(2)}</span>
+                <span className="text-lg font-medium" data-testid="cart-total">${totalAmount.toFixed(2)}</span>
               </div>
               <button 
                 className="w-full bg-luxury-black text-white py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors"

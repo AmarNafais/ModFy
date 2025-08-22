@@ -201,9 +201,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cart routes
-  app.get("/api/cart/:sessionId", async (req, res) => {
+  app.get("/api/cart", async (req, res) => {
     try {
-      const cartItems = await storage.getCartItems(req.params.sessionId);
+      const userId = req.session.userId;
+      const sessionId = req.sessionID;
+      
+      console.log('Cart GET - userId:', userId, 'sessionId:', sessionId);
+      
+      const cartItems = await storage.getCartItems(sessionId, userId);
       res.json(cartItems);
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -213,7 +218,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cart", async (req, res) => {
     try {
-      const validatedData = insertCartItemSchema.parse(req.body);
+      const userId = req.session.userId;
+      const sessionId = req.sessionID;
+      
+      const cartData = {
+        ...req.body,
+        userId: userId || null,
+        sessionId: userId ? null : sessionId, // Use sessionId only for guests
+      };
+      
+      const validatedData = insertCartItemSchema.parse(cartData);
       const cartItem = await storage.addToCart(validatedData);
       res.status(201).json(cartItem);
     } catch (error) {
@@ -246,9 +260,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/cart/session/:sessionId", async (req, res) => {
+  app.delete("/api/cart/clear", async (req, res) => {
     try {
-      await storage.clearCart(req.params.sessionId);
+      const userId = req.session.userId;
+      const sessionId = req.sessionID;
+      
+      await storage.clearCart(sessionId, userId);
       res.status(204).send();
     } catch (error) {
       console.error("Error clearing cart:", error);

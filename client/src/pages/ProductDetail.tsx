@@ -36,8 +36,7 @@ export default function ProductDetail() {
       return;
     }
 
-    addToCart({
-      productId: product.id,
+    addToCart(product.id, {
       size: selectedSize,
       color: selectedColor,
       quantity,

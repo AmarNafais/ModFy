@@ -64,7 +64,8 @@ export const collectionProducts = pgTable("collection_products", {
 
 export const cartItems = pgTable("cart_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  sessionId: text("session_id").notNull(),
+  sessionId: text("session_id"),
+  userId: varchar("user_id").references(() => users.id),
   productId: varchar("product_id").references(() => products.id),
   size: text("size"),
   color: text("color"),
