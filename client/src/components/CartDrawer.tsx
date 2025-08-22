@@ -1,4 +1,4 @@
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useEffect } from "react";
 
@@ -80,10 +80,22 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       className="w-16 h-20 object-cover" 
                     />
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium">{item.product.name}</h4>
-                      <p className="text-xs text-gray-600">
-                        Size: {item.size} • Color: {item.color}
-                      </p>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-sm font-medium">{item.product.name}</h4>
+                          <p className="text-xs text-gray-600">
+                            Size: {item.size} • Color: {item.color}
+                          </p>
+                        </div>
+                        <button 
+                          className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                          onClick={() => removeItem(item.id)}
+                          data-testid={`button-delete-${item.id}`}
+                          title="Remove item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-sm font-medium">${item.product.price}</span>
                         <div className="flex items-center space-x-2">
