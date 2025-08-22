@@ -481,6 +481,30 @@ export class DatabaseStorage implements IStorage {
     return newProduct;
   }
 
+  async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
+    const updateData = {
+      ...updates,
+      updatedAt: new Date(),
+      sizes: Array.isArray(updates.sizes) ? updates.sizes : (typeof updates.sizes === 'string' ? JSON.parse(updates.sizes) : undefined),
+      colors: Array.isArray(updates.colors) ? updates.colors : (typeof updates.colors === 'string' ? JSON.parse(updates.colors) : undefined),
+      images: Array.isArray(updates.images) ? updates.images : (typeof updates.images === 'string' ? JSON.parse(updates.images) : undefined),
+    };
+
+    // Remove undefined values
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+
+    const [updatedProduct] = await db.update(products)
+      .set(updateData)
+      .where(eq(products.id, id))
+      .returning();
+    
+    return updatedProduct;
+  }
+
   async deleteProduct(id: string): Promise<boolean> {
     try {
       // Check if product exists in order items (has been purchased)

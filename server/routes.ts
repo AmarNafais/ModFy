@@ -417,6 +417,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update product route
+  app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, price, categoryId, material, sizes, colors, images, stockQuantity, isFeatured, isActive } = req.body;
+      
+      const updates: any = {};
+      
+      if (name !== undefined) {
+        updates.name = name;
+        updates.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      }
+      if (description !== undefined) updates.description = description;
+      if (price !== undefined) updates.price = price;
+      if (categoryId !== undefined) updates.categoryId = categoryId;
+      if (material !== undefined) updates.material = material;
+      if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
+      if (colors !== undefined) updates.colors = Array.isArray(colors) ? colors : [];
+      if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
+      if (stockQuantity !== undefined) updates.stockQuantity = parseInt(stockQuantity) || 0;
+      if (isFeatured !== undefined) updates.isFeatured = Boolean(isFeatured);
+      if (isActive !== undefined) updates.isActive = Boolean(isActive);
+      
+      const product = await storage.updateProduct(id, updates);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
   app.post("/api/admin/categories", requireAdmin, async (req, res) => {
     try {
       const { name, description, imageUrl } = req.body;

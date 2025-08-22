@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus, Trash2 } from "lucide-react";
+import { Shield, Users, ShoppingBag, Package, FileText, Settings, Plus, Trash2, Edit } from "lucide-react";
 import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 
@@ -24,6 +24,8 @@ export default function Admin() {
   
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   
   const [productForm, setProductForm] = useState({
     name: '',
@@ -39,6 +41,7 @@ export default function Admin() {
   });
 
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [editNewImageUrl, setEditNewImageUrl] = useState('');
 
   const [categoryForm, setCategoryForm] = useState({
     name: '',
@@ -180,6 +183,28 @@ export default function Admin() {
     }
   }, [user, isLoading, toast]);
 
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, productData }: { id: string; productData: any }) =>
+      apiRequest("PATCH", `/api/admin/products/${id}`, productData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsEditDialogOpen(false);
+      setEditingProduct(null);
+      setEditNewImageUrl('');
+      toast({
+        title: "Product Updated",
+        description: "Product updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update product.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Functions that depend on state
   const addImageUrl = () => {
     const url = newImageUrl.trim();
@@ -207,6 +232,43 @@ export default function Admin() {
       ...prev,
       images: prev.images.filter((_, index) => index !== indexToRemove)
     }));
+  };
+
+  const addEditImageUrl = () => {
+    const url = editNewImageUrl.trim();
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      setEditingProduct(prev => ({
+        ...prev,
+        images: [...prev.images, url]
+      }));
+      setEditNewImageUrl('');
+      toast({
+        title: "Image Added",
+        description: "Product image URL added successfully.",
+      });
+    } else {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid image URL starting with http:// or https://",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeEditImage = (indexToRemove: number) => {
+    setEditingProduct(prev => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove)
+    }));
+  };
+
+  const openEditDialog = (product: any) => {
+    setEditingProduct({
+      ...product,
+      price: product.price.toString(),
+      stockQuantity: product.stockQuantity.toString(),
+    });
+    setIsEditDialogOpen(true);
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -823,16 +885,27 @@ export default function Admin() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteProductMutation.mutate(product.id)}
-                          disabled={deleteProductMutation.isPending}
-                          data-testid={`button-delete-product-${product.id}`}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(product)}
+                            data-testid={`button-edit-product-${product.id}`}
+                            className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteProductMutation.mutate(product.id)}
+                            disabled={deleteProductMutation.isPending}
+                            data-testid={`button-delete-product-${product.id}`}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -840,6 +913,178 @@ export default function Admin() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Edit Product Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Product</DialogTitle>
+              </DialogHeader>
+              {editingProduct && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-product-name">Product Name</Label>
+                      <Input
+                        id="edit-product-name"
+                        value={editingProduct.name}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                        placeholder="Enter product name"
+                        data-testid="input-edit-product-name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-product-price">Price ($)</Label>
+                      <Input
+                        id="edit-product-price"
+                        type="number"
+                        step="0.01"
+                        value={editingProduct.price}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                        placeholder="0.00"
+                        data-testid="input-edit-product-price"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-product-description">Description</Label>
+                    <Textarea
+                      id="edit-product-description"
+                      value={editingProduct.description || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                      placeholder="Enter product description"
+                      data-testid="textarea-edit-product-description"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-product-category">Category</Label>
+                      <Select
+                        value={editingProduct.categoryId}
+                        onValueChange={(value) => setEditingProduct({ ...editingProduct, categoryId: value })}
+                      >
+                        <SelectTrigger data-testid="select-edit-product-category">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.isArray(categories) && categories.map((category: any) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-product-material">Material</Label>
+                      <Input
+                        id="edit-product-material"
+                        value={editingProduct.material || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
+                        placeholder="e.g., Premium Cotton"
+                        data-testid="input-edit-product-material"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-product-stock">Stock Quantity</Label>
+                      <Input
+                        id="edit-product-stock"
+                        type="number"
+                        value={editingProduct.stockQuantity}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, stockQuantity: e.target.value })}
+                        placeholder="50"
+                        data-testid="input-edit-product-stock"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-6">
+                      <input
+                        type="checkbox"
+                        id="edit-product-featured"
+                        checked={editingProduct.isFeatured}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, isFeatured: e.target.checked })}
+                        data-testid="checkbox-edit-product-featured"
+                      />
+                      <Label htmlFor="edit-product-featured">Featured Product</Label>
+                    </div>
+                  </div>
+                  
+                  {/* Product Images Section */}
+                  <div>
+                    <Label>Product Images</Label>
+                    <div className="space-y-4">
+                      {/* Current Images */}
+                      <div className="grid grid-cols-3 gap-4">
+                        {editingProduct.images.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={image}
+                              alt={`Product ${index + 1}`}
+                              className="w-full h-20 object-cover rounded-md border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeEditImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                              data-testid={`button-remove-edit-image-${index}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Add Image URL */}
+                      <div className="flex gap-2">
+                        <Input
+                          type="url"
+                          placeholder="Enter image URL (e.g., https://imgur.com/...jpg)"
+                          value={editNewImageUrl}
+                          onChange={(e) => setEditNewImageUrl(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addEditImageUrl();
+                            }
+                          }}
+                          data-testid="input-edit-image-url"
+                        />
+                        <Button
+                          type="button"
+                          onClick={addEditImageUrl}
+                          disabled={!editNewImageUrl.trim()}
+                          data-testid="button-add-edit-image"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Image
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsEditDialogOpen(false)}
+                      data-testid="button-cancel-edit-product"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => updateProductMutation.mutate({ id: editingProduct.id, productData: editingProduct })}
+                      disabled={updateProductMutation.isPending}
+                      data-testid="button-submit-edit-product"
+                    >
+                      {updateProductMutation.isPending ? 'Updating...' : 'Update Product'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Collections Tab */}

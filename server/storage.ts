@@ -29,6 +29,7 @@ export interface IStorage {
   getProduct(id: string): Promise<ProductWithCategory | undefined>;
   getProductBySlug(slug: string): Promise<ProductWithCategory | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
 
   // Collection operations
@@ -718,6 +719,26 @@ export class MemStorage implements IStorage {
     };
     this.products.set(id, product);
     return product;
+  }
+
+  async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
+    const existingProduct = this.products.get(id);
+    if (!existingProduct) {
+      return undefined;
+    }
+
+    const updatedProduct: Product = {
+      ...existingProduct,
+      ...updates,
+      id, // Keep the same ID
+      updatedAt: new Date(),
+      sizes: updates.sizes !== undefined ? updates.sizes as string[] : existingProduct.sizes,
+      colors: updates.colors !== undefined ? updates.colors as string[] : existingProduct.colors,
+      images: updates.images !== undefined ? updates.images as string[] : existingProduct.images,
+    };
+
+    this.products.set(id, updatedProduct);
+    return updatedProduct;
   }
 
   async deleteProduct(id: string): Promise<boolean> {
