@@ -483,20 +483,30 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<boolean> {
     try {
-      // First, remove the product from all carts
-      await db.delete(cartItems).where(eq(cartItems.productId, id));
+      // Check if product exists in order items (has been purchased)
+      const orderItemsCount = await db.select().from(orderItems).where(eq(orderItems.productId, id));
       
-      // Remove from wishlists
-      await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
-      
-      // Remove from collections
-      await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
-      
-      // Note: We keep order_items for historical records
-      
-      // Finally, delete the product itself
-      const result = await db.delete(products).where(eq(products.id, id));
-      return result.rowCount > 0;
+      if (orderItemsCount.length > 0) {
+        // Product has been ordered, so just mark it as inactive instead of deleting
+        const result = await db.update(products)
+          .set({ isActive: false, updatedAt: new Date() })
+          .where(eq(products.id, id));
+        
+        // Remove from carts and wishlists (but keep order history)
+        await db.delete(cartItems).where(eq(cartItems.productId, id));
+        await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
+        await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
+        
+        return result.rowCount > 0;
+      } else {
+        // Product has never been ordered, safe to delete completely
+        await db.delete(cartItems).where(eq(cartItems.productId, id));
+        await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
+        await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
+        
+        const result = await db.delete(products).where(eq(products.id, id));
+        return result.rowCount > 0;
+      }
     } catch (error) {
       console.error('Error deleting product:', error);
       throw error;
