@@ -1,0 +1,87 @@
+"Implement a User Profile & Custom Checkout Flow with the following requirements:
+
+Profile Section
+
+When the user clicks their avatar in the navbar, redirect them to a Profile page.
+
+On this page, allow users to add/edit their delivery details and phone number (used for WhatsApp contact).
+
+Fields should include:
+
+Full Name
+
+Phone Number (WhatsApp)
+
+Address Line 1
+
+Address Line 2 (optional)
+
+City
+
+Postal Code
+
+Save these details in a new user_profile table linked to the user.
+
+Table Example: user_profile
+
+id (PK)
+
+user_id (FK → users)
+
+full_name
+
+phone_number
+
+address_line_1
+
+address_line_2
+
+city
+
+postal_code
+
+created_at, updated_at
+
+Checkout Flow
+
+When the user proceeds to checkout, redirect them to a Checkout page (not the cart slider).
+
+If the user already has delivery details saved in their profile, prefill those fields automatically.
+
+If no details are saved, force them to fill out the form during checkout.
+
+After checkout, store the order details in an orders table.
+
+Table Example: orders
+
+id (PK)
+
+user_id (FK → users)
+
+cart_items (JSON or separate order_items table with order_id, product_id, quantity, price)
+
+delivery_address (snapshot of user’s address at order time)
+
+phone_number (snapshot at order time)
+
+status (pending, confirmed, shipped, delivered)
+
+created_at, updated_at
+
+WhatsApp Contact Flow (No Card Payment)
+
+Instead of online payment, once the user completes checkout, show a confirmation page.
+
+On confirmation, generate a summary of the order + delivery details.
+
+Provide a button/link to contact the seller directly via WhatsApp using the phone number saved in the profile.
+
+The WhatsApp link should pre-fill a message with order details (products, total, delivery address).
+
+Best Practices
+
+Ensure profile updates are editable anytime by the user.
+
+Make sure order records save a snapshot of the delivery details (so if a user later changes their profile, old orders still keep the original address).
+
+Keep the checkout flow simple, clear, and mobile-friendly.
