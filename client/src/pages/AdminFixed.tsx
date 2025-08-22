@@ -267,6 +267,8 @@ export default function Admin() {
       ...product,
       price: product.price.toString(),
       stockQuantity: product.stockQuantity.toString(),
+      sizes: product.sizes || [],
+      colors: product.colors || [],
     });
     setIsEditDialogOpen(true);
   };
@@ -986,6 +988,192 @@ export default function Admin() {
                       />
                     </div>
                   </div>
+                  
+                  {/* Sizes and Colors Section */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Available Sizes</Label>
+                      <div className="space-y-3">
+                        {/* Selected sizes display */}
+                        <div className="flex flex-wrap gap-2 min-h-[32px] p-2 border rounded-md bg-gray-50">
+                          {editingProduct.sizes && editingProduct.sizes.length > 0 ? (
+                            editingProduct.sizes.map((size, index) => (
+                              <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-black text-white text-xs rounded">
+                                {size}
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingProduct({
+                                    ...editingProduct,
+                                    sizes: editingProduct.sizes.filter(s => s !== size)
+                                  })}
+                                  className="ml-1 hover:text-gray-300"
+                                  data-testid={`button-remove-edit-size-${size.toLowerCase()}`}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-400 text-sm">No sizes selected</span>
+                          )}
+                        </div>
+                        
+                        {/* Add common sizes */}
+                        <Select onValueChange={(size) => {
+                          if (!editingProduct.sizes.includes(size)) {
+                            setEditingProduct({
+                              ...editingProduct,
+                              sizes: [...editingProduct.sizes, size]
+                            });
+                          }
+                        }}>
+                          <SelectTrigger data-testid="select-edit-add-size">
+                            <SelectValue placeholder="Add common size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size => 
+                              !editingProduct.sizes.includes(size)
+                            ).map((size) => (
+                              <SelectItem key={size} value={size}>
+                                {size}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* Add custom size */}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Add custom size"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                const value = (e.target as HTMLInputElement).value.trim();
+                                if (value && !editingProduct.sizes.includes(value)) {
+                                  setEditingProduct({
+                                    ...editingProduct,
+                                    sizes: [...editingProduct.sizes, value]
+                                  });
+                                  (e.target as HTMLInputElement).value = '';
+                                }
+                              }
+                            }}
+                            data-testid="input-edit-custom-size"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
+                              const value = input.value.trim();
+                              if (value && !editingProduct.sizes.includes(value)) {
+                                setEditingProduct({
+                                  ...editingProduct,
+                                  sizes: [...editingProduct.sizes, value]
+                                });
+                                input.value = '';
+                              }
+                            }}
+                            data-testid="button-edit-add-custom-size"
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>Available Colors</Label>
+                      <div className="space-y-3">
+                        {/* Selected colors display */}
+                        <div className="flex flex-wrap gap-2 min-h-[32px] p-2 border rounded-md bg-gray-50">
+                          {editingProduct.colors && editingProduct.colors.length > 0 ? (
+                            editingProduct.colors.map((color, index) => (
+                              <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-black text-white text-xs rounded">
+                                {color}
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingProduct({
+                                    ...editingProduct,
+                                    colors: editingProduct.colors.filter(c => c !== color)
+                                  })}
+                                  className="ml-1 hover:text-gray-300"
+                                  data-testid={`button-remove-edit-color-${color.toLowerCase()}`}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-400 text-sm">No colors selected</span>
+                          )}
+                        </div>
+                        
+                        {/* Add common colors */}
+                        <Select onValueChange={(color) => {
+                          if (!editingProduct.colors.includes(color)) {
+                            setEditingProduct({
+                              ...editingProduct,
+                              colors: [...editingProduct.colors, color]
+                            });
+                          }
+                        }}>
+                          <SelectTrigger data-testid="select-edit-add-color">
+                            <SelectValue placeholder="Add common color" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue', 'Red', 'Green', 'Brown', 'Beige'].filter(color => 
+                              !editingProduct.colors.includes(color)
+                            ).map((color) => (
+                              <SelectItem key={color} value={color}>
+                                {color}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* Add custom color */}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Add custom color"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                const value = (e.target as HTMLInputElement).value.trim();
+                                if (value && !editingProduct.colors.includes(value)) {
+                                  setEditingProduct({
+                                    ...editingProduct,
+                                    colors: [...editingProduct.colors, value]
+                                  });
+                                  (e.target as HTMLInputElement).value = '';
+                                }
+                              }
+                            }}
+                            data-testid="input-edit-custom-color"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
+                              const value = input.value.trim();
+                              if (value && !editingProduct.colors.includes(value)) {
+                                setEditingProduct({
+                                  ...editingProduct,
+                                  colors: [...editingProduct.colors, value]
+                                });
+                                input.value = '';
+                              }
+                            }}
+                            data-testid="button-edit-add-custom-color"
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="edit-product-stock">Stock Quantity</Label>
