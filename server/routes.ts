@@ -617,7 +617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             productName: item.product.name,
             quantity: item.quantity,
             price: item.product.price,
-            imageUrl: item.product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+            imageUrl: (item.product.images?.[0]?.startsWith('http') ? item.product.images[0] : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'),
           })),
         });
       } catch (emailError) {
