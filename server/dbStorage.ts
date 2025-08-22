@@ -508,10 +508,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Cart operations
-  async getCartItems(sessionId: string): Promise<CartItemWithProduct[]> {
+  async getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]> {
+    let whereCondition;
+    
+    if (userId) {
+      // For authenticated users, query by userId
+      whereCondition = eq(cartItems.userId, userId);
+    } else if (sessionId) {
+      // For guest users, query by sessionId
+      whereCondition = eq(cartItems.sessionId, sessionId);
+    } else {
+      // Return empty array if neither sessionId nor userId provided
+      return [];
+    }
+
     const result = await db
       .select({
         id: cartItems.id,
+        userId: cartItems.userId,
         sessionId: cartItems.sessionId,
         productId: cartItems.productId,
         size: cartItems.size,
@@ -523,10 +537,11 @@ export class DatabaseStorage implements IStorage {
       })
       .from(cartItems)
       .leftJoin(products, eq(cartItems.productId, products.id))
-      .where(eq(cartItems.sessionId, sessionId));
+      .where(whereCondition);
 
     return result.map(row => ({
       id: row.id,
+      userId: row.userId,
       sessionId: row.sessionId,
       productId: row.productId,
       size: row.size,
@@ -563,8 +578,14 @@ export class DatabaseStorage implements IStorage {
     await db.delete(cartItems).where(eq(cartItems.id, id));
   }
 
-  async clearCart(sessionId: string): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
+  async clearCart(sessionId?: string, userId?: string): Promise<void> {
+    if (userId) {
+      // For authenticated users, clear by userId
+      await db.delete(cartItems).where(eq(cartItems.userId, userId));
+    } else if (sessionId) {
+      // For guest users, clear by sessionId
+      await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
+    }
   }
 
   // Order operations
