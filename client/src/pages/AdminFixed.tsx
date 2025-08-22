@@ -173,8 +173,8 @@ export default function Admin() {
   });
 
   const toggleProductStatusMutation = useMutation({
-    mutationFn: ({ productId, isActive }: { productId: string; isActive: boolean }) =>
-      apiRequest("PATCH", `/api/admin/products/${productId}`, { isActive }),
+    mutationFn: ({ productId, isActive, stockQuantity }: { productId: string; isActive: boolean; stockQuantity: number }) =>
+      apiRequest("PATCH", `/api/admin/products/${productId}`, { isActive, stockQuantity }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
@@ -190,6 +190,42 @@ export default function Admin() {
       });
     },
   });
+
+  // Helper function to determine product status
+  const getProductStatus = (product: any) => {
+    if (!product.isActive) return 'Inactive';
+    if (product.stockQuantity === 0) return 'Out of Stock';
+    return 'Active';
+  };
+
+  // Helper function to get next status in cycle: Active → Out of Stock → Inactive → Active
+  const getNextStatus = (product: any) => {
+    const currentStatus = getProductStatus(product);
+    switch (currentStatus) {
+      case 'Active':
+        return { isActive: true, stockQuantity: 0 }; // Out of Stock
+      case 'Out of Stock':
+        return { isActive: false, stockQuantity: 0 }; // Inactive
+      case 'Inactive':
+        return { isActive: true, stockQuantity: Math.max(1, product.stockQuantity) }; // Active
+      default:
+        return { isActive: true, stockQuantity: Math.max(1, product.stockQuantity) };
+    }
+  };
+
+  // Helper function to get badge variant for product status
+  const getProductStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'Active':
+        return 'default';
+      case 'Out of Stock':
+        return 'destructive';
+      case 'Inactive':
+        return 'secondary';
+      default:
+        return 'secondary';
+    }
+  };
 
   // All useEffect calls after state hooks
   useEffect(() => {
@@ -228,7 +264,7 @@ export default function Admin() {
   const addImageUrl = () => {
     const url = newImageUrl.trim();
     if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      setProductForm(prev => ({
+      setProductForm((prev: any) => ({
         ...prev,
         images: [...prev.images, url]
       }));
@@ -247,16 +283,16 @@ export default function Admin() {
   };
 
   const removeImage = (indexToRemove: number) => {
-    setProductForm(prev => ({
+    setProductForm((prev: any) => ({
       ...prev,
-      images: prev.images.filter((_, index) => index !== indexToRemove)
+      images: prev.images.filter((_: any, index: number) => index !== indexToRemove)
     }));
   };
 
   const addEditImageUrl = () => {
     const url = editNewImageUrl.trim();
     if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      setEditingProduct(prev => ({
+      setEditingProduct((prev: any) => ({
         ...prev,
         images: [...prev.images, url]
       }));
@@ -275,9 +311,9 @@ export default function Admin() {
   };
 
   const removeEditImage = (indexToRemove: number) => {
-    setEditingProduct(prev => ({
+    setEditingProduct((prev: any) => ({
       ...prev,
-      images: prev.images.filter((_, index) => index !== indexToRemove)
+      images: prev.images.filter((_: any, index: number) => index !== indexToRemove)
     }));
   };
 
@@ -902,16 +938,20 @@ export default function Admin() {
                       </TableCell>
                       <TableCell>
                         <button
-                          onClick={() => toggleProductStatusMutation.mutate({ 
-                            productId: product.id, 
-                            isActive: !product.isActive 
-                          })}
+                          onClick={() => {
+                            const nextStatus = getNextStatus(product);
+                            toggleProductStatusMutation.mutate({ 
+                              productId: product.id, 
+                              isActive: nextStatus.isActive,
+                              stockQuantity: nextStatus.stockQuantity
+                            });
+                          }}
                           disabled={toggleProductStatusMutation.isPending}
                           className="cursor-pointer transition-opacity hover:opacity-80"
                           data-testid={`button-toggle-status-${product.id}`}
                         >
-                          <Badge variant={product.isActive ? "default" : "secondary"} data-testid={`badge-active-${product.id}`}>
-                            {product.isActive ? 'Active' : 'Inactive'}
+                          <Badge variant={getProductStatusBadgeVariant(getProductStatus(product))} data-testid={`badge-status-${product.id}`}>
+                            {getProductStatus(product)}
                           </Badge>
                         </button>
                       </TableCell>
