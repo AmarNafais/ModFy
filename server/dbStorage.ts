@@ -507,14 +507,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<boolean> {
     try {
+      console.log(`Starting deletion of product: ${id}`);
+      
       // Always delete completely - remove all foreign key dependencies first
-      await db.delete(cartItems).where(eq(cartItems.productId, id));
-      await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
-      await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
-      await db.delete(orderItems).where(eq(orderItems.productId, id));
+      const cartResult = await db.delete(cartItems).where(eq(cartItems.productId, id));
+      console.log(`Deleted ${cartResult.rowCount} cart items`);
+      
+      const wishlistResult = await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
+      console.log(`Deleted ${wishlistResult.rowCount} wishlist items`);
+      
+      const collectionResult = await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
+      console.log(`Deleted ${collectionResult.rowCount} collection products`);
+      
+      const orderItemsResult = await db.delete(orderItems).where(eq(orderItems.productId, id));
+      console.log(`Deleted ${orderItemsResult.rowCount} order items`);
       
       // Now delete the product itself
       const result = await db.delete(products).where(eq(products.id, id));
+      console.log(`Product deletion result: ${result.rowCount} rows affected`);
+      
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting product:', error);
