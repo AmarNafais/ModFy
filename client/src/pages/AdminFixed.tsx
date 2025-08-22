@@ -378,7 +378,7 @@ export default function Admin() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">LKR {totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Paid orders</p>
           </CardContent>
         </Card>
@@ -450,7 +450,7 @@ export default function Admin() {
                           {order.paymentStatus}
                         </Badge>
                       </TableCell>
-                      <TableCell data-testid={`text-amount-${order.id}`}>${order.totalAmount}</TableCell>
+                      <TableCell data-testid={`text-amount-${order.id}`}>LKR {order.totalAmount}</TableCell>
                       <TableCell data-testid={`text-date-${order.id}`}>
                         {new Date(order.createdAt).toLocaleDateString()}
                       </TableCell>
@@ -512,7 +512,7 @@ export default function Admin() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="product-price">Price ($)</Label>
+                        <Label htmlFor="product-price">Price (LKR)</Label>
                         <Input
                           id="product-price"
                           type="number"
@@ -871,7 +871,7 @@ export default function Admin() {
                         {product.category?.name || 'N/A'}
                       </TableCell>
                       <TableCell data-testid={`text-product-price-${product.id}`}>
-                        ${product.price}
+                        LKR {product.price}
                       </TableCell>
                       <TableCell data-testid={`text-product-stock-${product.id}`}>
                         {product.stockQuantity}
@@ -936,7 +936,7 @@ export default function Admin() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="edit-product-price">Price ($)</Label>
+                      <Label htmlFor="edit-product-price">Price (LKR)</Label>
                       <Input
                         id="edit-product-price"
                         type="number"

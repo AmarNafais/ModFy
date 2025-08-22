@@ -164,7 +164,7 @@ export default function ProductDetail() {
                   </h1>
                   <div className="flex items-center gap-4 mb-2">
                     <p className="text-2xl font-medium text-luxury-black" data-testid="product-price">
-                      ${parseFloat(product.price).toFixed(2)}
+                      LKR {parseFloat(product.price).toFixed(2)}
                     </p>
                     <div className="text-sm text-green-600 font-medium">
                       {product.stockQuantity && product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}
@@ -302,7 +302,7 @@ export default function ProductDetail() {
               
               {/* Quick info */}
               <div className="text-xs text-gray-500 space-y-1">
-                <p>• Free shipping on orders over $75</p>
+                <p>• Free shipping on orders over LKR 7,500</p>
                 <p>• 30-day returns & exchanges</p>
                 <p>• Premium quality guaranteed</p>
               </div>

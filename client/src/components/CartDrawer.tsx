@@ -57,7 +57,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           {/* Free Shipping Banner */}
           <div className="p-4 bg-luxury-gray text-center">
             <p className="text-sm font-light text-gray-600">
-              Spend ${Math.max(0, 75 - totalAmount).toFixed(2)} USD more and get free shipping!
+              Spend LKR {Math.max(0, 7500 - totalAmount).toFixed(2)} more and get free shipping!
             </p>
           </div>
 
@@ -99,7 +99,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         </button>
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-sm font-medium">${item.product.price}</span>
+                        <span className="text-sm font-medium">LKR {item.product.price}</span>
                         <div className="flex items-center space-x-2">
                           <button 
                             className="w-6 h-6 border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100"

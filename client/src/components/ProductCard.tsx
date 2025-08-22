@@ -24,7 +24,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.material?.toUpperCase()}
           </p>
           <span className="text-sm font-medium" data-testid={`product-price-${product.id}`}>
-            ${product.price}
+            LKR {product.price}
           </span>
         </div>
       </a>

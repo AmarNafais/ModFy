@@ -137,7 +137,7 @@ export default function Wishlist() {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-lg font-medium" data-testid={`product-price-${item.productId}`}>
-                      ${item.product.price}
+                      LKR {item.product.price}
                     </span>
                   </div>
                 </div>
