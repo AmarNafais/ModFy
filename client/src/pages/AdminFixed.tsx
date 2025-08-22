@@ -172,6 +172,25 @@ export default function Admin() {
     },
   });
 
+  const toggleProductStatusMutation = useMutation({
+    mutationFn: ({ productId, isActive }: { productId: string; isActive: boolean }) =>
+      apiRequest("PATCH", `/api/admin/products/${productId}`, { isActive }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Status Updated",
+        description: "Product status updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update product status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // All useEffect calls after state hooks
   useEffect(() => {
     if (!isLoading && (!user || (user as any).role !== 'admin')) {
@@ -882,9 +901,19 @@ export default function Admin() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.isActive ? "default" : "secondary"} data-testid={`badge-active-${product.id}`}>
-                          {product.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
+                        <button
+                          onClick={() => toggleProductStatusMutation.mutate({ 
+                            productId: product.id, 
+                            isActive: !product.isActive 
+                          })}
+                          disabled={toggleProductStatusMutation.isPending}
+                          className="cursor-pointer transition-opacity hover:opacity-80"
+                          data-testid={`button-toggle-status-${product.id}`}
+                        >
+                          <Badge variant={product.isActive ? "default" : "secondary"} data-testid={`badge-active-${product.id}`}>
+                            {product.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </button>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
