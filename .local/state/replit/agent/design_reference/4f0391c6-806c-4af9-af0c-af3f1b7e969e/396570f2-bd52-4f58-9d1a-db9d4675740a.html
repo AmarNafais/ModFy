@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ModFy - Premium Men's Innerwear</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        'luxury-black': '#000000',
+                        'luxury-white': '#FFFFFF',
+                        'luxury-gray': '#F5F5F5',
+                        'luxury-muted': '#E8E8E8',
+                        'luxury-bg': '#FAFAFA'
+                    },
+                    spacing: {
+                        '18': '4.5rem',
+                        '88': '22rem',
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="font-inter bg-luxury-bg text-luxury-black antialiased">
+
+    <!-- @COMPONENT: Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-luxury-white/95 backdrop-blur-sm border-b border-luxury-muted">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Left Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#collections" class="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">COLLECTIONS</a>
+                    <a href="#shop" class="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">SHOP</a>
+                    <a href="#about" class="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">ABOUT</a>
+                    <a href="#journal" class="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">JOURNAL</a>
+                </div>
+
+                <!-- Brand Logo -->
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-light tracking-wider">MODFY</h1>
+                </div>
+
+                <!-- Right Navigation -->
+                <div class="flex items-center space-x-6">
+                    <button class="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button id="loginBtn" class="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+                        <i class="fas fa-user"></i>
+                    </button>
+                    <button id="cartBtn" class="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+                        <i class="fas fa-shopping-bag"></i>
+                    </button>
+                    <button class="md:hidden">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: Navigation -->
+
+    <!-- @COMPONENT: Hero Section -->
+    <section class="pt-16 min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div class="order-2 lg:order-1">
+                    <div class="max-w-lg">
+                        <h2 class="text-4xl lg:text-5xl font-light tracking-wide mb-6 leading-tight">
+                            Redefining<br />
+                            Men's Comfort
+                        </h2>
+                        <p class="text-gray-600 font-light text-lg leading-relaxed mb-8">
+                            Premium innerwear crafted with precision and designed for the modern man who values both comfort and sophistication.
+                        </p>
+                        <button class="bg-luxury-black text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors">
+                            EXPLORE COLLECTION
+                        </button>
+                    </div>
+                </div>
+                <div class="order-1 lg:order-2">
+                    <!-- Professional male model in minimalist setting -->
+                    <img src="https://pixabay.com/get/g451092a2493402684674fb4ed71856cbc04f4bab8a5806611f1ec4121b687d6721ef9449902cae3a790a7cc5c4e4288c65283f3310ceefba2ecee44a55758c07_1280.jpg" 
+                         alt="Male model showcasing premium men's innerwear" 
+                         class="w-full h-96 lg:h-[600px] object-cover" />
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Hero Section -->
+
+    <!-- @COMPONENT: Featured Collections Grid -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                
+                <!-- Collection 1 - Large Card -->
+                <div class="md:col-span-2 lg:col-span-1 lg:row-span-2">
+                    <!-- Male model in contemporary setting -->
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=800" 
+                         alt="Premium men's basics collection" 
+                         class="w-full h-96 lg:h-full object-cover mb-4" />
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium tracking-wide mb-2">ESSENTIALS 2024</h3>
+                        <p class="text-xs text-gray-600 font-light tracking-wide">PREMIUM BASICS</p>
+                    </div>
+                </div>
+
+                <!-- Collection 2 -->
+                <div>
+                    <!-- Professional male model portrait -->
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500" 
+                         alt="Luxury men's innerwear collection" 
+                         class="w-full h-80 object-cover mb-4" />
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium tracking-wide mb-2">LUXURY SERIES</h3>
+                        <p class="text-xs text-gray-600 font-light tracking-wide">PREMIUM COMFORT</p>
+                    </div>
+                </div>
+
+                <!-- Collection 3 -->
+                <div>
+                    <!-- Male model in casual setting -->
+                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500" 
+                         alt="Athletic men's underwear collection" 
+                         class="w-full h-80 object-cover mb-4" />
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium tracking-wide mb-2">PERFORMANCE</h3>
+                        <p class="text-xs text-gray-600 font-light tracking-wide">ACTIVE COMFORT</p>
+                    </div>
+                </div>
+
+                <!-- Editorial Section -->
+                <div class="md:col-span-2 lg:col-span-2 bg-luxury-gray p-8 lg:p-12 flex items-center">
+                    <div>
+                        <h3 class="text-2xl lg:text-3xl font-light tracking-wide mb-4">SUMMER 2024</h3>
+                        <p class="text-gray-600 font-light leading-relaxed mb-6">
+                            Our latest collection combines innovative fabric technology with timeless design principles, 
+                            creating innerwear that moves with you throughout your day.
+                        </p>
+                        <button class="text-sm font-medium tracking-wide underline hover:text-gray-600 transition-colors">
+                            DISCOVER MORE
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Featured Collections Grid -->
+
+    <!-- @COMPONENT: Product Showcase -->
+    <section class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-light tracking-wide mb-4">THE SIGNATURE EDIT</h2>
+                <p class="text-gray-600 font-light max-w-2xl mx-auto">
+                    Carefully curated pieces that represent the pinnacle of comfort, quality, and contemporary design.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- @MAP: featured products -->
+                <!-- Product 1 -->
+                <div class="group cursor-pointer" data-mock="true">
+                    <!-- Premium boxer briefs product shot -->
+                    <img src="https://pixabay.com/get/g5ce4e8034879fdc77b690d8aff7e357024e23b24a5953c1baa5499656c7f0ce977d2aca82efb00e0624bba45b9019220e19baa83536f64eaca3b413642396df6_1280.jpg" 
+                         alt="Premium cotton boxer briefs in charcoal" 
+                         class="w-full h-80 object-cover mb-4 group-hover:opacity-95 transition-opacity" />
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium tracking-wide mb-1" data-bind="product.name">SIGNATURE BOXER BRIEF</h3>
+                        <p class="text-xs text-gray-600 font-light mb-2" data-bind="product.material">PREMIUM COTTON</p>
+                        <span class="text-sm font-medium" data-bind="product.price">$48</span>
+                    </div>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="group cursor-pointer" data-mock="true">
+                    <!-- Luxury briefs product photography -->
+                    <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500" 
+                         alt="Luxury modal briefs in navy" 
+                         class="w-full h-80 object-cover mb-4 group-hover:opacity-95 transition-opacity" />
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium tracking-wide mb-1" data-bind="product.name">MODAL BRIEF</h3>
+                        <p class="text-xs text-gray-600 font-light mb-2" data-bind="product.material">MODAL BLEND</p>
+                        <span class="text-sm font-medium" data-bind="product.price">$42</span>
+                    </div>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="group cursor-pointer" data-mock="true">
+                    <!-- Athletic underwear product shot -->
+                    <img src="https://pixabay.com/get/g66fa684e293109f2108129a62f818369b55b3e5ab2880e0e8712806bee4a4967d0350e5210a62fc580ee724906708718385d4b0fd1317fcf82b4898feb29c4ef_1280.jpg" 
+                         alt="Performance boxer briefs for active wear" 
+                         class="w-full h-80 object-cover mb-4 group-hover:opacity-95 transition-opacity" />
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium tracking-wide mb-1" data-bind="product.name">PERFORMANCE BOXER</h3>
+                        <p class="text-xs text-gray-600 font-light mb-2" data-bind="product.material">MOISTURE-WICKING</p>
+                        <span class="text-sm font-medium" data-bind="product.price">$55</span>
+                    </div>
+                </div>
+
+                <!-- Product 4 -->
+                <div class="group cursor-pointer" data-mock="true">
+                    <!-- Luxury trunk underwear -->
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500" 
+                         alt="Designer trunks in black premium fabric" 
+                         class="w-full h-80 object-cover mb-4 group-hover:opacity-95 transition-opacity" />
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium tracking-wide mb-1" data-bind="product.name">DESIGNER TRUNK</h3>
+                        <p class="text-xs text-gray-600 font-light mb-2" data-bind="product.material">BAMBOO FIBER</p>
+                        <span class="text-sm font-medium" data-bind="product.price">$52</span>
+                    </div>
+                </div>
+                <!-- @END_MAP -->
+
+            </div>
+
+            <div class="text-center mt-12">
+                <button class="bg-luxury-black text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors">
+                    VIEW ALL PRODUCTS
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Product Showcase -->
+
+    <!-- @COMPONENT: Brand Story Section -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <!-- Minimalist interior design of luxury retail space -->
+                    <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=700" 
+                         alt="ModFy minimalist retail interior with clean design" 
+                         class="w-full h-96 lg:h-[500px] object-cover" />
+                </div>
+                <div class="max-w-lg">
+                    <h2 class="text-3xl font-light tracking-wide mb-6">CRAFTED FOR THE MODERN MAN</h2>
+                    <p class="text-gray-600 font-light leading-relaxed mb-6">
+                        At ModFy, we believe that exceptional comfort begins with exceptional materials. Each piece 
+                        in our collection is thoughtfully designed and meticulously crafted to meet the demands of 
+                        contemporary life.
+                    </p>
+                    <p class="text-gray-600 font-light leading-relaxed mb-8">
+                        From our signature cotton blends to innovative performance fabrics, we're committed to 
+                        creating innerwear that adapts to your lifestyle while maintaining the highest standards 
+                        of quality and comfort.
+                    </p>
+                    <button class="text-sm font-medium tracking-wide underline hover:text-gray-600 transition-colors">
+                        LEARN OUR STORY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Brand Story Section -->
+
+    <!-- @COMPONENT: Newsletter Section -->
+    <section class="py-16 bg-luxury-gray">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-2xl font-light tracking-wide mb-4">STAY CONNECTED</h2>
+            <p class="text-gray-600 font-light mb-8 max-w-2xl mx-auto">
+                Be the first to discover new collections, exclusive offers, and insights into the world of premium men's innerwear.
+            </p>
+            <div class="max-w-md mx-auto flex">
+                <input type="email" placeholder="Enter your email address" 
+                       class="flex-1 px-4 py-3 text-sm border border-luxury-muted focus:outline-none focus:border-luxury-black transition-colors"
+                       data-implementation="Email subscription form validation" />
+                <button class="bg-luxury-black text-white px-6 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors">
+                    SUBSCRIBE
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: Newsletter Section -->
+
+    <!-- @COMPONENT: Footer -->
+    <footer class="bg-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                
+                <!-- Company Info -->
+                <div>
+                    <h3 class="text-sm font-medium tracking-wide mb-4">MODFY</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">About</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Careers</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Press</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Stores</a></li>
+                    </ul>
+                </div>
+
+                <!-- Shop -->
+                <div>
+                    <h3 class="text-sm font-medium tracking-wide mb-4">SHOP</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">All Products</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Boxer Briefs</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Briefs</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Trunks</a></li>
+                    </ul>
+                </div>
+
+                <!-- Help -->
+                <div>
+                    <h3 class="text-sm font-medium tracking-wide mb-4">HELP</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Size Guide</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Shipping</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Returns</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Newsletter -->
+                <div>
+                    <h3 class="text-sm font-medium tracking-wide mb-4">NEWSLETTER</h3>
+                    <p class="text-sm text-gray-600 font-light mb-4">Subscribe to receive updates, access to exclusive deals, and more.</p>
+                    <button class="bg-luxury-black text-white px-6 py-2 text-xs font-medium tracking-wide hover:bg-gray-800 transition-colors">
+                        SUBSCRIBE
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Bottom Footer -->
+            <div class="border-t border-luxury-muted pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-xs text-gray-600 font-light mb-4 md:mb-0">
+                        MODFY MEN'S FASHION HOUSE LTD
+                    </p>
+                    <div class="flex items-center space-x-6">
+                        <div class="flex space-x-4">
+                            <i class="fab fa-instagram text-gray-600 hover:text-luxury-black cursor-pointer transition-colors"></i>
+                            <i class="fab fa-twitter text-gray-600 hover:text-luxury-black cursor-pointer transition-colors"></i>
+                            <i class="fab fa-facebook text-gray-600 hover:text-luxury-black cursor-pointer transition-colors"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <p class="text-xs text-gray-600 font-light">© 2024 MODFY</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <!-- @COMPONENT: Sliding Cart Drawer -->
+    <div id="cartDrawer" class="fixed inset-0 z-50 hidden">
+        <!-- Background overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+        
+        <!-- Cart Panel -->
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="flex flex-col h-full">
+                
+                <!-- Cart Header -->
+                <div class="flex items-center justify-between p-6 border-b border-luxury-muted">
+                    <h2 class="text-lg font-medium tracking-wide">CART</h2>
+                    <button id="closeCart" class="text-gray-500 hover:text-luxury-black transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Free Shipping Banner -->
+                <div class="p-4 bg-luxury-gray text-center">
+                    <p class="text-sm font-light text-gray-600">Spend $75 USD more and get free shipping!</p>
+                </div>
+
+                <!-- Cart Content -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <!-- Empty State -->
+                    <div id="emptyCart" class="text-center py-16">
+                        <h3 class="text-lg font-medium tracking-wide mb-2">YOUR CART IS EMPTY</h3>
+                        <p class="text-sm text-gray-600 font-light">Continue shopping to find the perfect pieces for you.</p>
+                    </div>
+
+                    <!-- Cart Items (hidden by default) -->
+                    <div id="cartItems" class="space-y-6 hidden">
+                        <!-- Sample cart item structure -->
+                        <div class="flex space-x-4" data-mock="true">
+                            <img src="https://pixabay.com/get/g63b1f3af417d522b0de7ccca2a42f315a81b9ea64a8fcf35fdea6866c3e7017d2adf3d26d6e937c05d53740c0868d83694b04021eb78c519c347a741a80b5caa_1280.jpg" 
+                                 alt="Product in cart" class="w-16 h-20 object-cover" />
+                            <div class="flex-1">
+                                <h4 class="text-sm font-medium">Signature Boxer Brief</h4>
+                                <p class="text-xs text-gray-600">Size: L • Color: Black</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="text-sm font-medium">$48</span>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="w-6 h-6 border border-gray-300 flex items-center justify-center text-xs">-</button>
+                                        <span class="text-sm">1</span>
+                                        <button class="w-6 h-6 border border-gray-300 flex items-center justify-center text-xs">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Footer -->
+                <div class="border-t border-luxury-muted p-6 hidden" id="cartFooter">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-lg font-medium">TOTAL</span>
+                        <span class="text-lg font-medium">$48</span>
+                    </div>
+                    <button class="w-full bg-luxury-black text-white py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors">
+                        CHECKOUT
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: Sliding Cart Drawer -->
+
+    <!-- @COMPONENT: Login Modal -->
+    <div id="loginModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <!-- Background overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-white max-w-md w-full mx-4 p-8">
+            <div class="text-center mb-8">
+                <h2 class="text-xl font-light tracking-wider mb-2">MODFY</h2>
+                <h3 class="text-lg font-medium mb-2">Log in</h3>
+                <p class="text-sm text-gray-600 font-light">Enter your email and we'll send you a login code</p>
+            </div>
+
+            <form class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Email</label>
+                    <input type="email" 
+                           class="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-luxury-black transition-colors"
+                           data-implementation="Email validation and login code sending" />
+                </div>
+                <button type="submit" 
+                        class="w-full bg-luxury-black text-white py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors">
+                    Continue
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <a href="#" class="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Privacy</a>
+            </div>
+
+            <!-- Close button -->
+            <button id="closeLogin" class="absolute top-4 right-4 text-gray-500 hover:text-luxury-black transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: Login Modal -->
+
+    <script>
+        (function() {
+            // Cart functionality
+            const cartBtn = document.getElementById('cartBtn');
+            const cartDrawer = document.getElementById('cartDrawer');
+            const closeCart = document.getElementById('closeCart');
+            const cartPanel = cartDrawer.querySelector('.absolute.right-0');
+
+            function openCart() {
+                cartDrawer.classList.remove('hidden');
+                setTimeout(() => {
+                    cartPanel.classList.remove('translate-x-full');
+                }, 10);
+            }
+
+            function closeCartDrawer() {
+                cartPanel.classList.add('translate-x-full');
+                setTimeout(() => {
+                    cartDrawer.classList.add('hidden');
+                }, 300);
+            }
+
+            cartBtn.addEventListener('click', openCart);
+            closeCart.addEventListener('click', closeCartDrawer);
+
+            // Close cart when clicking overlay
+            cartDrawer.addEventListener('click', (e) => {
+                if (e.target === cartDrawer) {
+                    closeCartDrawer();
+                }
+            });
+
+            // Login modal functionality
+            const loginBtn = document.getElementById('loginBtn');
+            const loginModal = document.getElementById('loginModal');
+            const closeLogin = document.getElementById('closeLogin');
+
+            function openLogin() {
+                loginModal.classList.remove('hidden');
+                loginModal.classList.add('flex');
+            }
+
+            function closeLoginModal() {
+                loginModal.classList.add('hidden');
+                loginModal.classList.remove('flex');
+            }
+
+            loginBtn.addEventListener('click', openLogin);
+            closeLogin.addEventListener('click', closeLoginModal);
+
+            // Close login modal when clicking overlay
+            loginModal.addEventListener('click', (e) => {
+                if (e.target === loginModal) {
+                    closeLoginModal();
+                }
+            });
+
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // TODO: Implement product filtering, cart state management, user authentication
+            // TODO: Add product detail modal/page navigation
+            // TODO: Implement search functionality
+            // TODO: Add form validation and submission handling
+            // TODO: Integrate with payment processing and order management systems
+        })();
+    </script>
+
+</body>
+</html>

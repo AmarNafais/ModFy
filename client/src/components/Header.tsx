@@ -24,7 +24,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
   const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isActive = (path: string) => location === path;
+  const is_active = (path: string) => location === path;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-luxury-white/95 backdrop-blur-sm border-b border-luxury-muted">
@@ -32,17 +32,17 @@ export default function Header({ onCartOpen }: HeaderProps) {
         <div className="flex items-center justify-between h-16">
           {/* Left Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/collections" data-testid="link-collections" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/collections') ? 'text-gray-900' : ''}`}>
+            <Link href="/collections" data-testid="link-collections" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/collections') ? 'text-gray-900' : ''}`}>
               COLLECTIONS
             </Link>
-            <Link href="/shop" data-testid="link-shop" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/shop') ? 'text-gray-900' : ''}`}>
+            <Link href="/shop" data-testid="link-shop" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/shop') ? 'text-gray-900' : ''}`}>
               SHOP
             </Link>
-            <Link href="/about" data-testid="link-about" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/about') ? 'text-gray-900' : ''}`}>
+            <Link href="/about" data-testid="link-about" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/about') ? 'text-gray-900' : ''}`}>
               ABOUT
             </Link>
             {(user as any)?.role === 'admin' && (
-              <Link href="/admin" data-testid="link-admin" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${isActive('/admin') ? 'text-gray-900' : ''}`}>
+              <Link href="/admin" data-testid="link-admin" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/admin') ? 'text-gray-900' : ''}`}>
                 ADMIN
               </Link>
             )}
@@ -60,9 +60,9 @@ export default function Header({ onCartOpen }: HeaderProps) {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors p-0 h-auto"
                     data-testid="button-user-menu"
                   >
@@ -84,7 +84,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={logout}
                     disabled={isLoggingOut}
                     className="text-red-600 focus:text-red-600"
@@ -103,7 +103,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
               </Link>
             )}
             <Link href="/wishlist">
-              <button 
+              <button
                 className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
                 data-testid="button-wishlist"
               >
@@ -115,7 +115,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
                 )}
               </button>
             </Link>
-            <button 
+            <button
               className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
               onClick={onCartOpen}
               data-testid="button-cart"
@@ -127,7 +127,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
                 </span>
               )}
             </button>
-            <button 
+            <button
               className="md:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               data-testid="button-mobile-menu"

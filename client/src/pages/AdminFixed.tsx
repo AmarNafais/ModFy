@@ -21,12 +21,12 @@ export default function Admin() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  
+
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
@@ -36,8 +36,8 @@ export default function Admin() {
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Black', 'White'],
     images: [],
-    stockQuantity: '50',
-    isFeatured: false,
+    stock_quantity: '50',
+    is_featured: false,
   });
 
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -110,8 +110,8 @@ export default function Admin() {
         sizes: ['S', 'M', 'L', 'XL'],
         colors: ['Black', 'White'],
         images: [],
-        stockQuantity: '50',
-        isFeatured: false,
+        stock_quantity: '50',
+        is_featured: false,
       });
       setNewImageUrl('');
       toast({
@@ -173,8 +173,8 @@ export default function Admin() {
   });
 
   const toggleProductStatusMutation = useMutation({
-    mutationFn: ({ productId, isActive, stockQuantity }: { productId: string; isActive: boolean; stockQuantity: number }) =>
-      apiRequest("PATCH", `/api/admin/products/${productId}`, { isActive, stockQuantity }),
+    mutationFn: ({ productId, is_active, stock_quantity }: { productId: string; is_active: boolean; stock_quantity: number }) =>
+      apiRequest("PATCH", `/api/admin/products/${productId}`, { is_active, stock_quantity }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
@@ -193,8 +193,8 @@ export default function Admin() {
 
   // Helper function to determine product status
   const getProductStatus = (product: any) => {
-    if (!product.isActive) return 'Inactive';
-    if (product.stockQuantity === 0) return 'Out of Stock';
+    if (!product.is_active) return 'Inactive';
+    if (product.stock_quantity === 0) return 'Out of Stock';
     return 'Active';
   };
 
@@ -203,13 +203,13 @@ export default function Admin() {
     const currentStatus = getProductStatus(product);
     switch (currentStatus) {
       case 'Active':
-        return { isActive: true, stockQuantity: 0 }; // Out of Stock
+        return { is_active: true, stock_quantity: 0 }; // Out of Stock
       case 'Out of Stock':
-        return { isActive: false, stockQuantity: 0 }; // Inactive
+        return { is_active: false, stock_quantity: 0 }; // Inactive
       case 'Inactive':
-        return { isActive: true, stockQuantity: Math.max(1, product.stockQuantity) }; // Active
+        return { is_active: true, stock_quantity: Math.max(1, product.stock_quantity) }; // Active
       default:
-        return { isActive: true, stockQuantity: Math.max(1, product.stockQuantity) };
+        return { is_active: true, stock_quantity: Math.max(1, product.stock_quantity) };
     }
   };
 
@@ -321,7 +321,8 @@ export default function Admin() {
     setEditingProduct({
       ...product,
       price: product.price.toString(),
-      stockQuantity: product.stockQuantity.toString(),
+      // stock_quantity: product.stock_quantity.toString(),
+      stock_quantity: product.stock_quantity,
       sizes: product.sizes || [],
       colors: product.colors || [],
     });
@@ -625,8 +626,8 @@ export default function Admin() {
                         <Input
                           id="product-stock"
                           type="number"
-                          value={productForm.stockQuantity}
-                          onChange={(e) => setProductForm({ ...productForm, stockQuantity: e.target.value })}
+                          value={productForm.stock_quantity}
+                          onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
                           placeholder="50"
                           data-testid="input-product-stock"
                         />
@@ -635,14 +636,14 @@ export default function Admin() {
                         <input
                           type="checkbox"
                           id="product-featured"
-                          checked={productForm.isFeatured}
-                          onChange={(e) => setProductForm({ ...productForm, isFeatured: e.target.checked })}
+                          checked={productForm.is_featured}
+                          onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })}
                           data-testid="checkbox-product-featured"
                         />
                         <Label htmlFor="product-featured">Featured Product</Label>
                       </div>
                     </div>
-                    
+
                     {/* Size and Color Configuration */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -671,7 +672,7 @@ export default function Admin() {
                               <span className="text-gray-400 text-sm">No sizes selected</span>
                             )}
                           </div>
-                          
+
                           {/* Add common sizes */}
                           <Select onValueChange={(size) => {
                             if (!productForm.sizes.includes(size)) {
@@ -685,7 +686,7 @@ export default function Admin() {
                               <SelectValue placeholder="Add common size" />
                             </SelectTrigger>
                             <SelectContent>
-                              {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size => 
+                              {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size =>
                                 !productForm.sizes.includes(size)
                               ).map((size) => (
                                 <SelectItem key={size} value={size}>
@@ -694,7 +695,7 @@ export default function Admin() {
                               ))}
                             </SelectContent>
                           </Select>
-                          
+
                           {/* Add custom size */}
                           <div className="flex gap-2">
                             <Input
@@ -735,7 +736,7 @@ export default function Admin() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div>
                         <Label>Available Colors</Label>
                         <div className="space-y-3">
@@ -762,7 +763,7 @@ export default function Admin() {
                               <span className="text-gray-400 text-sm">No colors selected</span>
                             )}
                           </div>
-                          
+
                           {/* Add common colors */}
                           <Select onValueChange={(color) => {
                             if (!productForm.colors.includes(color)) {
@@ -776,7 +777,7 @@ export default function Admin() {
                               <SelectValue placeholder="Add common color" />
                             </SelectTrigger>
                             <SelectContent>
-                              {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue', 'Red', 'Green', 'Brown', 'Beige'].filter(color => 
+                              {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue', 'Red', 'Green', 'Brown', 'Beige'].filter(color =>
                                 !productForm.colors.includes(color)
                               ).map((color) => (
                                 <SelectItem key={color} value={color}>
@@ -785,7 +786,7 @@ export default function Admin() {
                               ))}
                             </SelectContent>
                           </Select>
-                          
+
                           {/* Add custom color */}
                           <div className="flex gap-2">
                             <Input
@@ -827,7 +828,7 @@ export default function Admin() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Product Images Section */}
                     <div>
                       <Label>Product Images</Label>
@@ -852,7 +853,7 @@ export default function Admin() {
                             </div>
                           ))}
                         </div>
-                        
+
                         {/* Add Image URL */}
                         <div className="flex gap-2">
                           <Input
@@ -880,7 +881,7 @@ export default function Admin() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 pt-4">
                       <Button
                         type="button"
@@ -929,21 +930,21 @@ export default function Admin() {
                         LKR {product.price}
                       </TableCell>
                       <TableCell data-testid={`text-product-stock-${product.id}`}>
-                        {product.stockQuantity}
+                        {product.stock_quantity}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.isFeatured ? "default" : "secondary"} data-testid={`badge-featured-${product.id}`}>
-                          {product.isFeatured ? 'Featured' : 'Regular'}
+                        <Badge variant={product.is_featured ? "default" : "secondary"} data-testid={`badge-featured-${product.id}`}>
+                          {product.is_featured ? 'Featured' : 'Regular'}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <button
                           onClick={() => {
                             const nextStatus = getNextStatus(product);
-                            toggleProductStatusMutation.mutate({ 
-                              productId: product.id, 
-                              isActive: nextStatus.isActive,
-                              stockQuantity: nextStatus.stockQuantity
+                            toggleProductStatusMutation.mutate({
+                              productId: product.id,
+                              is_active: nextStatus.is_active,
+                              stock_quantity: nextStatus.stock_quantity
                             });
                           }}
                           disabled={toggleProductStatusMutation.isPending}
@@ -1057,7 +1058,7 @@ export default function Admin() {
                       />
                     </div>
                   </div>
-                  
+
                   {/* Sizes and Colors Section */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -1086,7 +1087,7 @@ export default function Admin() {
                             <span className="text-gray-400 text-sm">No sizes selected</span>
                           )}
                         </div>
-                        
+
                         {/* Add common sizes */}
                         <Select onValueChange={(size) => {
                           if (!editingProduct.sizes.includes(size)) {
@@ -1100,7 +1101,7 @@ export default function Admin() {
                             <SelectValue placeholder="Add common size" />
                           </SelectTrigger>
                           <SelectContent>
-                            {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size => 
+                            {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size =>
                               !editingProduct.sizes.includes(size)
                             ).map((size) => (
                               <SelectItem key={size} value={size}>
@@ -1109,7 +1110,7 @@ export default function Admin() {
                             ))}
                           </SelectContent>
                         </Select>
-                        
+
                         {/* Add custom size */}
                         <div className="flex gap-2">
                           <Input
@@ -1150,7 +1151,7 @@ export default function Admin() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <Label>Available Colors</Label>
                       <div className="space-y-3">
@@ -1177,7 +1178,7 @@ export default function Admin() {
                             <span className="text-gray-400 text-sm">No colors selected</span>
                           )}
                         </div>
-                        
+
                         {/* Add common colors */}
                         <Select onValueChange={(color) => {
                           if (!editingProduct.colors.includes(color)) {
@@ -1191,7 +1192,7 @@ export default function Admin() {
                             <SelectValue placeholder="Add common color" />
                           </SelectTrigger>
                           <SelectContent>
-                            {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue', 'Red', 'Green', 'Brown', 'Beige'].filter(color => 
+                            {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue', 'Red', 'Green', 'Brown', 'Beige'].filter(color =>
                               !editingProduct.colors.includes(color)
                             ).map((color) => (
                               <SelectItem key={color} value={color}>
@@ -1200,7 +1201,7 @@ export default function Admin() {
                             ))}
                           </SelectContent>
                         </Select>
-                        
+
                         {/* Add custom color */}
                         <div className="flex gap-2">
                           <Input
@@ -1242,15 +1243,15 @@ export default function Admin() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="edit-product-stock">Stock Quantity</Label>
                       <Input
                         id="edit-product-stock"
                         type="number"
-                        value={editingProduct.stockQuantity}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, stockQuantity: e.target.value })}
+                        value={editingProduct.stock_quantity}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, stock_quantity: e.target.value })}
                         placeholder="50"
                         data-testid="input-edit-product-stock"
                       />
@@ -1259,14 +1260,14 @@ export default function Admin() {
                       <input
                         type="checkbox"
                         id="edit-product-featured"
-                        checked={editingProduct.isFeatured}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, isFeatured: e.target.checked })}
+                        checked={editingProduct.is_featured}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, is_featured: e.target.checked })}
                         data-testid="checkbox-edit-product-featured"
                       />
                       <Label htmlFor="edit-product-featured">Featured Product</Label>
                     </div>
                   </div>
-                  
+
                   {/* Product Images Section */}
                   <div>
                     <Label>Product Images</Label>
@@ -1291,7 +1292,7 @@ export default function Admin() {
                           </div>
                         ))}
                       </div>
-                      
+
                       {/* Add Image URL */}
                       <div className="flex gap-2">
                         <Input
@@ -1319,7 +1320,7 @@ export default function Admin() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2 pt-4">
                     <Button
                       type="button"
@@ -1477,8 +1478,8 @@ export default function Admin() {
                         {category.description}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={category.isActive ? "default" : "secondary"} data-testid={`badge-category-active-${category.id}`}>
-                          {category.isActive ? 'Active' : 'Inactive'}
+                        <Badge variant={category.is_active ? "default" : "secondary"} data-testid={`badge-category-active-${category.id}`}>
+                          {category.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                     </TableRow>

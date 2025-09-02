@@ -4,14 +4,14 @@ import ProductCard from "./ProductCard";
 
 interface ProductGridProps {
   categoryId?: string;
-  isFeatured?: boolean;
+  is_featured?: boolean;
   title?: string;
   showViewAll?: boolean;
 }
 
-export default function ProductGrid({ categoryId, isFeatured, title, showViewAll = false }: ProductGridProps) {
+export default function ProductGrid({ categoryId, is_featured, title, showViewAll = false }: ProductGridProps) {
   const { data: products = [], isLoading } = useQuery<ProductWithCategory[]>({
-    queryKey: ['/api/products', { categoryId, isFeatured, isActive: true }],
+    queryKey: ['/api/products', { categoryId, is_featured, is_active: true }],
   });
 
   if (isLoading) {
@@ -50,7 +50,7 @@ export default function ProductGrid({ categoryId, isFeatured, title, showViewAll
 
         {showViewAll && (
           <div className="text-center mt-12">
-            <button 
+            <button
               className="bg-luxury-black text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors"
               data-testid="button-view-all"
             >

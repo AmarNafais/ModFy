@@ -1,137 +1,130 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { mysqlTable, varchar, text, int, decimal, boolean, datetime, json } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: text("email").notNull().unique(),
+export const users = mysqlTable("users", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  email: text("email").notNull(),
   password: text("password").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
-  role: text("role").default("customer"), // customer, admin
+  role: text("role").default("customer"),
   isEmailVerified: boolean("is_email_verified").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
-export const categories = pgTable("categories", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const categories = mysqlTable("categories", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
   name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
+  slug: text("slug").notNull(),
   description: text("description"),
   imageUrl: text("image_url"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  is_active: boolean("is_active").default(true),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const products = pgTable("products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const products = mysqlTable("products", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
   name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
+  slug: text("slug").notNull(),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  categoryId: varchar("category_id").references(() => categories.id),
+  categoryId: varchar("category_id", { length: 255 }),
   material: text("material"),
-  sizes: jsonb("sizes").$type<string[]>().default([]),
-  colors: jsonb("colors").$type<string[]>().default([]),
-  images: jsonb("images").$type<string[]>().default([]),
-  isActive: boolean("is_active").default(true),
-  isFeatured: boolean("is_featured").default(false),
-  stockQuantity: integer("stock_quantity").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  sizes: json("sizes"),
+  colors: json("colors"),
+  images: json("images"),
+  is_active: boolean("is_active").default(true),
+  is_featured: boolean("is_featured").default(false),
+  stock_quantity: int("stock_quantity").default(0),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
-export const collections = pgTable("collections", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const collections = mysqlTable("collections", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
   name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
+  slug: text("slug").notNull(),
   description: text("description"),
   imageUrl: text("image_url"),
-  isActive: boolean("is_active").default(true),
+  is_active: boolean("is_active").default(true),
   season: text("season"),
-  year: integer("year"),
-  createdAt: timestamp("created_at").defaultNow(),
+  year: int("year"),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const collectionProducts = pgTable("collection_products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  collectionId: varchar("collection_id").references(() => collections.id),
-  productId: varchar("product_id").references(() => products.id),
-  order: integer("order").default(0),
+export const collectionProducts = mysqlTable("collection_products", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  collectionId: varchar("collection_id", { length: 255 }),
+  productId: varchar("product_id", { length: 255 }),
+  order: int("order").default(0),
 });
 
-export const cartItems = pgTable("cart_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const cartItems = mysqlTable("cart_items", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
   sessionId: text("session_id"),
-  userId: varchar("user_id").references(() => users.id),
-  productId: varchar("product_id").references(() => products.id),
+  userId: varchar("user_id", { length: 255 }),
+  productId: varchar("product_id", { length: 255 }),
   size: text("size"),
   color: text("color"),
-  quantity: integer("quantity").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  quantity: int("quantity").notNull().default(1),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
-export const orders = pgTable("orders", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id),
-  orderNumber: text("order_number").notNull().unique(),
-  status: text("status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
+export const orders = mysqlTable("orders", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  userId: varchar("user_id", { length: 255 }),
+  orderNumber: text("order_number").notNull(),
+  status: text("status").notNull().default("pending"),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  deliveryAddress: jsonb("delivery_address").$type<{
-    fullName: string;
-    phoneNumber: string;
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    postalCode: string;
-  }>().notNull(),
-  phoneNumber: text("phone_number").notNull(), // snapshot at order time
-  paymentStatus: text("payment_status").default("pending"), // pending, paid, failed
+  deliveryAddress: json("delivery_address").notNull(),
+  phoneNumber: text("phone_number").notNull(),
+  paymentStatus: text("payment_status").default("pending"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
-export const orderItems = pgTable("order_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  orderId: varchar("order_id").references(() => orders.id),
-  productId: varchar("product_id").references(() => products.id),
+export const orderItems = mysqlTable("order_items", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  orderId: varchar("order_id", { length: 255 }),
+  productId: varchar("product_id", { length: 255 }),
   size: text("size"),
   color: text("color"),
-  quantity: integer("quantity").notNull(),
+  quantity: int("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const wishlistItems = pgTable("wishlist_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  productId: varchar("product_id").references(() => products.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+export const wishlistItems = mysqlTable("wishlist_items", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  userId: varchar("user_id", { length: 255 }).notNull(),
+  productId: varchar("product_id", { length: 255 }).notNull(),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const userProfiles = pgTable("user_profiles", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+export const userProfiles = mysqlTable("user_profiles", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  userId: varchar("user_id", { length: 255 }).notNull(),
   fullName: text("full_name"),
   phoneNumber: text("phone_number"),
   addressLine1: text("address_line_1"),
   addressLine2: text("address_line_2"),
   city: text("city"),
   postalCode: text("postal_code"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updated_at: true,
 });
 
 // Auth schemas
@@ -155,7 +148,7 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updated_at: true,
 });
 
 export const insertCollectionSchema = createInsertSchema(collections).omit({
@@ -166,7 +159,7 @@ export const insertCollectionSchema = createInsertSchema(collections).omit({
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updated_at: true,
 });
 
 export const insertWishlistItemSchema = createInsertSchema(wishlistItems).omit({
@@ -177,7 +170,7 @@ export const insertWishlistItemSchema = createInsertSchema(wishlistItems).omit({
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updated_at: true,
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
@@ -188,7 +181,7 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
 export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updated_at: true,
 });
 
 // Types

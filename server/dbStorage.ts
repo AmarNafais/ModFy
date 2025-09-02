@@ -1,7 +1,6 @@
-import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
-import bcrypt from 'bcryptjs';
+import mysql from 'mysql2/promise';
 import { randomUUID } from "crypto";
+import bcrypt from 'bcryptjs';
 import {
   users,
   categories,
@@ -39,15 +38,30 @@ import {
 import type { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
+  private pool: mysql.Pool;
+
   constructor() {
+    this.pool = mysql.createPool({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || 'Complex123',
+      database: process.env.DB_NAME || 'modfy',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+    
     this.seedData();
   }
 
   private async seedData() {
+    let connection;
     try {
+      connection = await this.pool.getConnection();
+      
       // Check if data already exists
-      const existingUsers = await db.select().from(users).limit(1);
-      if (existingUsers.length > 0) return;
+      const [existingUsers] = await connection.execute('SELECT id FROM users LIMIT 1');
+      if (Array.isArray(existingUsers) && existingUsers.length > 0) return;
 
       console.log('Seeding database...');
       
@@ -55,194 +69,122 @@ export class DatabaseStorage implements IStorage {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash("Password123", saltRounds);
       
-      await db.insert(users).values({
-        id: "admin-user-id",
-        email: "admin@modfy.lk",
-        password: hashedPassword,
-        firstName: "Admin",
-        lastName: "User",
-        role: "admin",
-        isEmailVerified: true,
-      });
+      await connection.execute(
+        `INSERT INTO users 
+        (id, email, password, first_name, last_name, role, is_email_verified) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ["admin-user-id", "admin@modfy.lk", hashedPassword, "Admin", "User", "admin", 1]
+      );
 
       // Seed categories
       const categoryData = [
-        { id: "cat-1", name: "Boxer Briefs", slug: "boxer-briefs", description: "Comfortable and supportive boxer briefs", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
-        { id: "cat-2", name: "Briefs", slug: "briefs", description: "Classic briefs for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" },
-        { id: "cat-3", name: "Trunks", slug: "trunks", description: "Modern trunks with sleek design", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400" },
-        { id: "cat-4", name: "Performance", slug: "performance", description: "Athletic performance underwear", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400" },
-        { id: "cat-5", name: "Luxury", slug: "luxury", description: "Premium luxury innerwear collection", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
-        { id: "cat-6", name: "Thermal", slug: "thermal", description: "Temperature-regulating thermal collection", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400" },
+        ["cat-1", "Boxer Briefs", "boxer-briefs", "Comfortable and supportive boxer briefs", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"],
+        ["cat-2", "Briefs", "briefs", "Classic briefs for everyday comfort", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400"],
+        ["cat-3", "Trunks", "trunks", "Modern trunks with sleek design", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400"],
+        ["cat-4", "Performance", "performance", "Athletic performance underwear", "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400"],
+        ["cat-5", "Luxury", "luxury", "Premium luxury innerwear collection", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"],
+        ["cat-6", "Thermal", "thermal", "Temperature-regulating thermal collection", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400"],
       ];
       
-      await db.insert(categories).values(categoryData);
+      for (const category of categoryData) {
+        await connection.execute(
+          'INSERT INTO categories (id, name, slug, description, image_url) VALUES (?, ?, ?, ?, ?)',
+          category
+        );
+      }
 
       // Seed collections
       const collectionData = [
-        {
-          id: "col-1",
-          name: "Essentials 2024",
-          slug: "essentials-2024",
-          description: "Premium basics for everyday comfort",
-          imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600",
-          season: "All Season",
-          year: 2024,
-        },
-        {
-          id: "col-2",
-          name: "Luxury Series",
-          slug: "luxury-series",
-          description: "Premium comfort with luxury materials",
-          imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600",
-          season: "All Season",
-          year: 2024,
-        },
+        ["col-1", "Essentials 2024", "essentials-2024", "Premium basics for everyday comfort", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", "All Season", 2024],
+        ["col-2", "Luxury Series", "luxury-series", "Premium comfort with luxury materials", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", "All Season", 2024],
       ];
 
-      await db.insert(collections).values(collectionData);
+      for (const collection of collectionData) {
+        await connection.execute(
+          'INSERT INTO collections (id, name, slug, description, image_url, season, year) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          collection
+        );
+      }
 
       // Seed products
       const productData = [
-        {
-          id: "prod-1",
-          name: "Signature Boxer Brief",
-          slug: "signature-boxer-brief",
-          description: "Our signature boxer brief with premium comfort and support. Made with the finest materials for all-day comfort.",
-          price: "48.00",
-          categoryId: "cat-1",
-          material: "Premium Cotton",
-          sizes: ["S", "M", "L", "XL", "XXL"],
-          colors: ["Black", "White", "Navy", "Gray"],
-          images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
-          stockQuantity: 120,
-          isFeatured: true,
-        },
-        {
-          id: "prod-2",
-          name: "Essential Brief",
-          slug: "essential-brief",
-          description: "Classic brief design with modern comfort technology. Perfect for everyday wear.",
-          price: "42.00",
-          categoryId: "cat-2",
-          material: "Organic Cotton",
-          sizes: ["S", "M", "L", "XL"],
-          colors: ["Black", "White", "Navy"],
-          images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
-          stockQuantity: 85,
-          isFeatured: true,
-        },
-        {
-          id: "prod-3",
-          name: "Performance Trunk",
-          slug: "performance-trunk",
-          description: "Athletic performance trunk with moisture-wicking technology and enhanced support.",
-          price: "55.00",
-          categoryId: "cat-3",
-          material: "Technical Blend",
-          sizes: ["S", "M", "L", "XL", "XXL"],
-          colors: ["Black", "Navy", "Gray", "White"],
-          images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
-          stockQuantity: 95,
-          isFeatured: true,
-        },
+        ["prod-1", "Signature Boxer Brief", "signature-boxer-brief", "Our signature boxer brief with premium comfort and support. Made with the finest materials for all-day comfort.", "48.00", "cat-1", "Premium Cotton", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify(["Black", "White", "Navy", "Gray"]), JSON.stringify(["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"]), 120, true, true],
+        ["prod-2", "Essential Brief", "essential-brief", "Classic brief design with modern comfort technology. Perfect for everyday wear.", "42.00", "cat-2", "Organic Cotton", JSON.stringify(["S", "M", "L", "XL"]), JSON.stringify(["Black", "White", "Navy"]), JSON.stringify(["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"]), 85, true, true],
+        ["prod-3", "Performance Trunk", "performance-trunk", "Athletic performance trunk with moisture-wicking technology and enhanced support.", "55.00", "cat-3", "Technical Blend", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify(["Black", "Navy", "Gray", "White"]), JSON.stringify(["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"]), 95, true, true],
       ];
 
-      await db.insert(products).values(productData);
+      for (const product of productData) {
+        await connection.execute(
+          'INSERT INTO products (id, name, slug, description, price, category_id, material, sizes, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          product
+        );
+      }
 
       // Seed sample orders
       const sampleOrders = [
-        {
-          id: "order-1",
-          orderNumber: "ORD-001",
-          status: "delivered",
-          totalAmount: "96.00",
-          deliveryAddress: {
-            fullName: "John Doe",
-            phoneNumber: "+94771234567",
-            addressLine1: "123 Main St",
-            addressLine2: "",
-            city: "Colombo",
-            postalCode: "10001"
-          } as const,
+        ["order-1", "ORD-001", "delivered", "96.00", JSON.stringify({
+          fullName: "John Doe",
           phoneNumber: "+94771234567",
-          paymentStatus: "paid",
-          notes: "Fast delivery requested",
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        },
-        {
-          id: "order-2",
-          orderNumber: "ORD-002",
-          status: "shipped",
-          totalAmount: "155.00",
-          deliveryAddress: {
-            fullName: "Jane Smith",
-            phoneNumber: "+94771234568",
-            addressLine1: "456 Park Ave",
-            addressLine2: "",
-            city: "Kandy",
-            postalCode: "20000"
-          },
+          addressLine1: "123 Main St",
+          addressLine2: "",
+          city: "Colombo",
+          postalCode: "10001"
+        }), "+94771234567", "paid", "Fast delivery requested", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)],
+        ["order-2", "ORD-002", "shipped", "155.00", JSON.stringify({
+          fullName: "Jane Smith",
           phoneNumber: "+94771234568",
-          paymentStatus: "paid",
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-          updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        },
+          addressLine1: "456 Park Ave",
+          addressLine2: "",
+          city: "Kandy",
+          postalCode: "20000"
+        }), "+94771234568", "paid", null, new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)],
       ];
 
-      await db.insert(orders).values(sampleOrders);
+      for (const order of sampleOrders) {
+        await connection.execute(
+          'INSERT INTO orders (id, order_number, status, total_amount, delivery_address, phone_number, payment_status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          order
+        );
+      }
 
       // Seed order items
       const sampleOrderItems = [
-        {
-          id: "item-1",
-          orderId: "order-1",
-          productId: "prod-1",
-          size: "L",
-          color: "Black",
-          quantity: 2,
-          unitPrice: "48.00",
-          totalPrice: "96.00",
-        },
-        {
-          id: "item-2",
-          orderId: "order-2",
-          productId: "prod-2",
-          size: "M",
-          color: "Navy",
-          quantity: 1,
-          unitPrice: "42.00",
-          totalPrice: "42.00",
-        },
-        {
-          id: "item-3",
-          orderId: "order-2",
-          productId: "prod-3",
-          size: "L",
-          color: "Black",
-          quantity: 2,
-          unitPrice: "55.00",
-          totalPrice: "110.00",
-        },
+        ["item-1", "order-1", "prod-1", "L", "Black", 2, "48.00", "96.00", new Date()],
+        ["item-2", "order-2", "prod-2", "M", "Navy", 1, "42.00", "42.00", new Date()],
+        ["item-3", "order-2", "prod-3", "L", "Black", 2, "55.00", "110.00", new Date()],
       ];
 
-      await db.insert(orderItems).values(sampleOrderItems);
+      for (const item of sampleOrderItems) {
+        await connection.execute(
+          'INSERT INTO orderItems (id, order_id, product_id, size, color, quantity, unit_price, total_price, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          item
+        );
+      }
 
       console.log('Database seeded successfully!');
     } catch (error) {
       console.error('Error seeding database:', error);
+    } finally {
+      if (connection) {
+        connection.release();
+      }
     }
   }
 
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    const [rows] = await this.pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as User : undefined;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const [rows] = await this.pool.execute('SELECT * FROM users');
+    return Array.isArray(rows) ? (rows as User[]) : [];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    const [rows] = await this.pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as User : undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -254,7 +196,13 @@ export class DatabaseStorage implements IStorage {
       isEmailVerified: insertUser.isEmailVerified ?? false,
     };
 
-    const [user] = await db.insert(users).values(userData).returning();
+    await this.pool.execute(
+      'INSERT INTO users (id, email, password, first_name, last_name, role, is_email_verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, userData.email, userData.password, userData.firstName, userData.lastName, userData.role, userData.isEmailVerified]
+    );
+
+    const user = await this.getUser(id);
+    if (!user) throw new Error("Failed to create user");
     return user;
   }
 
@@ -290,72 +238,63 @@ export class DatabaseStorage implements IStorage {
 
   // Category operations
   async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories).orderBy(categories.name);
+    const [rows] = await this.pool.execute('SELECT * FROM categories ORDER BY name');
+    return Array.isArray(rows) ? rows as Category[] : [];
   }
 
   async getCategory(id: string): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.id, id));
-    return category;
+    const [rows] = await this.pool.execute('SELECT * FROM categories WHERE id = ?', [id]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as Category : undefined;
   }
 
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
-    return category;
+    const [rows] = await this.pool.execute('SELECT * FROM categories WHERE slug = ?', [slug]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as Category : undefined;
   }
 
   async createCategory(category: InsertCategory): Promise<Category> {
     const id = randomUUID();
-    const categoryData = {
-      ...category,
-      id,
-    };
+    await this.pool.execute(
+      'INSERT INTO categories (id, name, slug, description, image_url) VALUES (?, ?, ?, ?, ?)',
+      [id, category.name, category.slug, category.description, category.imageUrl]
+    );
 
-    const [newCategory] = await db.insert(categories).values(categoryData).returning();
+    const newCategory = await this.getCategory(id);
+    if (!newCategory) throw new Error("Failed to create category");
     return newCategory;
   }
 
   // Product operations
-  async getProducts(filters?: { categoryId?: string; isFeatured?: boolean; isActive?: boolean }): Promise<ProductWithCategory[]> {
-    const query = db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        price: products.price,
-        categoryId: products.categoryId,
-        material: products.material,
-        sizes: products.sizes,
-        colors: products.colors,
-        images: products.images,
-        isActive: products.isActive,
-        isFeatured: products.isFeatured,
-        stockQuantity: products.stockQuantity,
-        createdAt: products.createdAt,
-        updatedAt: products.updatedAt,
-        category: categories,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id));
+  async getProducts(filters?: { categoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]> {
+    let query = `
+      SELECT p.*, c.id as category_id, c.name as category_name, c.slug as category_slug, 
+             c.description as category_description, c.image_url as category_imageUrl
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE 1=1
+    `;
+    const params: any[] = [];
 
-    let conditions = [];
     if (filters?.categoryId) {
-      conditions.push(eq(products.categoryId, filters.categoryId));
+      query += ' AND p.category_id = ?';
+      params.push(filters.categoryId);
     }
-    if (filters?.isFeatured !== undefined) {
-      conditions.push(eq(products.isFeatured, filters.isFeatured));
+    if (filters?.is_featured !== undefined) {
+      query += ' AND p.is_featured = ?';
+      params.push(filters.is_featured);
     }
-    if (filters?.isActive !== undefined) {
-      conditions.push(eq(products.isActive, filters.isActive));
+    if (filters?.is_active !== undefined) {
+      query += ' AND p.is_active = ?';
+      params.push(filters.is_active);
     }
 
-    if (conditions.length > 0) {
-      query.where(and(...conditions));
-    }
+    query += ' ORDER BY p.name';
 
-    const result = await query;
+    const [rows] = await this.pool.execute(query, params);
     
-    return result.map(row => ({
+    if (!Array.isArray(rows)) return [];
+    
+    return rows.map((row: any) => ({
       id: row.id,
       name: row.name,
       slug: row.slug,
@@ -363,107 +302,101 @@ export class DatabaseStorage implements IStorage {
       price: row.price,
       categoryId: row.categoryId,
       material: row.material,
-      sizes: row.sizes,
-      colors: row.colors,
-      images: row.images,
-      isActive: row.isActive,
-      isFeatured: row.isFeatured,
-      stockQuantity: row.stockQuantity,
+      sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+      colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+      images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
+      is_active: Boolean(row.is_active),
+      is_featured: Boolean(row.is_featured),
+      stock_quantity: row.stock_quantity,
       createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      category: row.category,
+      updated_at: row.updated_at,
+      category: row.category_id ? {
+        id: row.category_id,
+        name: row.category_name,
+        slug: row.category_slug,
+        description: row.category_description,
+        imageUrl: row.category_imageUrl
+      } : null
     }));
   }
 
   async getProduct(id: string): Promise<ProductWithCategory | undefined> {
-    const [result] = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        price: products.price,
-        categoryId: products.categoryId,
-        material: products.material,
-        sizes: products.sizes,
-        colors: products.colors,
-        images: products.images,
-        isActive: products.isActive,
-        isFeatured: products.isFeatured,
-        stockQuantity: products.stockQuantity,
-        createdAt: products.createdAt,
-        updatedAt: products.updatedAt,
-        category: categories,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(eq(products.id, id));
-
-    if (!result) return undefined;
-
+    const query = `
+      SELECT p.*, c.id as category_id, c.name as category_name, c.slug as category_slug, 
+             c.description as category_description, c.image_url as category_imageUrl
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.id = ?
+    `;
+    
+    const [rows] = await this.pool.execute(query, [id]);
+    
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const row = rows[0] as any;
     return {
-      id: result.id,
-      name: result.name,
-      slug: result.slug,
-      description: result.description,
-      price: result.price,
-      categoryId: result.categoryId,
-      material: result.material,
-      sizes: result.sizes,
-      colors: result.colors,
-      images: result.images,
-      isActive: result.isActive,
-      isFeatured: result.isFeatured,
-      stockQuantity: result.stockQuantity,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-      category: result.category,
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      price: row.price,
+      categoryId: row.categoryId,
+      material: row.material,
+      sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+      colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+      images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
+      is_active: Boolean(row.is_active),
+      is_featured: Boolean(row.is_featured),
+      stock_quantity: row.stock_quantity,
+      createdAt: row.createdAt,
+      updated_at: row.updated_at,
+      category: row.category_id ? {
+        id: row.category_id,
+        name: row.category_name,
+        slug: row.category_slug,
+        description: row.category_description,
+        imageUrl: row.category_imageUrl
+      } : null
     };
   }
 
   async getProductBySlug(slug: string): Promise<ProductWithCategory | undefined> {
-    const [result] = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        price: products.price,
-        categoryId: products.categoryId,
-        material: products.material,
-        sizes: products.sizes,
-        colors: products.colors,
-        images: products.images,
-        isActive: products.isActive,
-        isFeatured: products.isFeatured,
-        stockQuantity: products.stockQuantity,
-        createdAt: products.createdAt,
-        updatedAt: products.updatedAt,
-        category: categories,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(eq(products.slug, slug));
-
-    if (!result) return undefined;
-
+    const query = `
+      SELECT p.*, c.id as category_id, c.name as category_name, c.slug as category_slug, 
+             c.description as category_description, c.image_url as category_imageUrl
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.slug = ?
+    `;
+    
+    const [rows] = await this.pool.execute(query, [slug]);
+    
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const row = rows[0] as any;
     return {
-      id: result.id,
-      name: result.name,
-      slug: result.slug,
-      description: result.description,
-      price: result.price,
-      categoryId: result.categoryId,
-      material: result.material,
-      sizes: result.sizes,
-      colors: result.colors,
-      images: result.images,
-      isActive: result.isActive,
-      isFeatured: result.isFeatured,
-      stockQuantity: result.stockQuantity,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-      category: result.category,
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      price: row.price,
+      categoryId: row.categoryId,
+      material: row.material,
+      sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+      colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+      images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
+      is_active: Boolean(row.is_active),
+      is_featured: Boolean(row.is_featured),
+      stock_quantity: row.stock_quantity,
+      createdAt: row.createdAt,
+      updated_at: row.updated_at,
+      category: row.category_id ? {
+        id: row.category_id,
+        name: row.category_name,
+        slug: row.category_slug,
+        description: row.category_description,
+        imageUrl: row.category_imageUrl
+      } : null
     };
   }
 
@@ -472,61 +405,81 @@ export class DatabaseStorage implements IStorage {
     const productData = {
       ...product,
       id,
-      sizes: Array.isArray(product.sizes) ? product.sizes : (typeof product.sizes === 'string' ? JSON.parse(product.sizes) : []),
-      colors: Array.isArray(product.colors) ? product.colors : (typeof product.colors === 'string' ? JSON.parse(product.colors) : []),
-      images: Array.isArray(product.images) ? product.images : (typeof product.images === 'string' ? JSON.parse(product.images) : []),
+      sizes: Array.isArray(product.sizes) ? JSON.stringify(product.sizes) : product.sizes,
+      colors: Array.isArray(product.colors) ? JSON.stringify(product.colors) : product.colors,
+      images: Array.isArray(product.images) ? JSON.stringify(product.images) : product.images,
     };
 
-    const [newProduct] = await db.insert(products).values(productData).returning();
+    await this.pool.execute(
+      'INSERT INTO products (id, name, slug, description, price, category_id, material, sizes, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        id, productData.name, productData.slug, productData.description, productData.price, 
+        productData.categoryId, productData.material, productData.sizes, productData.colors, 
+        productData.images, productData.stock_quantity, productData.is_active, productData.is_featured
+      ]
+    );
+
+    const newProduct = await this.getProduct(id);
+    if (!newProduct) throw new Error("Failed to create product");
     return newProduct;
   }
 
   async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
-    const updateData = {
+    const updated_ata: any = {
       ...updates,
-      updatedAt: new Date(),
-      sizes: Array.isArray(updates.sizes) ? updates.sizes : (typeof updates.sizes === 'string' ? JSON.parse(updates.sizes) : undefined),
-      colors: Array.isArray(updates.colors) ? updates.colors : (typeof updates.colors === 'string' ? JSON.parse(updates.colors) : undefined),
-      images: Array.isArray(updates.images) ? updates.images : (typeof updates.images === 'string' ? JSON.parse(updates.images) : undefined),
+      updated_at: new Date(),
     };
 
-    // Remove undefined values
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
-      }
-    });
+    if (updates.sizes) {
+      updated_ata.sizes = Array.isArray(updates.sizes) ? JSON.stringify(updates.sizes) : updates.sizes;
+    }
+    if (updates.colors) {
+      updated_ata.colors = Array.isArray(updates.colors) ? JSON.stringify(updates.colors) : updates.colors;
+    }
+    if (updates.images) {
+      updated_ata.images = Array.isArray(updates.images) ? JSON.stringify(updates.images) : updates.images;
+    }
 
-    const [updatedProduct] = await db.update(products)
-      .set(updateData)
-      .where(eq(products.id, id))
-      .returning();
-    
-    return updatedProduct;
+    // Build the SET clause
+    const setClause = Object.keys(updated_ata)
+      .filter(key => updated_ata[key] !== undefined)
+      .map(key => `${key} = ?`)
+      .join(', ');
+
+    const values = Object.keys(updated_ata)
+      .filter(key => updated_ata[key] !== undefined)
+      .map(key => updated_ata[key]);
+
+    if (values.length === 0) {
+      return this.getProduct(id);
+    }
+
+    values.push(id);
+
+    await this.pool.execute(
+      `UPDATE products SET ${setClause} WHERE id = ?`,
+      values
+    );
+
+    return this.getProduct(id);
   }
 
   async deleteProduct(id: string): Promise<boolean> {
     try {
       console.log(`Starting deletion of product: ${id}`);
       
-      // Always delete completely - remove all foreign key dependencies first
-      const cartResult = await db.delete(cartItems).where(eq(cartItems.productId, id));
-      console.log(`Deleted ${cartResult.rowCount} cart items`);
+      // Delete related records
+      await this.pool.execute('DELETE FROM cart_items WHERE product_id = ?', [id]);
+      await this.pool.execute('DELETE FROM wishlist_items WHERE product_id = ?', [id]);
+      await this.pool.execute('DELETE FROM collection_products WHERE product_id = ?', [id]);
+      await this.pool.execute('DELETE FROM order_items WHERE product_id = ?', [id]);
       
-      const wishlistResult = await db.delete(wishlistItems).where(eq(wishlistItems.productId, id));
-      console.log(`Deleted ${wishlistResult.rowCount} wishlist items`);
+      // Delete the product
+      const [result] = await this.pool.execute('DELETE FROM products WHERE id = ?', [id]);
+      const resultObj = result as any;
       
-      const collectionResult = await db.delete(collectionProducts).where(eq(collectionProducts.productId, id));
-      console.log(`Deleted ${collectionResult.rowCount} collection products`);
-      
-      const orderItemsResult = await db.delete(orderItems).where(eq(orderItems.productId, id));
-      console.log(`Deleted ${orderItemsResult.rowCount} order items`);
-      
-      // Now delete the product itself
-      const result = await db.delete(products).where(eq(products.id, id));
-      console.log(`Product deletion result: ${result.rowCount} rows affected`);
-      
-      return result.rowCount > 0;
+      console.log(`Product deletion result: ${resultObj.affectedRows} rows affected`);
+      return resultObj.affectedRows > 0;
     } catch (error) {
       console.error('Error deleting product:', error);
       throw error;
@@ -535,155 +488,202 @@ export class DatabaseStorage implements IStorage {
 
   // Collection operations
   async getCollections(): Promise<Collection[]> {
-    return await db.select().from(collections).orderBy(desc(collections.year), collections.name);
+    const [rows] = await this.pool.execute('SELECT * FROM collections ORDER BY year DESC, name');
+    return Array.isArray(rows) ? rows as Collection[] : [];
   }
 
   async getCollection(id: string): Promise<Collection | undefined> {
-    const [collection] = await db.select().from(collections).where(eq(collections.id, id));
-    return collection;
+    const [rows] = await this.pool.execute('SELECT * FROM collections WHERE id = ?', [id]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as Collection : undefined;
   }
 
   async getCollectionBySlug(slug: string): Promise<Collection | undefined> {
-    const [collection] = await db.select().from(collections).where(eq(collections.slug, slug));
-    return collection;
+    const [rows] = await this.pool.execute('SELECT * FROM collections WHERE slug = ?', [slug]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as Collection : undefined;
   }
 
   async createCollection(collection: InsertCollection): Promise<Collection> {
     const id = randomUUID();
-    const collectionData = {
-      ...collection,
-      id,
-    };
+    await this.pool.execute(
+      'INSERT INTO collections (id, name, slug, description, image_url, season, year) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, collection.name, collection.slug, collection.description, collection.imageUrl, collection.season, collection.year]
+    );
 
-    const [newCollection] = await db.insert(collections).values(collectionData).returning();
+    const newCollection = await this.getCollection(id);
+    if (!newCollection) throw new Error("Failed to create collection");
     return newCollection;
   }
 
   // Cart operations
   async getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]> {
-    let whereCondition;
+    let query = `
+      SELECT ci.*, p.* 
+      FROM cart_items ci
+      LEFT JOIN products p ON ci.product_id = p.id
+      WHERE `;
+    
+    const params: any[] = [];
     
     if (userId) {
-      // For authenticated users, query by userId
-      whereCondition = eq(cartItems.userId, userId);
+      query += 'ci.user_id = ?';
+      params.push(userId);
     } else if (sessionId) {
-      // For guest users, query by sessionId
-      whereCondition = eq(cartItems.sessionId, sessionId);
+      query += 'ci.session_id = ?';
+      params.push(sessionId);
     } else {
-      // Return empty array if neither sessionId nor userId provided
       return [];
     }
 
-    const result = await db
-      .select({
-        id: cartItems.id,
-        userId: cartItems.userId,
-        sessionId: cartItems.sessionId,
-        productId: cartItems.productId,
-        size: cartItems.size,
-        color: cartItems.color,
-        quantity: cartItems.quantity,
-        createdAt: cartItems.createdAt,
-        updatedAt: cartItems.updatedAt,
-        product: products,
-      })
-      .from(cartItems)
-      .leftJoin(products, eq(cartItems.productId, products.id))
-      .where(whereCondition);
-
-    return result.map(row => ({
+    const [rows] = await this.pool.execute(query, params);
+    
+    if (!Array.isArray(rows)) return [];
+    
+    return rows.map((row: any) => ({
       id: row.id,
-      userId: row.userId,
-      sessionId: row.sessionId,
-      productId: row.productId,
+      userId: row.user_id,
+      sessionId: row.session_id,
+      productId: row.product_id,
       size: row.size,
       color: row.color,
       quantity: row.quantity,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      product: row.product!,
+      createdAt: row.created_at,
+      updated_at: row.updated_at,
+      product: {
+        id: row.product_id,
+        name: row.name,
+        slug: row.slug,
+        description: row.description,
+        price: row.price,
+        categoryId: row.category_id,
+        material: row.material,
+        sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+        colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+        images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
+        is_active: Boolean(row.is_active),
+        is_featured: Boolean(row.is_featured),
+        stock_quantity: row.stock_quantity,
+        createdAt: row.created_at,
+        updated_at: row.updated_at,
+      }
     }));
   }
 
   async addToCart(cartItem: InsertCartItem): Promise<CartItem> {
     const id = randomUUID();
-    const cartItemData = {
-      ...cartItem,
-      id,
-    };
+    await this.pool.execute(
+      'INSERT INTO cart_items (id, user_id, session_id, product_id, size, color, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, cartItem.userId, cartItem.sessionId, cartItem.productId, cartItem.size, cartItem.color, cartItem.quantity]
+    );
 
-    const [newCartItem] = await db.insert(cartItems).values(cartItemData).returning();
-    return newCartItem;
+    const [rows] = await this.pool.execute('SELECT * FROM cart_items WHERE id = ?', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("Failed to add to cart");
+    
+    return rows[0] as CartItem;
   }
 
   async updateCartItem(id: string, updates: Partial<CartItem>): Promise<CartItem | undefined> {
-    const [updatedItem] = await db
-      .update(cartItems)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(cartItems.id, id))
-      .returning();
+    const updated_ata: any = {
+      ...updates,
+      updated_at: new Date(),
+    };
 
-    return updatedItem;
+    // Build the SET clause
+    const setClause = Object.keys(updated_ata)
+      .filter(key => updated_ata[key] !== undefined)
+      .map(key => `${key} = ?`)
+      .join(', ');
+
+    const values = Object.keys(updated_ata)
+      .filter(key => updated_ata[key] !== undefined)
+      .map(key => updated_ata[key]);
+
+    if (values.length === 0) {
+      const [rows] = await this.pool.execute('SELECT * FROM cart_items WHERE id = ?', [id]);
+      return Array.isArray(rows) && rows.length > 0 ? rows[0] as CartItem : undefined;
+    }
+
+    values.push(id);
+
+    await this.pool.execute(
+      `UPDATE cart_items SET ${setClause} WHERE id = ?`,
+      values
+    );
+
+    const [rows] = await this.pool.execute('SELECT * FROM cart_items WHERE id = ?', [id]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as CartItem : undefined;
   }
 
   async removeFromCart(id: string): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.id, id));
+    await this.pool.execute('DELETE FROM cart_items WHERE id = ?', [id]);
   }
 
   async clearCart(sessionId?: string, userId?: string): Promise<void> {
     if (userId) {
-      // For authenticated users, clear by userId
-      await db.delete(cartItems).where(eq(cartItems.userId, userId));
+      await this.pool.execute('DELETE FROM cart_items WHERE user_id = ?', [userId]);
     } else if (sessionId) {
-      // For guest users, clear by sessionId
-      await db.delete(cartItems).where(eq(cartItems.sessionId, sessionId));
+      await this.pool.execute('DELETE FROM cart_items WHERE session_id = ?', [sessionId]);
     }
   }
 
   // Order operations
   async getOrders(): Promise<OrderWithItems[]> {
-    const ordersData = await db
-      .select()
-      .from(orders)
-      .orderBy(desc(orders.createdAt));
-
+    const [ordersData] = await this.pool.execute('SELECT * FROM orders ORDER BY created_at DESC');
+    
+    if (!Array.isArray(ordersData)) return [];
+    
     const result: OrderWithItems[] = [];
     
-    for (const order of ordersData) {
-      const orderItemsData = await db
-        .select({
-          id: orderItems.id,
-          orderId: orderItems.orderId,
-          productId: orderItems.productId,
-          size: orderItems.size,
-          color: orderItems.color,
-          quantity: orderItems.quantity,
-          unitPrice: orderItems.unitPrice,
-          totalPrice: orderItems.totalPrice,
-          createdAt: orderItems.createdAt,
-          product: products,
-        })
-        .from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
-        .where(eq(orderItems.orderId, order.id));
-
-      const user = order.userId ? (await this.getUser(order.userId)) ?? null : null;
+    for (const order of ordersData as any[]) {
+      const [orderItemsData] = await this.pool.execute(`
+        SELECT oi.*, p.* 
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+      `, [order.id]);
+      
+      const user = order.user_id ? (await this.getUser(order.user_id)) ?? null : null;
 
       result.push({
-        ...order,
+        id: order.id,
+        userId: order.user_id,
+        orderNumber: order.order_number,
+        status: order.status,
+        totalAmount: order.total_amount,
+        deliveryAddress: typeof order.delivery_address === 'string' ? JSON.parse(order.delivery_address) : order.delivery_address,
+        phoneNumber: order.phone_number,
+        paymentStatus: order.payment_status,
+        notes: order.notes,
+        createdAt: order.created_at,
+        updated_at: order.updated_at,
         user,
-        items: orderItemsData.map(item => ({
+        items: Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => ({
           id: item.id,
-          orderId: item.orderId,
-          productId: item.productId,
+          orderId: item.order_id,
+          productId: item.product_id,
           size: item.size,
           color: item.color,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.totalPrice,
-          createdAt: item.createdAt,
-          product: item.product!,
-        })),
+          unitPrice: item.unit_price,
+          totalPrice: item.total_price,
+          createdAt: item.created_at,
+          product: {
+            id: item.product_id,
+            name: item.name,
+            slug: item.slug,
+            description: item.description,
+            price: item.price,
+            categoryId: item.category_id,
+            material: item.material,
+            sizes: typeof item.sizes === 'string' ? JSON.parse(item.sizes) : item.sizes,
+            colors: typeof item.colors === 'string' ? JSON.parse(item.colors) : item.colors,
+            images: typeof item.images === 'string' ? JSON.parse(item.images) : item.images,
+            is_active: Boolean(item.is_active),
+            is_featured: Boolean(item.is_featured),
+            stock_quantity: item.stock_quantity,
+            createdAt: item.created_at,
+            updated_at: item.updated_at,
+          }
+        })) : [],
       });
     }
 
@@ -691,32 +691,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrder(id: string): Promise<OrderWithItems | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
-    if (!order) return undefined;
-
-    const orderItemsData = await db
-      .select({
-        id: orderItems.id,
-        orderId: orderItems.orderId,
-        productId: orderItems.productId,
-        size: orderItems.size,
-        color: orderItems.color,
-        quantity: orderItems.quantity,
-        unitPrice: orderItems.unitPrice,
-        totalPrice: orderItems.totalPrice,
-        createdAt: orderItems.createdAt,
-        product: products,
-      })
-      .from(orderItems)
-      .leftJoin(products, eq(orderItems.productId, products.id))
-      .where(eq(orderItems.orderId, id));
-
+    const [orders] = await this.pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    if (!Array.isArray(orders) || orders.length === 0) return undefined;
+    
+    const order = orders[0] as any;
+    
+    const [orderItemsData] = await this.pool.execute(`
+      SELECT oi.*, p.* 
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ?
+    `, [id]);
+    
     const user = order.userId ? (await this.getUser(order.userId)) ?? null : null;
 
     return {
       ...order,
+      deliveryAddress: typeof order.deliveryAddress === 'string' ? JSON.parse(order.deliveryAddress) : order.deliveryAddress,
       user,
-      items: orderItemsData.map(item => ({
+      items: Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => ({
         id: item.id,
         orderId: item.orderId,
         productId: item.productId,
@@ -726,32 +719,66 @@ export class DatabaseStorage implements IStorage {
         unitPrice: item.unitPrice,
         totalPrice: item.totalPrice,
         createdAt: item.createdAt,
-        product: item.product!,
-      })),
+        product: {
+          id: item.productId,
+          name: item.name,
+          slug: item.slug,
+          description: item.description,
+          price: item.price,
+          categoryId: item.categoryId,
+          material: item.material,
+          sizes: typeof item.sizes === 'string' ? JSON.parse(item.sizes) : item.sizes,
+          colors: typeof item.colors === 'string' ? JSON.parse(item.colors) : item.colors,
+          images: typeof item.images === 'string' ? JSON.parse(item.images) : item.images,
+          is_active: Boolean(item.is_active),
+          is_featured: Boolean(item.is_featured),
+          stock_quantity: item.stock_quantity,
+          createdAt: item.p_createdAt,
+          updated_at: item.p_updated_at,
+        }
+      })) : [],
     };
   }
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = randomUUID();
-    const orderData = {
-      ...insertOrder,
-      id,
-      deliveryAddress: insertOrder.deliveryAddress,
-      phoneNumber: insertOrder.phoneNumber,
-    };
+    await this.pool.execute(
+      'INSERT INTO orders (id, order_number, status, total_amount, delivery_address, phone_number, payment_status, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        id, 
+        insertOrder.orderNumber, 
+        insertOrder.status, 
+        insertOrder.totalAmount, 
+        JSON.stringify(insertOrder.deliveryAddress), 
+        insertOrder.phoneNumber, 
+        insertOrder.paymentStatus, 
+        insertOrder.notes,
+        insertOrder.userId
+      ]
+    );
 
-    const [order] = await db.insert(orders).values(orderData).returning();
+    const [rows] = await this.pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("Failed to create order");
+    
+    const order = rows[0] as any;
+    order.deliveryAddress = typeof order.deliveryAddress === 'string' ? JSON.parse(order.deliveryAddress) : order.deliveryAddress;
+    
     return order;
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    const [updatedOrder] = await db
-      .update(orders)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(orders.id, id))
-      .returning();
+    await this.pool.execute(
+      'UPDATE orders SET status = ?, updated_at = ? WHERE id = ?',
+      [status, new Date(), id]
+    );
 
-    return updatedOrder;
+    const [rows] = await this.pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const order = rows[0] as any;
+    order.deliveryAddress = typeof order.deliveryAddress === 'string' ? JSON.parse(order.deliveryAddress) : order.deliveryAddress;
+    
+    return order;
   }
 
   // Wishlist operations
@@ -760,26 +787,39 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
 
-    const wishlistData = await db
-      .select({
-        id: wishlistItems.id,
-        userId: wishlistItems.userId,
-          productId: wishlistItems.productId,
-        createdAt: wishlistItems.createdAt,
-        product: products,
-      })
-      .from(wishlistItems)
-      .leftJoin(products, eq(wishlistItems.productId, products.id))
-      .where(eq(wishlistItems.userId, userId));
-
+    const [wishlistData] = await this.pool.execute(`
+      SELECT wi.*, p.* 
+      FROM wishlist_items wi
+      LEFT JOIN products p ON wi.product_id = p.id
+      WHERE wi.user_id = ?
+    `, [userId]);
+    
+    if (!Array.isArray(wishlistData)) return [];
+    
     return wishlistData
-      .filter(item => item.product)
-      .map(item => ({
+      .filter((item: any) => item.productId)
+      .map((item: any) => ({
         id: item.id,
         userId: item.userId,
         productId: item.productId,
         createdAt: item.createdAt,
-        product: item.product!,
+        product: {
+          id: item.productId,
+          name: item.name,
+          slug: item.slug,
+          description: item.description,
+          price: item.price,
+          categoryId: item.categoryId,
+          material: item.material,
+          sizes: typeof item.sizes === 'string' ? JSON.parse(item.sizes) : item.sizes,
+          colors: typeof item.colors === 'string' ? JSON.parse(item.colors) : item.colors,
+          images: typeof item.images === 'string' ? JSON.parse(item.images) : item.images,
+          is_active: Boolean(item.is_active),
+          is_featured: Boolean(item.is_featured),
+          stock_quantity: item.stock_quantity,
+          createdAt: item.p_createdAt,
+          updated_at: item.p_updated_at,
+        }
       }));
   }
 
@@ -789,31 +829,25 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Check if item already exists for this user
-    const [existing] = await db
-      .select()
-      .from(wishlistItems)
-      .where(
-        and(
-          eq(wishlistItems.productId, insertWishlistItem.productId),
-          eq(wishlistItems.userId, insertWishlistItem.userId)
-        )
-      )
-      .limit(1);
-
-    if (existing) {
-      return existing;
+    const [existing] = await this.pool.execute(
+      'SELECT * FROM wishlist_items WHERE product_id = ? AND user_id = ?',
+      [insertWishlistItem.productId, insertWishlistItem.userId]
+    );
+    
+    if (Array.isArray(existing) && existing.length > 0) {
+      return existing[0] as WishlistItem;
     }
 
-    const [wishlistItem] = await db
-      .insert(wishlistItems)
-      .values({
-        id: randomUUID(),
-        productId: insertWishlistItem.productId,
-        userId: insertWishlistItem.userId,
-      })
-      .returning();
+    const id = randomUUID();
+    await this.pool.execute(
+      'INSERT INTO wishlist_items (id, product_id, user_id) VALUES (?, ?, ?)',
+      [id, insertWishlistItem.productId, insertWishlistItem.userId]
+    );
 
-    return wishlistItem;
+    const [rows] = await this.pool.execute('SELECT * FROM wishlist_items WHERE id = ?', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("Failed to add to wishlist");
+    
+    return rows[0] as WishlistItem;
   }
 
   async removeFromWishlist(productId: string, userId: string): Promise<void> {
@@ -821,45 +855,48 @@ export class DatabaseStorage implements IStorage {
       throw new Error('User ID and Product ID are required');
     }
 
-    await db
-      .delete(wishlistItems)
-      .where(
-        and(
-          eq(wishlistItems.productId, productId),
-          eq(wishlistItems.userId, userId)
-        )
-      );
+    await this.pool.execute(
+      'DELETE FROM wishlist_items WHERE product_id = ? AND userId = ?',
+      [productId, userId]
+    );
   }
 
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {
-    const profile = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1);
-    return profile[0];
+    const [rows] = await this.pool.execute('SELECT * FROM user_profiles WHERE user_id = ?', [userId]);
+    return Array.isArray(rows) && rows.length > 0 ? rows[0] as UserProfile : undefined;
   }
 
   async createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
     const existingProfile = await this.getUserProfile(profile.userId);
     
     if (existingProfile) {
-      const [updatedProfile] = await db
-        .update(userProfiles)
-        .set({ ...profile, updatedAt: new Date() })
-        .where(eq(userProfiles.userId, profile.userId))
-        .returning();
-      return updatedProfile;
+      await this.pool.execute(
+        'UPDATE user_profiles SET phone_number = ?, address = ?, dateOfBirth = ?, gender = ?, updated_at = ? WHERE user_id = ?',
+        [profile.phoneNumber, JSON.stringify(profile.address), profile.dateOfBirth, profile.gender, new Date(), profile.userId]
+      );
     } else {
-      const [newProfile] = await db
-        .insert(userProfiles)
-        .values(profile)
-        .returning();
-      return newProfile;
+      await this.pool.execute(
+        'INSERT INTO user_profiles (id, user_id, phone_number, address, dateOfBirth, gender) VALUES (?, ?, ?, ?, ?, ?)',
+        [randomUUID(), profile.userId, profile.phoneNumber, JSON.stringify(profile.address), profile.dateOfBirth, profile.gender]
+      );
     }
+
+    const updatedProfile = await this.getUserProfile(profile.userId);
+    if (!updatedProfile) throw new Error("Failed to create/update user profile");
+    
+    return updatedProfile;
   }
 
   async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
-    const [orderItem] = await db
-      .insert(orderItems)
-      .values(insertOrderItem)
-      .returning();
-    return orderItem;
+    const id = randomUUID();
+    await this.pool.execute(
+      'INSERT INTO order_items (id, order_id, product_id, size, color, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, insertOrderItem.orderId, insertOrderItem.productId, insertOrderItem.size, insertOrderItem.color, insertOrderItem.quantity, insertOrderItem.unitPrice, insertOrderItem.totalPrice]
+    );
+
+    const [rows] = await this.pool.execute('SELECT * FROM order_items WHERE id = ?', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("Failed to create order item");
+    
+    return rows[0] as OrderItem;
   }
 }

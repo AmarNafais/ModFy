@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
@@ -25,7 +26,7 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
 
   // Product operations
-  getProducts(filters?: { categoryId?: string; isFeatured?: boolean; isActive?: boolean }): Promise<ProductWithCategory[]>;
+  getProducts(filters?: { categoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]>;
   getProduct(id: string): Promise<ProductWithCategory | undefined>;
   getProductBySlug(slug: string): Promise<ProductWithCategory | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
@@ -86,25 +87,25 @@ export class MemStorage implements IStorage {
   private seedData() {
     // Seed categories
     const categories = [
-      { id: "cat-1", name: "Boxer Briefs", slug: "boxer-briefs", description: "Comfortable and supportive boxer briefs", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", isActive: true, createdAt: new Date() },
-      { id: "cat-2", name: "Briefs", slug: "briefs", description: "Classic briefs for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", isActive: true, createdAt: new Date() },
-      { id: "cat-3", name: "Trunks", slug: "trunks", description: "Modern trunks with sleek design", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400", isActive: true, createdAt: new Date() },
-      { id: "cat-4", name: "Performance", slug: "performance", description: "Athletic performance underwear", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400", isActive: true, createdAt: new Date() },
-      { id: "cat-5", name: "Luxury", slug: "luxury", description: "Premium luxury innerwear collection", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", isActive: true, createdAt: new Date() },
-      { id: "cat-6", name: "Thermal", slug: "thermal", description: "Temperature-regulating thermal collection", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", isActive: true, createdAt: new Date() },
+      { id: "cat-1", name: "Boxer Briefs", slug: "boxer-briefs", description: "Comfortable and supportive boxer briefs", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", is_active: true, createdAt: new Date() },
+      { id: "cat-2", name: "Briefs", slug: "briefs", description: "Classic briefs for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", is_active: true, createdAt: new Date() },
+      { id: "cat-3", name: "Trunks", slug: "trunks", description: "Modern trunks with sleek design", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400", is_active: true, createdAt: new Date() },
+      { id: "cat-4", name: "Performance", slug: "performance", description: "Athletic performance underwear", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400", is_active: true, createdAt: new Date() },
+      { id: "cat-5", name: "Luxury", slug: "luxury", description: "Premium luxury innerwear collection", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", is_active: true, createdAt: new Date() },
+      { id: "cat-6", name: "Thermal", slug: "thermal", description: "Temperature-regulating thermal collection", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", is_active: true, createdAt: new Date() },
     ];
 
     categories.forEach(cat => this.categories.set(cat.id, cat));
 
     // Seed collections
     const collections = [
-      { id: "col-1", name: "Essentials 2024", slug: "essentials-2024", description: "Premium basics for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-2", name: "Luxury Series", slug: "luxury-series", description: "Premium comfort with luxury materials", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-3", name: "Performance Collection", slug: "performance-collection", description: "Active comfort for the modern man", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-4", name: "Summer 2024", slug: "summer-2024", description: "Breathable fabrics for warm weather", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600", isActive: true, season: "Summer", year: 2024, createdAt: new Date() },
-      { id: "col-5", name: "Executive Line", slug: "executive-line", description: "Professional-grade comfort for the workplace", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-6", name: "Travel Essentials", slug: "travel-essentials", description: "Comfort that travels with you", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", isActive: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-7", name: "Winter Warmth", slug: "winter-warmth", description: "Thermal comfort for cold seasons", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", isActive: true, season: "Winter", year: 2024, createdAt: new Date() },
+      { id: "col-1", name: "Essentials 2024", slug: "essentials-2024", description: "Premium basics for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-2", name: "Luxury Series", slug: "luxury-series", description: "Premium comfort with luxury materials", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-3", name: "Performance Collection", slug: "performance-collection", description: "Active comfort for the modern man", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-4", name: "Summer 2024", slug: "summer-2024", description: "Breathable fabrics for warm weather", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600", is_active: true, season: "Summer", year: 2024, createdAt: new Date() },
+      { id: "col-5", name: "Executive Line", slug: "executive-line", description: "Professional-grade comfort for the workplace", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-6", name: "Travel Essentials", slug: "travel-essentials", description: "Comfort that travels with you", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
+      { id: "col-7", name: "Winter Warmth", slug: "winter-warmth", description: "Thermal comfort for cold seasons", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", is_active: true, season: "Winter", year: 2024, createdAt: new Date() },
     ];
 
     collections.forEach(col => this.collections.set(col.id, col));
@@ -122,11 +123,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "Navy", "Gray", "White"],
         images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 100,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 100,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-2",
@@ -139,11 +140,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Navy", "Black", "White"],
         images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 85,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 85,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-3",
@@ -156,11 +157,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL", "XXL"],
         colors: ["Black", "Gray", "Navy"],
         images: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 75,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 75,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-4",
@@ -173,11 +174,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "Charcoal", "Navy", "White"],
         images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 60,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 60,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-5",
@@ -190,11 +191,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["White", "Black", "Gray"],
         images: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 120,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 120,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-6",
@@ -207,11 +208,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL", "XXL"],
         colors: ["Black", "Navy", "Gray"],
         images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 90,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 90,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-7",
@@ -224,11 +225,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "Navy", "Charcoal"],
         images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 35,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 35,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-8",
@@ -241,11 +242,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "White", "Gray", "Navy"],
         images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 80,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 80,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-9",
@@ -258,11 +259,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "Navy", "White", "Gray"],
         images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 95,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 95,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-10",
@@ -275,11 +276,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL", "XXL"],
         colors: ["Black", "Navy", "Charcoal", "White"],
         images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 70,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 70,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-11",
@@ -292,11 +293,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL", "XXL"],
         colors: ["Black", "Navy", "Gray", "Red"],
         images: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 110,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 110,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-12",
@@ -309,11 +310,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "Navy", "Gray"],
         images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 85,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 85,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-13",
@@ -326,11 +327,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "Navy", "Charcoal"],
         images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 25,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 25,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-14",
@@ -343,11 +344,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "White", "Navy", "Beige"],
         images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 130,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 130,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-15",
@@ -360,11 +361,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "Navy", "Gray", "Olive"],
         images: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 75,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 75,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-16",
@@ -377,11 +378,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL", "XXL"],
         colors: ["White", "Black", "Gray", "Navy"],
         images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 105,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 105,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-17",
@@ -394,11 +395,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL", "XXL"],
         colors: ["Black", "Navy", "Red", "Gray"],
         images: ["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"],
-        isActive: true,
-        isFeatured: true,
-        stockQuantity: 60,
+        is_active: true,
+        is_featured: true,
+        stock_quantity: 60,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       },
       {
         id: "prod-18",
@@ -411,11 +412,11 @@ export class MemStorage implements IStorage {
         sizes: ["S", "M", "L", "XL"],
         colors: ["Black", "White", "Navy", "Gray", "Burgundy"],
         images: ["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"],
-        isActive: true,
-        isFeatured: false,
-        stockQuantity: 90,
+        is_active: true,
+        is_featured: false,
+        stock_quantity: 90,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       }
     ];
 
@@ -443,7 +444,7 @@ export class MemStorage implements IStorage {
         role: "admin",
         isEmailVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updated_at: new Date(),
       };
       
       this.users.set(adminUser.id, adminUser);
@@ -470,7 +471,7 @@ export class MemStorage implements IStorage {
         paymentStatus: "paid",
         notes: "Fast delivery requested",
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
       },
       {
         id: "order-2", 
@@ -490,7 +491,7 @@ export class MemStorage implements IStorage {
         paymentStatus: "paid",
         notes: null,
         createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
       },
       {
         id: "order-3",
@@ -510,7 +511,7 @@ export class MemStorage implements IStorage {
         paymentStatus: "pending",
         notes: null,
         createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       }
     ];
 
@@ -573,6 +574,10 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
   async getUserByEmail(email: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
@@ -587,7 +592,7 @@ export class MemStorage implements IStorage {
       role: insertUser.role || "customer",
       isEmailVerified: insertUser.isEmailVerified ?? false,
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updated_at: new Date(),
     };
     this.users.set(id, user);
     return user;
@@ -633,7 +638,7 @@ export class MemStorage implements IStorage {
 
   // Category operations
   async getCategories(): Promise<Category[]> {
-    return Array.from(this.categories.values()).filter(cat => cat.isActive);
+    return Array.from(this.categories.values()).filter(cat => cat.is_active);
   }
 
   async getCategory(id: string): Promise<Category | undefined> {
@@ -651,7 +656,7 @@ export class MemStorage implements IStorage {
       id,
       description: insertCategory.description || null,
       imageUrl: insertCategory.imageUrl || null,
-      isActive: insertCategory.isActive ?? true,
+      is_active: insertCategory.is_active ?? true,
       createdAt: new Date(),
     };
     this.categories.set(id, category);
@@ -659,18 +664,18 @@ export class MemStorage implements IStorage {
   }
 
   // Product operations
-  async getProducts(filters?: { categoryId?: string; isFeatured?: boolean; isActive?: boolean }): Promise<ProductWithCategory[]> {
+  async getProducts(filters?: { categoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]> {
     let products = Array.from(this.products.values());
 
     if (filters) {
       if (filters.categoryId) {
         products = products.filter(p => p.categoryId === filters.categoryId);
       }
-      if (filters.isFeatured !== undefined) {
-        products = products.filter(p => p.isFeatured === filters.isFeatured);
+      if (filters.is_featured !== undefined) {
+        products = products.filter(p => p.is_featured === filters.is_featured);
       }
-      if (filters.isActive !== undefined) {
-        products = products.filter(p => p.isActive === filters.isActive);
+      if (filters.is_active !== undefined) {
+        products = products.filter(p => p.is_active === filters.is_active);
       }
     }
 
@@ -711,11 +716,11 @@ export class MemStorage implements IStorage {
       sizes: insertProduct.sizes as string[] || [],
       colors: insertProduct.colors as string[] || [],
       images: insertProduct.images as string[] || [],
-      isActive: insertProduct.isActive ?? true,
-      isFeatured: insertProduct.isFeatured ?? false,
-      stockQuantity: insertProduct.stockQuantity ?? 0,
+      is_active: insertProduct.is_active ?? true,
+      is_featured: insertProduct.is_featured ?? false,
+      stock_quantity: insertProduct.stock_quantity ?? 0,
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updated_at: new Date(),
     };
     this.products.set(id, product);
     return product;
@@ -731,7 +736,7 @@ export class MemStorage implements IStorage {
       ...existingProduct,
       ...updates,
       id, // Keep the same ID
-      updatedAt: new Date(),
+      updated_at: new Date(),
       sizes: updates.sizes !== undefined ? updates.sizes as string[] : existingProduct.sizes,
       colors: updates.colors !== undefined ? updates.colors as string[] : existingProduct.colors,
       images: updates.images !== undefined ? updates.images as string[] : existingProduct.images,
@@ -753,7 +758,7 @@ export class MemStorage implements IStorage {
 
   // Collection operations
   async getCollections(): Promise<Collection[]> {
-    return Array.from(this.collections.values()).filter(col => col.isActive);
+    return Array.from(this.collections.values()).filter(col => col.is_active);
   }
 
   async getCollection(id: string): Promise<Collection | undefined> {
@@ -771,7 +776,7 @@ export class MemStorage implements IStorage {
       id,
       description: insertCollection.description || null,
       imageUrl: insertCollection.imageUrl || null,
-      isActive: insertCollection.isActive ?? true,
+      is_active: insertCollection.is_active ?? true,
       season: insertCollection.season || null,
       year: insertCollection.year || null,
       createdAt: new Date(),
@@ -813,7 +818,7 @@ export class MemStorage implements IStorage {
     if (existingItem) {
       // Update quantity
       existingItem.quantity += insertCartItem.quantity || 1;
-      existingItem.updatedAt = new Date();
+      existingItem.updated_at = new Date();
       this.cartItems.set(existingItem.id, existingItem);
       return existingItem;
     }
@@ -828,7 +833,7 @@ export class MemStorage implements IStorage {
       color: insertCartItem.color || null,
       quantity: insertCartItem.quantity || 1,
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updated_at: new Date(),
     };
     this.cartItems.set(id, cartItem);
     return cartItem;
@@ -841,7 +846,7 @@ export class MemStorage implements IStorage {
     const updatedItem = {
       ...item,
       ...updates,
-      updatedAt: new Date(),
+      updated_at: new Date(),
     };
     this.cartItems.set(id, updatedItem);
     return updatedItem;
@@ -964,7 +969,7 @@ export class MemStorage implements IStorage {
       paymentStatus: insertOrder.paymentStatus || null,
       notes: insertOrder.notes || null,
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updated_at: new Date(),
     };
     this.orders.set(id, order);
     return order;
@@ -974,7 +979,7 @@ export class MemStorage implements IStorage {
     const order = this.orders.get(id);
     if (!order) return undefined;
 
-    const updatedOrder = { ...order, status, updatedAt: new Date() };
+    const updatedOrder = { ...order, status, updated_at: new Date() };
     this.orders.set(id, updatedOrder);
     return updatedOrder;
   }
@@ -990,7 +995,7 @@ export class MemStorage implements IStorage {
       const updatedProfile: UserProfile = {
         ...existingProfile,
         ...profile,
-        updatedAt: new Date(),
+        updated_at: new Date(),
       };
       this.userProfiles.set(existingProfile.id, updatedProfile);
       return updatedProfile;
@@ -1000,7 +1005,7 @@ export class MemStorage implements IStorage {
         id,
         ...profile,
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updated_at: new Date(),
       };
       this.userProfiles.set(id, newProfile);
       return newProfile;

@@ -1,14 +1,13 @@
 import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
-}
-
 export default defineConfig({
   out: "./migrations",
-  schema: "./shared/schema.ts",
-  dialect: "postgresql",
+  schema: "./shared/schema.ts",   // adjust path if needed
+  dialect: "mysql",               // 👈 use mysql, not postgresql
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    host: process.env.DB_HOST!,
+    user: process.env.DB_USER!,
+    password: process.env.DB_PASSWORD!,
+    database: process.env.DB_NAME!,
   },
 });

@@ -278,7 +278,7 @@ export async function sendOrderConfirmationEmail(orderData: {
         <div class="content">
           <h1>Order Confirmation - ${orderData.orderNumber}</h1>
           
-          <p>Hi there,</p>
+          <p>Hi ${orderData.customerName},</p>
           
           <p>A new order has been received! Details below:</p>
           

@@ -22,7 +22,7 @@ export default function Admin() {
   const queryClient = useQueryClient();
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-  
+
   // Product form state
   const [productForm, setProductForm] = useState({
     name: '',
@@ -33,8 +33,8 @@ export default function Admin() {
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Black', 'White'],
     images: [],
-    stockQuantity: '50',
-    isFeatured: false,
+    stock_quantity: '50',
+    is_featured: false,
   });
 
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -132,8 +132,8 @@ export default function Admin() {
         sizes: ['S', 'M', 'L', 'XL'],
         colors: ['Black', 'White'],
         images: [],
-        stockQuantity: '50',
-        isFeatured: false,
+        stock_quantity: '50',
+        is_featured: false,
       });
       setNewImageUrl('');
       toast({
@@ -341,7 +341,7 @@ export default function Admin() {
                         {order.orderNumber}
                       </TableCell>
                       <TableCell>
-                        {order.shippingAddress 
+                        {order.shippingAddress
                           ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`
                           : 'Guest Customer'
                         }
@@ -478,8 +478,8 @@ export default function Admin() {
                         <Input
                           id="product-stock"
                           type="number"
-                          value={productForm.stockQuantity}
-                          onChange={(e) => setProductForm({ ...productForm, stockQuantity: e.target.value })}
+                          value={productForm.stock_quantity}
+                          onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
                           placeholder="50"
                           data-testid="input-product-stock"
                         />
@@ -488,14 +488,14 @@ export default function Admin() {
                         <input
                           type="checkbox"
                           id="product-featured"
-                          checked={productForm.isFeatured}
-                          onChange={(e) => setProductForm({ ...productForm, isFeatured: e.target.checked })}
+                          checked={productForm.is_featured}
+                          onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })}
                           data-testid="checkbox-product-featured"
                         />
                         <Label htmlFor="product-featured">Featured Product</Label>
                       </div>
                     </div>
-                    
+
                     {/* Product Images Section */}
                     <div>
                       <Label>Product Images</Label>
@@ -520,7 +520,7 @@ export default function Admin() {
                             </div>
                           ))}
                         </div>
-                        
+
                         {/* Add Image URL */}
                         <div className="flex gap-2">
                           <Input
@@ -548,7 +548,7 @@ export default function Admin() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 pt-4">
                       <Button
                         type="button"
@@ -590,15 +590,15 @@ export default function Admin() {
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.category?.name || 'No Category'}</TableCell>
                       <TableCell>${product.price}</TableCell>
-                      <TableCell>{product.stockQuantity}</TableCell>
+                      <TableCell>{product.stock_quantity}</TableCell>
                       <TableCell>
-                        <Badge variant={product.isActive ? "default" : "secondary"}>
-                          {product.isActive ? 'Active' : 'Inactive'}
+                        <Badge variant={product.is_active ? "default" : "secondary"}>
+                          {product.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.isFeatured ? "default" : "outline"}>
-                          {product.isFeatured ? 'Featured' : 'Regular'}
+                        <Badge variant={product.is_featured ? "default" : "outline"}>
+                          {product.is_featured ? 'Featured' : 'Regular'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -641,8 +641,8 @@ export default function Admin() {
                       <TableCell>{collection.season}</TableCell>
                       <TableCell>{collection.year}</TableCell>
                       <TableCell>
-                        <Badge variant={collection.isActive ? "default" : "secondary"}>
-                          {collection.isActive ? 'Active' : 'Inactive'}
+                        <Badge variant={collection.is_active ? "default" : "secondary"}>
+                          {collection.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -746,8 +746,8 @@ export default function Admin() {
                       <TableCell className="font-mono text-sm text-gray-600">{category.slug}</TableCell>
                       <TableCell>{category.description}</TableCell>
                       <TableCell>
-                        <Badge variant={category.isActive ? "default" : "secondary"}>
-                          {category.isActive ? 'Active' : 'Inactive'}
+                        <Badge variant={category.is_active ? "default" : "secondary"}>
+                          {category.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -786,7 +786,7 @@ export default function Admin() {
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.email}</TableCell>
                       <TableCell>
-                        {user.firstName || user.lastName 
+                        {user.firstName || user.lastName
                           ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
                           : 'No name provided'
                         }

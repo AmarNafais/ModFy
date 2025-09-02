@@ -58,7 +58,7 @@ export default function ProductDetail() {
 
   const handleImageNavigation = (direction: 'prev' | 'next') => {
     if (!product?.images?.length) return;
-    
+
     if (direction === 'prev') {
       setSelectedImageIndex(selectedImageIndex === 0 ? product.images.length - 1 : selectedImageIndex - 1);
     } else {
@@ -95,18 +95,18 @@ export default function ProductDetail() {
     <div className="pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          
+
           {/* Product Images */}
           <div className="relative">
             <div className="aspect-[3/4] mb-4 relative group">
-              <img 
-                src={product.images?.[selectedImageIndex] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'} 
+              <img
+                src={product.images?.[selectedImageIndex] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'}
                 alt={product.name}
                 className="w-full h-full object-cover rounded-sm"
                 data-testid="product-main-image"
                 key={selectedImageIndex}
               />
-              
+
               {/* Navigation arrows */}
               {product.images && product.images.length > 1 && (
                 <>
@@ -127,7 +127,7 @@ export default function ProductDetail() {
                 </>
               )}
             </div>
-            
+
             {/* Thumbnail gallery */}
             {product.images && product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
@@ -137,14 +137,14 @@ export default function ProductDetail() {
                     onClick={() => setSelectedImageIndex(index)}
                     className={cn(
                       "aspect-square border-2 rounded-sm overflow-hidden transition-all",
-                      selectedImageIndex === index 
-                        ? "border-luxury-black" 
+                      selectedImageIndex === index
+                        ? "border-luxury-black"
                         : "border-gray-200 hover:border-gray-400"
                     )}
                     data-testid={`product-image-${index}`}
                   >
-                    <img 
-                      src={image} 
+                    <img
+                      src={image}
                       alt={`${product.name} view ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -167,7 +167,7 @@ export default function ProductDetail() {
                       LKR {parseFloat(product.price).toFixed(2)}
                     </p>
                     <div className="text-sm text-green-600 font-medium">
-                      {product.stockQuantity && product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}
+                      {product.stock_quantity && product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
                     </div>
                   </div>
                 </div>
@@ -182,9 +182,9 @@ export default function ProductDetail() {
                   )}
                   data-testid="button-wishlist"
                 >
-                  <Heart 
-                    size={20} 
-                    className={isInWishlist(product.id) ? "fill-current" : ""} 
+                  <Heart
+                    size={20}
+                    className={isInWishlist(product.id) ? "fill-current" : ""}
                   />
                 </button>
               </div>
@@ -293,13 +293,13 @@ export default function ProductDetail() {
             <div className="space-y-3">
               <Button
                 onClick={handleAddToCart}
-                disabled={isAddingToCart || !selectedSize || !selectedColor || (product.stockQuantity !== null && product.stockQuantity <= 0)}
+                disabled={isAddingToCart || !selectedSize || !selectedColor || (product.stock_quantity !== null && product.stock_quantity <= 0)}
                 className="w-full bg-luxury-black text-white hover:bg-gray-800 py-3 text-sm font-medium tracking-wide transition-colors"
                 data-testid="button-add-to-cart"
               >
                 {isAddingToCart ? "ADDING TO CART..." : "ADD TO CART"}
               </Button>
-              
+
               {/* Quick info */}
               <div className="text-xs text-gray-500 space-y-1">
                 <p>• Free shipping on orders over LKR 7,500</p>
@@ -316,14 +316,14 @@ export default function ProductDetail() {
                   <p>Premium quality materials and construction ensure lasting comfort and durability.</p>
                 </div>
               </details>
-              
+
               <details className="border-t border-luxury-muted pt-4">
                 <summary className="text-sm font-medium tracking-wide cursor-pointer">SIZE GUIDE</summary>
                 <div className="mt-4 text-sm text-gray-600 font-light">
                   <p>Refer to our size guide for the perfect fit. All measurements are in inches.</p>
                 </div>
               </details>
-              
+
               <details className="border-t border-luxury-muted pt-4">
                 <summary className="text-sm font-medium tracking-wide cursor-pointer">CARE INSTRUCTIONS</summary>
                 <div className="mt-4 text-sm text-gray-600 font-light">

@@ -13,7 +13,7 @@ export default function Shop() {
   });
 
   const { data: allProducts = [], isLoading } = useQuery<ProductWithCategory[]>({
-    queryKey: ['/api/products', { categoryId: selectedCategory || undefined, isActive: true }],
+    queryKey: ['/api/products', { categoryId: selectedCategory || undefined, is_active: true }],
   });
 
   // Filter products based on search query
@@ -21,9 +21,9 @@ export default function Shop() {
     if (!searchQuery.trim()) {
       return allProducts;
     }
-    
+
     const query = searchQuery.toLowerCase().trim();
-    return allProducts.filter(product => 
+    return allProducts.filter(product =>
       product.name.toLowerCase().includes(query) ||
       product.description?.toLowerCase().includes(query) ||
       product.material?.toLowerCase().includes(query) ||
@@ -34,7 +34,7 @@ export default function Shop() {
   return (
     <div className="pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Page Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-light tracking-wide mb-4">SHOP</h1>
@@ -86,11 +86,10 @@ export default function Shop() {
               setSelectedCategory("");
               setSearchQuery(""); // Clear search when changing category
             }}
-            className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${
-              selectedCategory === "" 
-                ? "bg-luxury-black text-white" 
+            className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === ""
+                ? "bg-luxury-black text-white"
                 : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
-            }`}
+              }`}
             data-testid="filter-all"
           >
             ALL
@@ -102,11 +101,10 @@ export default function Shop() {
                 setSelectedCategory(category.id);
                 setSearchQuery(""); // Clear search when changing category
               }}
-              className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${
-                selectedCategory === category.id 
-                  ? "bg-luxury-black text-white" 
+              className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === category.id
+                  ? "bg-luxury-black text-white"
                   : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
-              }`}
+                }`}
               data-testid={`filter-${category.slug}`}
             >
               {category.name.toUpperCase()}
@@ -125,8 +123,8 @@ export default function Shop() {
             <p className="text-gray-600 font-light">
               {searchQuery ? (
                 <>
-                  No products match your search for "{searchQuery}". 
-                  <button 
+                  No products match your search for "{searchQuery}".
+                  <button
                     onClick={() => setSearchQuery("")}
                     className="ml-1 text-luxury-black underline hover:no-underline"
                     data-testid="button-clear-search-results"
@@ -168,7 +166,7 @@ export default function Shop() {
             <h2 className="text-2xl font-light tracking-wide mb-4">RECENTLY VIEWED</h2>
             <p className="text-gray-600 font-light">Products you've recently looked at</p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.slice(0, 4).map((product) => (
               <ProductCard key={`recent-${product.id}`} product={product} />

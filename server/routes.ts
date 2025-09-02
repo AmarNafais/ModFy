@@ -148,12 +148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { categoryId, isFeatured, isActive } = req.query;
+      const { categoryId, is_featured, is_active } = req.query;
       const filters: any = {};
       
       if (categoryId) filters.categoryId = categoryId as string;
-      if (isFeatured !== undefined) filters.isFeatured = isFeatured === 'true';
-      if (isActive !== undefined) filters.isActive = isActive === 'true';
+      if (is_featured !== undefined) filters.is_featured = is_featured === 'true';
+      if (is_active !== undefined) filters.is_active = is_active === 'true';
 
       const products = await storage.getProducts(filters);
       res.json(products);
@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/users", requireAdmin, async (req, res) => {
     try {
-      const allUsers = await db.select().from(users);
+      const allUsers = await storage.getAllUsers();
       res.json(allUsers.map(user => ({ ...user, password: undefined })));
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -391,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, material, sizes, colors, images, stockQuantity, isFeatured } = req.body;
+      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -405,9 +405,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sizes: Array.isArray(sizes) ? sizes : [],
         colors: Array.isArray(colors) ? colors : [],
         images: Array.isArray(images) ? images : [],
-        stockQuantity: parseInt(stockQuantity) || 0,
-        isFeatured: Boolean(isFeatured),
-        isActive: true,
+        stock_quantity: parseInt(stock_quantity) || 0,
+        is_featured: Boolean(is_featured),
+        is_active: true,
       });
       
       res.status(201).json(product);
@@ -421,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, material, sizes, colors, images, stockQuantity, isFeatured, isActive } = req.body;
+      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured, is_active } = req.body;
       
       const updates: any = {};
       
@@ -436,9 +436,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
       if (colors !== undefined) updates.colors = Array.isArray(colors) ? colors : [];
       if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
-      if (stockQuantity !== undefined) updates.stockQuantity = parseInt(stockQuantity) || 0;
-      if (isFeatured !== undefined) updates.isFeatured = Boolean(isFeatured);
-      if (isActive !== undefined) updates.isActive = Boolean(isActive);
+      if (stock_quantity !== undefined) updates.stock_quantity = parseInt(stock_quantity) || 0;
+      if (is_featured !== undefined) updates.is_featured = Boolean(is_featured);
+      if (is_active !== undefined) updates.is_active = Boolean(is_active);
       
       const product = await storage.updateProduct(id, updates);
       
@@ -464,7 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         slug,
         description,
         imageUrl,
-        isActive: true,
+        is_active: true,
       });
       
       res.status(201).json(category);
@@ -611,9 +611,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Cart is empty" });
       }
       
+      // Generate order number
+      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      
       const orderData = insertOrderSchema.parse({
         ...req.body,
-        userId
+        userId,
+        orderNumber
       });
       
       // Create the order
@@ -624,8 +628,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createOrderItem({
           orderId: order.id,
           productId: cartItem.productId,
-          size: cartItem.size,
-          color: cartItem.color,
+          size: cartItem.size || null,
+          color: cartItem.color || null,
           quantity: cartItem.quantity,
           unitPrice: cartItem.product.price,
           totalPrice: (parseFloat(cartItem.product.price) * cartItem.quantity).toFixed(2),
