@@ -9,44 +9,31 @@ export function useCart() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get cart items - only fetch when authenticated
+  // Get cart items - fetch for both authenticated users and guest sessions
+  // Use a stable key that doesn't depend on user auth status
   const { data: cartItems = [], isLoading } = useQuery<CartItemWithProduct[]>({
-    queryKey: ["/api/cart", user?.id],
-    enabled: isAuthenticated && !!user,
+    queryKey: ["/api/cart"],
     retry: false,
   });
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async (data: { productId: string; size?: string; color?: string; quantity?: number }) => {
-      if (!isAuthenticated) {
-        toast({
-          title: "Login Required",
-          description: "Please log in to add items to your cart",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/auth";
-        }, 1000);
-        throw new Error("Authentication required");
-      }
       return apiRequest("POST", "/api/cart", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Added to cart",
         description: "Product has been added to your cart.",
       });
     },
     onError: (error: any) => {
-      if (error.message !== "Authentication required") {
-        toast({
-          title: "Error",
-          description: "Failed to add to cart. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: "Failed to add to cart. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -56,7 +43,7 @@ export function useCart() {
       return apiRequest("PUT", `/api/cart/${id}`, { quantity });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
     },
     onError: () => {
       toast({
@@ -73,7 +60,7 @@ export function useCart() {
       return apiRequest("DELETE", `/api/cart/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Removed from cart",
         description: "Product has been removed from your cart.",
@@ -94,7 +81,7 @@ export function useCart() {
       return apiRequest("DELETE", "/api/cart/clear");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Cart cleared",
         description: "All items have been removed from your cart.",

@@ -207,8 +207,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionId = req.sessionID;
       
       console.log('Cart GET - userId:', userId, 'sessionId:', sessionId);
+      console.log('Cart GET - will query with:', userId ? `userId=${userId}` : `sessionId=${sessionId}`);
       
-      const cartItems = await storage.getCartItems(sessionId, userId);
+      // For authenticated users, pass only userId; for guests, pass only sessionId
+      const cartItems = await storage.getCartItems(
+        userId ? undefined : sessionId,
+        userId ? userId : undefined
+      );
+      
+      console.log('Cart GET - found items:', cartItems.length);
       res.json(cartItems);
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -221,14 +228,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       const sessionId = req.sessionID;
       
+      console.log('Cart POST - userId:', userId, 'sessionId:', sessionId);
+      console.log('Cart POST - body:', req.body);
+      
       const cartData = {
         ...req.body,
         userId: userId || null,
         sessionId: userId ? null : sessionId, // Use sessionId only for guests
       };
       
+      console.log('Cart POST - cartData:', cartData);
+      
       const validatedData = insertCartItemSchema.parse(cartData);
+      console.log('Cart POST - validatedData:', validatedData);
+      
       const cartItem = await storage.addToCart(validatedData);
+      console.log('Cart POST - cartItem added:', cartItem);
+      
       res.status(201).json(cartItem);
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -600,12 +616,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders routes
-  app.post("/api/orders", requireAuth, async (req, res) => {
+  app.post("/api/orders", async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      // Ensure userId is typed as string | undefined (avoid null)
+      const userId: string | undefined = req.session.userId ?? undefined; // Allow undefined for guest orders
+      const sessionId = req.sessionID;
       
-      // Get cart items to create order items
-      const cartItems = await storage.getCartItems(undefined, userId);
+      // Get cart items to create order items (support both authenticated and guest carts)
+      const cartItems = await storage.getCartItems(userId ? undefined : sessionId, userId);
       
       if (cartItems.length === 0) {
         return res.status(400).json({ error: "Cart is empty" });
@@ -621,7 +639,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Create the order
-      const order = await storage.createOrder(orderData);
+  const order = await storage.createOrder(orderData);
+  console.log('Created order:', order);
+  console.log('Order properties - orderNumber:', (order as any).orderNumber ?? (order as any).order_number, 'totalAmount:', (order as any).totalAmount ?? (order as any).total_amount);
       
       // Create order items from cart items
       for (const cartItem of cartItems) {
@@ -636,28 +656,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Clear the cart after successful order creation
-      await storage.clearCart(undefined, userId);
+      // Clear the cart after successful order creation (support both authenticated and guest carts)
+  await storage.clearCart(userId ? undefined : sessionId, userId);
       
       // Send order confirmation email
       try {
+        // Prefer values from the validated orderData (what we intended to store)
+        const delivery = orderData.deliveryAddress as any;
+        const orderNumberStr = (orderData as any).orderNumber ?? (order as any).orderNumber ?? (order as any).order_number ?? '';
+        const totalStr = String((orderData as any).totalAmount ?? (order as any).totalAmount ?? (order as any).total_amount ?? '0');
+
         await sendOrderConfirmationEmail({
-          orderNumber: order.orderNumber,
-          totalAmount: order.totalAmount,
-          customerName: orderData.deliveryAddress.fullName,
+          orderNumber: orderNumberStr,
+          totalAmount: totalStr,
+          customerName: delivery?.fullName ?? '',
           deliveryAddress: {
-            fullName: orderData.deliveryAddress.fullName,
-            phoneNumber: orderData.deliveryAddress.phoneNumber,
-            addressLine1: orderData.deliveryAddress.addressLine1,
-            addressLine2: orderData.deliveryAddress.addressLine2 as string | undefined,
-            city: orderData.deliveryAddress.city,
-            postalCode: orderData.deliveryAddress.postalCode,
+            fullName: delivery?.fullName ?? '',
+            phoneNumber: delivery?.phoneNumber ?? '',
+            addressLine1: delivery?.addressLine1 ?? '',
+            addressLine2: delivery?.addressLine2 ?? undefined,
+            city: delivery?.city ?? '',
+            postalCode: delivery?.postalCode ?? '',
           },
           items: cartItems.map(item => ({
             productName: item.product.name,
             quantity: item.quantity,
-            price: item.product.price,
-            imageUrl: (item.product.images?.[0]?.startsWith('http') ? item.product.images[0] : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'),
+            price: String((item.product as any).price),
+            imageUrl: (() => {
+              const firstImage = (item.product as any)?.images?.[0];
+              return typeof firstImage === 'string' && firstImage.startsWith('http')
+                ? firstImage
+                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+            })(),
           })),
         });
       } catch (emailError) {

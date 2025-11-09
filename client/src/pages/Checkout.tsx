@@ -35,7 +35,7 @@ export default function Checkout() {
   const { cartItems, total, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch user profile for prefilling
+  // Fetch user profile for prefilling (optional - no auth required)
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["/api/profile"],
     queryFn: async () => {
@@ -43,10 +43,8 @@ export default function Checkout() {
         credentials: "include",
       });
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("Please login to checkout");
-        }
-        throw new Error("Failed to fetch profile");
+        // If not authenticated or any error, just return null
+        return null;
       }
       return response.json();
     },
@@ -122,10 +120,10 @@ export default function Checkout() {
     setIsSubmitting(true);
     try {
       const order = await createOrder(data);
-      
+
       // Clear the cart
       await clearCart();
-      
+
       // Generate WhatsApp message
       const whatsappMessage = `Hi! I'd like to place an order:\n\n*Order Number:* ${order.orderNumber}\n*Total:* LKR ${total.toFixed(2)}\n*Delivery Address:*\n${data.fullName}\n${data.addressLine1}${data.addressLine2 ? '\n' + data.addressLine2 : ''}\n${data.city}, ${data.postalCode}\n*Phone:* ${data.phoneNumber}${data.notes ? '\n\n*Notes:* ' + data.notes : ''}`;
       const whatsappNumber = "+94771234567"; // Replace with actual business WhatsApp number
@@ -202,8 +200,8 @@ export default function Checkout() {
             {cartItems.map((item) => (
               <div key={item.id} className="flex items-start gap-4">
                 <div className="flex-shrink-0">
-                  <img 
-                    src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'} 
+                  <img
+                    src={item.product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'}
                     alt={item.product.name}
                     className="w-16 h-16 object-cover rounded-lg border"
                   />
@@ -230,9 +228,9 @@ export default function Checkout() {
                 </div>
               </div>
             ))}
-            
+
             <Separator />
-            
+
             <div className="flex justify-between items-center font-bold text-lg">
               <span>Total</span>
               <span>LKR {total.toFixed(2)}</span>
@@ -261,7 +259,7 @@ export default function Checkout() {
               Delivery Information
             </CardTitle>
             <CardDescription>
-              {profile ? 
+              {profile ?
                 "Your profile information has been pre-filled. Update if needed." :
                 "Please provide your delivery details."
               }
@@ -278,10 +276,10 @@ export default function Checkout() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Enter your full name" 
+                          <Input
+                            placeholder="Enter your full name"
                             data-testid="input-checkout-full-name"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -299,10 +297,10 @@ export default function Checkout() {
                           Phone Number
                         </FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="+94 77 123 4567" 
+                          <Input
+                            placeholder="+94 77 123 4567"
                             data-testid="input-checkout-phone"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -317,10 +315,10 @@ export default function Checkout() {
                       <FormItem>
                         <FormLabel>Address Line 1</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Street address, building number" 
+                          <Input
+                            placeholder="Street address, building number"
                             data-testid="input-checkout-address-1"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -335,10 +333,10 @@ export default function Checkout() {
                       <FormItem>
                         <FormLabel>Address Line 2 (Optional)</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Apartment, suite, floor" 
+                          <Input
+                            placeholder="Apartment, suite, floor"
                             data-testid="input-checkout-address-2"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -354,10 +352,10 @@ export default function Checkout() {
                         <FormItem>
                           <FormLabel>City</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="Colombo" 
+                            <Input
+                              placeholder="Colombo"
                               data-testid="input-checkout-city"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -372,10 +370,10 @@ export default function Checkout() {
                         <FormItem>
                           <FormLabel>Postal Code</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="10001" 
+                            <Input
+                              placeholder="10001"
                               data-testid="input-checkout-postal-code"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -391,11 +389,11 @@ export default function Checkout() {
                       <FormItem>
                         <FormLabel>Order Notes (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Any special delivery instructions or requests..." 
+                          <Textarea
+                            placeholder="Any special delivery instructions or requests..."
                             className="min-h-[80px]"
                             data-testid="input-checkout-notes"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -404,8 +402,8 @@ export default function Checkout() {
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isSubmitting}
                   className="w-full"
                   size="lg"

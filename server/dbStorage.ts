@@ -742,26 +742,52 @@ export class DatabaseStorage implements IStorage {
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = randomUUID();
+    // Ensure we pass null (not undefined) for optional fields to satisfy mysql2 bind rules
+    const orderNumberVal = insertOrder.orderNumber ?? null;
+    const statusVal = insertOrder.status ?? 'pending';
+    const totalAmountVal = insertOrder.totalAmount ?? null;
+    const deliveryAddressVal = insertOrder.deliveryAddress ? JSON.stringify(insertOrder.deliveryAddress) : null;
+    const phoneNumberVal = insertOrder.phoneNumber ?? null;
+    const paymentStatusVal = insertOrder.paymentStatus ?? null;
+    const notesVal = insertOrder.notes ?? null;
+    const userIdVal = insertOrder.userId ?? null;
+
+    const insertValues = [
+      id,
+      orderNumberVal,
+      statusVal,
+      totalAmountVal,
+      deliveryAddressVal,
+      phoneNumberVal,
+      paymentStatusVal,
+      notesVal,
+      userIdVal,
+    ];
+
+    console.log('DB createOrder - inserting values:', insertValues.map(v => (v === null ? 'NULL' : v)));
+
     await this.pool.execute(
       'INSERT INTO orders (id, order_number, status, total_amount, delivery_address, phone_number, payment_status, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [
-        id, 
-        insertOrder.orderNumber, 
-        insertOrder.status, 
-        insertOrder.totalAmount, 
-        JSON.stringify(insertOrder.deliveryAddress), 
-        insertOrder.phoneNumber, 
-        insertOrder.paymentStatus, 
-        insertOrder.notes,
-        insertOrder.userId
-      ]
+      insertValues
     );
 
     const [rows] = await this.pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
     if (!Array.isArray(rows) || rows.length === 0) throw new Error("Failed to create order");
     
-    const order = rows[0] as any;
-    order.deliveryAddress = typeof order.deliveryAddress === 'string' ? JSON.parse(order.deliveryAddress) : order.deliveryAddress;
+    const row = rows[0] as any;
+    const order: Order = {
+      id: row.id,
+      userId: row.user_id,
+      orderNumber: row.order_number,
+      status: row.status,
+      totalAmount: row.total_amount,
+      deliveryAddress: typeof row.delivery_address === 'string' ? JSON.parse(row.delivery_address) : row.delivery_address,
+      phoneNumber: row.phone_number,
+      paymentStatus: row.payment_status,
+      notes: row.notes,
+      createdAt: row.created_at,
+      updated_at: row.updated_at,
+    };
     
     return order;
   }

@@ -8,8 +8,8 @@ export const sessionConfig = session({
   store: new MemStoreSession({
     checkPeriod: 86400000, // Clean up expired entries every 24h
   }),
-  resave: false,
-  saveUninitialized: false,
+  resave: true, // Changed to true to ensure guest sessions are saved
+  saveUninitialized: true, // Changed to true to create session for all requests
   cookie: {
     secure: false, // Set to true in production with HTTPS
     httpOnly: true,
