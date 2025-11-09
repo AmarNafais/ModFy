@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   apps: [{
     name: "modfy-server",
     script: "./server/index.ts",
@@ -9,7 +9,7 @@ module.exports = {
       PORT: 3000,
       DB_HOST: "127.0.0.1",
       DB_USER: "root",
-      DB_PASSWORD: "Complex123", // Replace with your actual MySQL password
+      DB_PASSWORD: "Complex123", // Make sure this matches your MySQL password
       DB_NAME: "modfy"
     },
     instances: 1,
