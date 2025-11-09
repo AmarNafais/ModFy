@@ -551,7 +551,7 @@ export default function Admin() {
                     Create Product
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Create New Product</DialogTitle>
                   </DialogHeader>
@@ -988,7 +988,7 @@ export default function Admin() {
 
           {/* Edit Product Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Edit Product</DialogTitle>
               </DialogHeader>
@@ -1402,7 +1402,7 @@ export default function Admin() {
                     Create Category
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="max-w-lg w-full mx-4 sm:mx-auto max-h-[70vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Create New Category</DialogTitle>
                   </DialogHeader>
