@@ -1,7 +1,11 @@
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 
-// Initialize SendGrid with your API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+// Create a transporter using sendmail
+const transporter = nodemailer.createTransport({
+  sendmail: true,
+  newline: 'unix',
+  path: '/usr/sbin/sendmail'
+});
 
 export interface WelcomeEmailData {
   email: string;
@@ -135,18 +139,18 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
     </html>
     `;
 
-    const msg = {
-      to: email,
+    const mailOptions = {
       from: {
-        email: 'amarnafais@gmail.com',
-        name: 'MODFY - Premium Innerwear'
+        name: 'MODFY - Premium Innerwear',
+        address: 'amarnafais@gmail.com'
       },
+      to: email,
       subject: 'Welcome to MODFY - Your Premium Journey Begins',
       html: welcomeEmailHTML,
       text: `Welcome to MODFY, ${name}! Thank you for joining our exclusive community of men who value premium comfort and sophisticated style. Explore our collection at https://your-domain.replit.app/shop`
     };
 
-    await sgMail.send(msg);
+    await transporter.sendMail(mailOptions);
     console.log(`Welcome email sent successfully to ${email}`);
     return true;
   } catch (error) {
@@ -158,17 +162,17 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
 // Test the email configuration
 export async function testEmailConnection(): Promise<boolean> {
   try {
-    const msg = {
-      to: 'legacyamar999@gmail.com',
+    const mailOptions = {
       from: {
-        email: 'amarnafais@gmail.com',
-        name: 'MODFY - Test'
+        name: 'MODFY - Test',
+        address: 'amarnafais@gmail.com'
       },
+      to: 'legacyamar999@gmail.com',
       subject: 'Email Service Test',
       text: 'If you receive this, the email service is working correctly.',
       html: '<p>If you receive this, the email service is working correctly.</p>'
     };
-    await sgMail.send(msg);
+    await transporter.sendMail(mailOptions);
     console.log('Email service is ready');
     return true;
   } catch (error) {
@@ -333,18 +337,18 @@ export async function sendOrderConfirmationEmail(orderData: {
     </html>
     `;
 
-    const msg = {
-      to: "legacyamar999@gmail.com",
+    const mailOptions = {
       from: {
-        email: 'amarnafais@gmail.com',
-        name: 'MODFY - Order System'
+        name: 'MODFY - Order System',
+        address: 'amarnafais@gmail.com'
       },
+      to: "legacyamar999@gmail.com",
       subject: `New Order Received - ${orderData.orderNumber}`,
       html: orderConfirmationEmailHTML,
       text: `New order received: ${orderData.orderNumber} for LKR ${orderData.totalAmount}. Customer: ${orderData.customerName}`
     };
 
-    await sgMail.send(msg);
+    await transporter.sendMail(mailOptions);
     console.log(`Order confirmation email sent for order ${orderData.orderNumber}`);
     return true;
   } catch (error) {
@@ -419,18 +423,18 @@ export async function sendOrderStatusUpdateEmail(params: {
     </html>
     `;
 
-    const msg = {
-      to,
-      from: { 
-        email: 'amarnafais@gmail.com',
-        name: 'MODFY - Orders'
+    const mailOptions = {
+      from: {
+        name: 'MODFY - Orders',
+        address: 'amarnafais@gmail.com'
       },
+      to,
       subject: `Your Order ${orderNumber} has been ${newStatus}`,
       html: statusEmailHTML,
       text: `Your order ${orderNumber} status is now ${newStatus}. ${message}`
     };
 
-    await sgMail.send(msg);
+    await transporter.sendMail(mailOptions);
     console.log(`Order status update email sent to ${to} for ${orderNumber}`);
     return true;
   } catch (error) {
