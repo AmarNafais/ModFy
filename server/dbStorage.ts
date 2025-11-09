@@ -42,7 +42,7 @@ export class DatabaseStorage implements IStorage {
 
   constructor() {
     this.pool = mysql.createPool({
-      host: process.env.DB_HOST || 'localhost',
+      host: process.env.DB_HOST || '127.0.0.1',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || 'Complex123',
       database: process.env.DB_NAME || 'modfy',
