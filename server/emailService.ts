@@ -1,11 +1,7 @@
-import nodemailer from 'nodemailer';
+// import sgMail from '@sendgrid/mail';
 
-// Create a transporter using sendmail
-const transporter = nodemailer.createTransport({
-  sendmail: true,
-  newline: 'unix',
-  path: '/usr/sbin/sendmail'
-});
+// Initialize SendGrid with API key
+// sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
 
 export interface WelcomeEmailData {
   email: string;
@@ -150,8 +146,8 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
       text: `Welcome to MODFY, ${name}! Thank you for joining our exclusive community of men who value premium comfort and sophisticated style. Explore our collection at https://your-domain.replit.app/shop`
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Welcome email sent successfully to ${email}`);
+    // await transporter.sendMail(mailOptions);
+    console.log(`[DISABLED] Welcome email would be sent to ${email}`);
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
@@ -172,8 +168,8 @@ export async function testEmailConnection(): Promise<boolean> {
       text: 'If you receive this, the email service is working correctly.',
       html: '<p>If you receive this, the email service is working correctly.</p>'
     };
-    await transporter.sendMail(mailOptions);
-    console.log('Email service is ready');
+    // await transporter.sendMail(mailOptions);
+    console.log('[DISABLED] Email service test');
     return true;
   } catch (error) {
     console.error('Email service error:', error);
@@ -348,8 +344,8 @@ export async function sendOrderConfirmationEmail(orderData: {
       text: `New order received: ${orderData.orderNumber} for LKR ${orderData.totalAmount}. Customer: ${orderData.customerName}`
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Order confirmation email sent for order ${orderData.orderNumber}`);
+    // await transporter.sendMail(mailOptions);
+    console.log(`[DISABLED] Order confirmation email would be sent for order ${orderData.orderNumber}`);
     return true;
   } catch (error) {
     console.error("Failed to send order confirmation email:", error);
@@ -434,8 +430,8 @@ export async function sendOrderStatusUpdateEmail(params: {
       text: `Your order ${orderNumber} status is now ${newStatus}. ${message}`
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Order status update email sent to ${to} for ${orderNumber}`);
+    // await transporter.sendMail(mailOptions);
+    console.log(`[DISABLED] Order status update email would be sent to ${to} for ${orderNumber}`);
     return true;
   } catch (error) {
     console.error('Failed to send order status update email:', error);
