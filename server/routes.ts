@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, signupSchema, loginSchema, insertUserProfileSchema, insertOrderSchema, users } from "@shared/schema";
 import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
-import { sendWelcomeEmail, testEmailConnection, sendOrderConfirmationEmail } from "./emailService";
+import { sendWelcomeEmail, testEmailConnection, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
 import { db } from "./db";
 import { ObjectStorageService } from "./objectStorage";
 
@@ -389,6 +389,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
       res.json(order);
+
+      // Try sending an email to the customer notifying about the status update.
+      (async () => {
+        try {
+          // Support both snake_case and camelCase shapes returned from storage
+          const userId = (order as any).userId ?? (order as any).user_id;
+          const orderNumber = (order as any).orderNumber ?? (order as any).order_number ?? id;
+
+          // Attempt to get customer email from user record when available
+          let customerEmail: string | undefined;
+          let customerName: string | undefined;
+
+          // Prefer a stored customer email on the order (guest checkout)
+          customerEmail = (order as any).customerEmail ?? (order as any).customer_email;
+
+          if (userId) {
+            try {
+              const user = await storage.getUser(userId);
+              if (user?.email) customerEmail = user.email;
+              customerName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : undefined;
+            } catch (err) {
+              console.error('Failed to fetch user for order status email:', err);
+            }
+          }
+
+          // If no registered user email, try to read delivery address for possible contact info
+          if (!customerEmail) {
+            const rawDelivery = (order as any).deliveryAddress ?? (order as any).delivery_address;
+            let delivery: any = rawDelivery;
+            if (typeof rawDelivery === 'string') {
+              try { delivery = JSON.parse(rawDelivery); } catch (e) { delivery = rawDelivery; }
+            }
+            if (delivery && typeof delivery === 'object') {
+              if (delivery.email) customerEmail = delivery.email;
+              if (!customerName) customerName = delivery.fullName ?? delivery.full_name;
+            }
+          }
+
+          if (!customerEmail) {
+            console.log(`No customer email available for order ${orderNumber}; skipping status email.`);
+            return;
+          }
+
+          // Fetch full order details (including items) to include product images and details
+          let orderFull: any = null;
+          try {
+            orderFull = await storage.getOrder(id);
+          } catch (err) {
+            console.error('Failed to fetch full order details for email:', err);
+          }
+
+          const items = (orderFull?.items ?? []).map((item: any) => ({
+            productName: item.product?.name ?? item.productName ?? item.product_name ?? 'Product',
+            quantity: item.quantity,
+            price: String(item.unitPrice ?? item.unit_price ?? item.price ?? '0'),
+            imageUrl: (() => {
+              const firstImage = item.product?.images?.[0] ?? (item.product as any)?.imageUrl ?? null;
+              return typeof firstImage === 'string' && firstImage.startsWith('http')
+                ? firstImage
+                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+            })(),
+          }));
+
+          await sendOrderStatusUpdateEmail({
+            to: customerEmail,
+            orderNumber,
+            newStatus: status,
+            customerName: customerName,
+            message: `Your order has been ${status}.`,
+            items,
+          });
+        } catch (err) {
+          console.error('Error sending order status update email:', err);
+        }
+      })();
     } catch (error) {
       console.error("Error updating order status:", error);
       res.status(500).json({ message: "Failed to update order status" });
@@ -670,6 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           orderNumber: orderNumberStr,
           totalAmount: totalStr,
           customerName: delivery?.fullName ?? '',
+          customerEmail: orderData.customerEmail ?? delivery?.email ?? undefined,
           deliveryAddress: {
             fullName: delivery?.fullName ?? '',
             phoneNumber: delivery?.phoneNumber ?? '',

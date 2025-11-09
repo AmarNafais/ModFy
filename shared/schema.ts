@@ -80,6 +80,7 @@ export const orders = mysqlTable("orders", {
   orderNumber: text("order_number").notNull(),
   status: text("status").notNull().default("pending"),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  customerEmail: text("customer_email"),
   deliveryAddress: json("delivery_address").notNull(),
   phoneNumber: text("phone_number").notNull(),
   paymentStatus: text("payment_status").default("pending"),

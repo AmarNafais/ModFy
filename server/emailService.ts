@@ -191,6 +191,7 @@ export async function sendOrderConfirmationEmail(orderData: {
     price: string;
     imageUrl: string;
   }>;
+  customerEmail?: string;
 }): Promise<boolean> {
   try {
     const orderConfirmationEmailHTML = `
@@ -313,6 +314,7 @@ export async function sendOrderConfirmationEmail(orderData: {
             ${orderData.deliveryAddress.addressLine2 ? `<p style="margin: 5px 0;">${orderData.deliveryAddress.addressLine2}</p>` : ''}
             <p style="margin: 5px 0;">${orderData.deliveryAddress.city}, ${orderData.deliveryAddress.postalCode}</p>
             <p style="margin: 5px 0;"><strong>Phone:</strong> ${orderData.deliveryAddress.phoneNumber}</p>
+            ${orderData.customerEmail || (orderData.deliveryAddress as any).email ? `<p style="margin: 5px 0;"><strong>Email:</strong> ${orderData.customerEmail ?? (orderData.deliveryAddress as any).email}</p>` : ''}
           </div>
           
           <p>Please process this order promptly.</p>
@@ -343,6 +345,89 @@ export async function sendOrderConfirmationEmail(orderData: {
     return true;
   } catch (error) {
     console.error("Failed to send order confirmation email:", error);
+    return false;
+  }
+}
+
+export async function sendOrderStatusUpdateEmail(params: {
+  to: string;
+  orderNumber: string;
+  newStatus: string;
+  customerName?: string;
+  message?: string;
+  items?: Array<{
+    productName: string;
+    quantity: number;
+    price: string;
+    imageUrl?: string;
+  }>;
+}): Promise<boolean> {
+  try {
+    const { to, orderNumber, newStatus, customerName = '', message = '', items = [] } = params;
+
+    const statusEmailHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        .email-container { max-width: 600px; margin: 0 auto; font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; }
+        .header { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); color: white; padding: 30px 20px; text-align: center; }
+        .logo { font-size: 28px; font-weight: bold; }
+        .content { padding: 30px 20px; background: #fff; }
+        .status { font-weight: 700; color: #1a1a1a; }
+        .note { margin-top: 15px; color: #555; }
+        .order-item { display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #eee; padding: 12px 0; }
+        .product-image { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 1px solid #e9ecef; }
+        .product-details { flex: 1; }
+        .product-price { text-align: right; min-width: 80px; }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header"><div class="logo">MODFY</div></div>
+        <div class="content">
+          <h2>Order Update - ${orderNumber}</h2>
+          <p>Hi ${customerName || 'Customer'},</p>
+          <p>Your order <strong>${orderNumber}</strong> has been <span class="status">${newStatus.toUpperCase()}</span>.</p>
+
+          ${items.length > 0 ? `
+            <h3 style="margin-top:20px;">Items in this order</h3>
+            ${items.map(item => `
+              <div class="order-item">
+                <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'}" alt="${item.productName}" class="product-image" />
+                <div class="product-details">
+                  <strong>${item.productName}</strong><br />
+                  <small>Qty: ${item.quantity}</small>
+                </div>
+                <div class="product-price">
+                  <strong>LKR ${ (parseFloat(item.price || '0') * item.quantity).toFixed(2) }</strong><br />
+                  <small>LKR ${item.price} each</small>
+                </div>
+              </div>
+            `).join('')}
+          ` : ''}
+
+          <p style="margin-top:20px;">If you have any questions, reply to this email or contact our support team.</p>
+          <p style="margin-top:20px;">Best regards,<br/>The MODFY Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const mailOptions = {
+      from: { name: 'MODFY - Orders', address: 'amarnafais@gmail.com' },
+      to,
+      subject: `Your Order ${orderNumber} has been ${newStatus}`,
+      html: statusEmailHTML,
+      text: `Your order ${orderNumber} status is now ${newStatus}. ${message}`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Order status update email sent to ${to} for ${orderNumber}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send order status update email:', error);
     return false;
   }
 }

@@ -649,6 +649,7 @@ export class DatabaseStorage implements IStorage {
         orderNumber: order.order_number,
         status: order.status,
         totalAmount: order.total_amount,
+        customerEmail: order.customer_email,
         deliveryAddress: typeof order.delivery_address === 'string' ? JSON.parse(order.delivery_address) : order.delivery_address,
         phoneNumber: order.phone_number,
         paymentStatus: order.payment_status,
@@ -707,6 +708,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...order,
+      customerEmail: order.customer_email,
       deliveryAddress: typeof order.deliveryAddress === 'string' ? JSON.parse(order.deliveryAddress) : order.deliveryAddress,
       user,
       items: Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => ({
@@ -745,7 +747,8 @@ export class DatabaseStorage implements IStorage {
     // Ensure we pass null (not undefined) for optional fields to satisfy mysql2 bind rules
     const orderNumberVal = insertOrder.orderNumber ?? null;
     const statusVal = insertOrder.status ?? 'pending';
-    const totalAmountVal = insertOrder.totalAmount ?? null;
+  const totalAmountVal = insertOrder.totalAmount ?? null;
+  const customerEmailVal = insertOrder.customerEmail ?? null;
     const deliveryAddressVal = insertOrder.deliveryAddress ? JSON.stringify(insertOrder.deliveryAddress) : null;
     const phoneNumberVal = insertOrder.phoneNumber ?? null;
     const paymentStatusVal = insertOrder.paymentStatus ?? null;
@@ -757,6 +760,7 @@ export class DatabaseStorage implements IStorage {
       orderNumberVal,
       statusVal,
       totalAmountVal,
+      customerEmailVal,
       deliveryAddressVal,
       phoneNumberVal,
       paymentStatusVal,
@@ -767,7 +771,7 @@ export class DatabaseStorage implements IStorage {
     console.log('DB createOrder - inserting values:', insertValues.map(v => (v === null ? 'NULL' : v)));
 
     await this.pool.execute(
-      'INSERT INTO orders (id, order_number, status, total_amount, delivery_address, phone_number, payment_status, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO orders (id, order_number, status, total_amount, customer_email, delivery_address, phone_number, payment_status, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       insertValues
     );
 
@@ -781,6 +785,7 @@ export class DatabaseStorage implements IStorage {
       orderNumber: row.order_number,
       status: row.status,
       totalAmount: row.total_amount,
+      customerEmail: row.customer_email,
       deliveryAddress: typeof row.delivery_address === 'string' ? JSON.parse(row.delivery_address) : row.delivery_address,
       phoneNumber: row.phone_number,
       paymentStatus: row.payment_status,

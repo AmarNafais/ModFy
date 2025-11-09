@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 
 // Checkout form schema
 const checkoutFormSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   phoneNumber: z.string().min(10, "Please enter a valid phone number"),
   addressLine1: z.string().min(5, "Address must be at least 5 characters"),
@@ -54,6 +55,7 @@ export default function Checkout() {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
+      email: profile?.email || "",
       fullName: "",
       phoneNumber: "",
       addressLine1: "",
@@ -63,6 +65,7 @@ export default function Checkout() {
       notes: "",
     },
     values: profile ? {
+      email: profile.email || "",
       fullName: profile.fullName || "",
       phoneNumber: profile.phoneNumber || "",
       addressLine1: profile.addressLine1 || "",
@@ -85,6 +88,7 @@ export default function Checkout() {
     const orderData = {
       orderNumber: generateOrderNumber(),
       totalAmount: total.toFixed(2),
+      customerEmail: formData.email,
       deliveryAddress: {
         fullName: formData.fullName,
         phoneNumber: formData.phoneNumber,
@@ -300,6 +304,24 @@ export default function Checkout() {
                           <Input
                             placeholder="+94 77 123 4567"
                             data-testid="input-checkout-phone"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="you@example.com"
+                            data-testid="input-checkout-email"
                             {...field}
                           />
                         </FormControl>
