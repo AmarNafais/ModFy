@@ -156,7 +156,7 @@ export class DatabaseStorage implements IStorage {
 
       for (const item of sampleOrderItems) {
         await connection.execute(
-          'INSERT INTO orderItems (id, order_id, product_id, size, color, quantity, unit_price, total_price, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO order_items (id, order_id, product_id, size, color, quantity, unit_price, total_price, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
           item
         );
       }
