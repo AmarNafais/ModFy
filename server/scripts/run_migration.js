@@ -24,7 +24,7 @@ async function run() {
   const sql = fs.readFileSync(sqlPath, 'utf8');
 
   const host = process.env.DB_HOST || '127.0.0.1';
-  const user = process.env.DB_USER || 'root';
+  const user = process.env.DB_USER || 'mysql';
   const password = process.env.DB_PASSWORD || 'Complex123';
   const database = process.env.DB_NAME || 'modfy';
 
