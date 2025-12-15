@@ -67,9 +67,9 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
-export function serveStatic(app:  Express){
-  const distPath = path. resolve(import.meta.dirname, ". .", "dist", "public");
-
+export function serveStatic(app: Express) {
+  const distPath = path. resolve(import.meta.dirname, "public");
+  
   console.log("Looking for static files in:", distPath);
 
   if (!fs.existsSync(distPath)) {
@@ -82,8 +82,8 @@ export function serveStatic(app:  Express){
   app.use(express.static(distPath));
 
   app.use("*", (req, res) => {
-    if (req.path. startsWith('/api')) {
-      return res. status(404).json({ message: 'API route not found' });
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API route not found' });
     }
     
     console.log("Serving index.html for route:", req.path);
