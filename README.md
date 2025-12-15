@@ -91,7 +91,8 @@ DB_USER=mysql
 
 # Application Configuration
 NODE_ENV=development
-PORT=5000
+# Match your chosen dev/prod port; server defaults to 5000 if unset.
+PORT=3000
 ```
 
 ### 4. Setup MySQL Database
@@ -120,7 +121,7 @@ npm run db:migrate
 npm run dev
 ```
 
-The application will be available at **http://localhost:5000**
+The application will be available at **http://localhost:5000** by default (or `PORT` if you override it).
 
 ## 🏗️ Production Build
 
@@ -431,6 +432,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Amar Nafais**
 
 - GitHub: [@AmarNafais](https://github.com/AmarNafais)
+
+## 👥 Contributors
+
+- Amar Nafais — project lead & full-stack development
 
 ## 🙏 Acknowledgments
 
