@@ -83,15 +83,14 @@ Update the `.env` file with your configuration:
 
 ```env
 # Database Configuration
-DB_HOST=127.0.0.1
+DB_HOST=localhost
 DB_NAME=modfy
-DB_PASSWORD=your_secure_password
+DB_PASSWORD=yourpassword
 DB_PORT=3306
 DB_USER=mysql
 
 # Application Configuration
-NODE_ENV=development
-# Match your chosen dev/prod port; server defaults to 5000 if unset.
+NODE_ENV=production
 PORT=3000
 ```
 
