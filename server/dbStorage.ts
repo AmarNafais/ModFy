@@ -304,7 +304,8 @@ export class DatabaseStorage implements IStorage {
       slug: row.slug,
       description: row.description,
       price: row.price,
-      categoryId: row.categoryId,
+      categoryId: row.category_id,
+      subcategoryId: row.subcategory_id,
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
       colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
@@ -344,7 +345,8 @@ export class DatabaseStorage implements IStorage {
       slug: row.slug,
       description: row.description,
       price: row.price,
-      categoryId: row.categoryId,
+      categoryId: row.category_id,
+      subcategoryId: row.subcategory_id,
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
       colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
@@ -384,7 +386,8 @@ export class DatabaseStorage implements IStorage {
       slug: row.slug,
       description: row.description,
       price: row.price,
-      categoryId: row.categoryId,
+      categoryId: row.category_id,
+      subcategoryId: row.subcategory_id,
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
       colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
@@ -415,10 +418,10 @@ export class DatabaseStorage implements IStorage {
     };
 
     await this.pool.execute(
-      'INSERT INTO products (id, name, slug, description, price, category_id, material, sizes, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         id, productData.name, productData.slug, productData.description, productData.price, 
-        productData.categoryId, productData.material, productData.sizes, productData.colors, 
+        productData.categoryId, productData.subcategoryId || null, productData.material, productData.sizes, productData.colors, 
         productData.images, productData.stock_quantity, productData.is_active, productData.is_featured
       ]
     );
@@ -429,30 +432,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
-    const updated_ata: any = {
+    const updated_data: any = {
       ...updates,
       updated_at: new Date(),
     };
 
     if (updates.sizes) {
-      updated_ata.sizes = Array.isArray(updates.sizes) ? JSON.stringify(updates.sizes) : updates.sizes;
+      updated_data.sizes = Array.isArray(updates.sizes) ? JSON.stringify(updates.sizes) : updates.sizes;
     }
     if (updates.colors) {
-      updated_ata.colors = Array.isArray(updates.colors) ? JSON.stringify(updates.colors) : updates.colors;
+      updated_data.colors = Array.isArray(updates.colors) ? JSON.stringify(updates.colors) : updates.colors;
     }
     if (updates.images) {
-      updated_ata.images = Array.isArray(updates.images) ? JSON.stringify(updates.images) : updates.images;
+      updated_data.images = Array.isArray(updates.images) ? JSON.stringify(updates.images) : updates.images;
     }
 
+    // Map camelCase to snake_case for database columns
+    const columnMapping: Record<string, string> = {
+      categoryId: 'category_id',
+      subcategoryId: 'subcategory_id',
+      stockQuantity: 'stock_quantity',
+      stock_quantity: 'stock_quantity',
+      isActive: 'is_active',
+      is_active: 'is_active',
+      isFeatured: 'is_featured',
+      is_featured: 'is_featured',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+      updated_at: 'updated_at'
+    };
+
     // Build the SET clause
-    const setClause = Object.keys(updated_ata)
-      .filter(key => updated_ata[key] !== undefined)
-      .map(key => `${key} = ?`)
+    const setClause = Object.keys(updated_data)
+      .filter(key => updated_data[key] !== undefined)
+      .map(key => `${columnMapping[key] || key} = ?`)
       .join(', ');
 
-    const values = Object.keys(updated_ata)
-      .filter(key => updated_ata[key] !== undefined)
-      .map(key => updated_ata[key]);
+    const values = Object.keys(updated_data)
+      .filter(key => updated_data[key] !== undefined)
+      .map(key => updated_data[key]);
 
     if (values.length === 0) {
       return this.getProduct(id);

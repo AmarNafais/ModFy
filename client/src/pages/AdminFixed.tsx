@@ -33,6 +33,7 @@ export default function Admin() {
     description: '',
     price: '',
     categoryId: '',
+    subcategoryId: '',
     material: '',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Black', 'White'],
@@ -108,6 +109,7 @@ export default function Admin() {
         description: '',
         price: '',
         categoryId: '',
+        subcategoryId: '',
         material: '',
         sizes: ['S', 'M', 'L', 'XL'],
         colors: ['Black', 'White'],
@@ -614,16 +616,16 @@ export default function Admin() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="product-category">Category</Label>
+                        <Label htmlFor="product-category">Main Category</Label>
                         <Select
                           value={productForm.categoryId}
-                          onValueChange={(value) => setProductForm({ ...productForm, categoryId: value })}
+                          onValueChange={(value) => setProductForm({ ...productForm, categoryId: value, subcategoryId: '' })}
                         >
                           <SelectTrigger data-testid="select-product-category">
-                            <SelectValue placeholder="Select category" />
+                            <SelectValue placeholder="Select main category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.isArray(categories) && categories.map((category: any) => (
+                            {Array.isArray(categories) && categories.filter((cat: any) => !cat.parent_id).map((category: any) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}
                               </SelectItem>
@@ -632,6 +634,29 @@ export default function Admin() {
                         </Select>
                       </div>
                       <div>
+                        <Label htmlFor="product-subcategory">Subcategory</Label>
+                        <Select
+                          value={productForm.subcategoryId}
+                          onValueChange={(value) => setProductForm({ ...productForm, subcategoryId: value })}
+                          disabled={!productForm.categoryId}
+                        >
+                          <SelectTrigger data-testid="select-product-subcategory">
+                            <SelectValue placeholder="Select subcategory" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.isArray(categories) && categories
+                              .filter((cat: any) => cat.parent_id === productForm.categoryId)
+                              .map((category: any) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
                         <Label htmlFor="product-material">Material</Label>
                         <Input
                           id="product-material"
@@ -639,6 +664,17 @@ export default function Admin() {
                           onChange={(e) => setProductForm({ ...productForm, material: e.target.value })}
                           placeholder="e.g., Premium Cotton"
                           data-testid="input-product-material"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="product-stock">Stock Quantity</Label>
+                        <Input
+                          id="product-stock"
+                          type="number"
+                          value={productForm.stock_quantity}
+                          onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
+                          placeholder="50"
+                          data-testid="input-product-stock"
                         />
                       </div>
                     </div>
@@ -1052,16 +1088,16 @@ export default function Admin() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="edit-product-category">Category</Label>
+                      <Label htmlFor="edit-product-category">Main Category</Label>
                       <Select
                         value={editingProduct.categoryId}
-                        onValueChange={(value) => setEditingProduct({ ...editingProduct, categoryId: value })}
+                        onValueChange={(value) => setEditingProduct({ ...editingProduct, categoryId: value, subcategoryId: '' })}
                       >
                         <SelectTrigger data-testid="select-edit-product-category">
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Select main category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.isArray(categories) && categories.map((category: any) => (
+                          {Array.isArray(categories) && categories.filter((cat: any) => !cat.parent_id).map((category: any) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
                             </SelectItem>
@@ -1070,6 +1106,29 @@ export default function Admin() {
                       </Select>
                     </div>
                     <div>
+                      <Label htmlFor="edit-product-subcategory">Subcategory</Label>
+                      <Select
+                        value={editingProduct.subcategoryId || ''}
+                        onValueChange={(value) => setEditingProduct({ ...editingProduct, subcategoryId: value })}
+                        disabled={!editingProduct.categoryId}
+                      >
+                        <SelectTrigger data-testid="select-edit-product-subcategory">
+                          <SelectValue placeholder="Select subcategory" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.isArray(categories) && categories
+                            .filter((cat: any) => cat.parent_id === editingProduct.categoryId)
+                            .map((category: any) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
                       <Label htmlFor="edit-product-material">Material</Label>
                       <Input
                         id="edit-product-material"
@@ -1077,6 +1136,17 @@ export default function Admin() {
                         onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
                         placeholder="e.g., Premium Cotton"
                         data-testid="input-edit-product-material"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-product-stock">Stock Quantity</Label>
+                      <Input
+                        id="edit-product-stock"
+                        type="number"
+                        value={editingProduct.stock_quantity || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, stock_quantity: e.target.value })}
+                        placeholder="50"
+                        data-testid="input-edit-product-stock"
                       />
                     </div>
                   </div>

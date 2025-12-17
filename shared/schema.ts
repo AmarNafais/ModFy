@@ -33,6 +33,7 @@ export const products = mysqlTable("products", {
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   categoryId: varchar("category_id", { length: 255 }),
+  subcategoryId: varchar("subcategory_id", { length: 255 }),
   material: text("material"),
   sizes: json("sizes"),
   colors: json("colors"),

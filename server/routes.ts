@@ -482,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, colors, images, stock_quantity, is_featured } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -492,6 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
         price,
         categoryId,
+        subcategoryId,
         material,
         sizes: Array.isArray(sizes) ? sizes : [],
         colors: Array.isArray(colors) ? colors : [],
@@ -512,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured, is_active } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, colors, images, stock_quantity, is_featured, is_active } = req.body;
       
       const updates: any = {};
       
@@ -523,6 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (description !== undefined) updates.description = description;
       if (price !== undefined) updates.price = price;
       if (categoryId !== undefined) updates.categoryId = categoryId;
+      if (subcategoryId !== undefined) updates.subcategoryId = subcategoryId;
       if (material !== undefined) updates.material = material;
       if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
       if (colors !== undefined) updates.colors = Array.isArray(colors) ? colors : [];
