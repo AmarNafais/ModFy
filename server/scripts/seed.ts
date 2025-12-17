@@ -1,10 +1,14 @@
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 async function seed() {
   const pool = mysql.createPool({
     host: process.env.DB_HOST || '127.0.0.1',
-    user: process.env.DB_USER || 'mysql',
+    user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || 'Complex123',
     database: process.env.DB_NAME || 'modfy',
     waitForConnections: true,
@@ -72,18 +76,18 @@ async function seed() {
 
     // Seed products
     const productData = [
-      ["prod-1", "Signature Boxer Brief", "signature-boxer-brief", "Our signature boxer brief with premium comfort and support. Made with the finest materials for all-day comfort.", "48.00", "cat-1", "Premium Cotton", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify(["Black", "White", "Navy", "Gray"]), JSON.stringify(["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"]), 120, true, true],
-      ["prod-2", "Essential Brief", "essential-brief", "Classic brief design with modern comfort technology. Perfect for everyday wear.", "42.00", "cat-2", "Organic Cotton", JSON.stringify(["S", "M", "L", "XL"]), JSON.stringify(["Black", "White", "Navy"]), JSON.stringify(["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"]), 85, true, true],
-      ["prod-3", "Performance Trunk", "performance-trunk", "Athletic performance trunk with moisture-wicking technology and enhanced support.", "55.00", "cat-3", "Technical Blend", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify(["Black", "Navy", "Gray", "White"]), JSON.stringify(["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"]), 95, true, true],
-    ];
+        ["prod-1", "Signature Boxer Brief", "signature-boxer-brief", "Our signature boxer brief with premium comfort and support. Made with the finest materials for all-day comfort.", "48.00", "cat-1", "Premium Cotton", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify({"S": "45.00", "M": "48.00", "L": "52.00", "XL": "56.00", "XXL": "60.00"}), JSON.stringify(["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"]), 120, true, true],
+        ["prod-2", "Essential Brief", "essential-brief", "Classic brief design with modern comfort technology. Perfect for everyday wear.", "42.00", "cat-2", "Organic Cotton", JSON.stringify(["S", "M", "L", "XL"]), JSON.stringify({"S": "40.00", "M": "42.00", "L": "45.00", "XL": "48.00"}), JSON.stringify(["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"]), 85, true, true],
+        ["prod-3", "Performance Trunk", "performance-trunk", "Athletic performance trunk with moisture-wicking technology and enhanced support.", "55.00", "cat-3", "Technical Blend", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify({"S": "52.00", "M": "55.00", "L": "58.00", "XL": "62.00", "XXL": "66.00"}), JSON.stringify(["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"]), 95, true, true],
+      ];
 
-    for (const product of productData) {
-      await connection.execute(
-        'INSERT INTO products (id, name, slug, description, price, category_id, material, sizes, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        product
-      );
-    }
-    console.log(`✓ Created ${productData.length} products`);
+      for (const product of productData) {
+        await connection.execute(
+          'INSERT INTO products (id, name, slug, description, price, category_id, material, sizes, size_pricing, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          product
+        );
+      }
+      console.log(`✓ Created ${productData.length} products`);
 
     // Seed sample orders
     const sampleOrders = [

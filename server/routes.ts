@@ -6,6 +6,7 @@ import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
 import { sendWelcomeEmail, testEmailConnection, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
 import { db } from "./db";
 import { ObjectStorageService } from "./objectStorage";
+import { upload, getImageUrl } from "./uploadService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
@@ -371,6 +372,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, role, isEmailVerified } = req.body;
+
+      // Validate required fields
+      if (!email || !password || !firstName || !lastName) {
+        return res.status(400).json({ message: "Email, password, first name, and last name are required" });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      // Validate password length
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ message: "User with this email already exists" });
+      }
+
+      // Hash the password
+      const bcrypt = await import('bcryptjs');
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Create the user
+      const newUser = await storage.createUser({
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role: role || "customer",
+        isEmailVerified: isEmailVerified ?? false,
+      });
+
+      // Return user without password
+      res.status(201).json({ ...newUser, password: undefined });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Prevent deleting yourself
+      if (req.session?.userId === id) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.deleteUser(id);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { firstName, lastName, role, isEmailVerified } = req.body;
+
+      console.log('PATCH /api/admin/users/:id - Request data:', { id, firstName, lastName, role, isEmailVerified });
+
+      // Validate required fields
+      if (!firstName || !lastName) {
+        return res.status(400).json({ message: "First name and last name are required" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log('PATCH /api/admin/users/:id - User before update:', { id: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role });
+
+      const updatedUser = await storage.updateUser(id, {
+        firstName,
+        lastName,
+        role,
+        isEmailVerified,
+      });
+
+      console.log('PATCH /api/admin/users/:id - User after update:', updatedUser);
+
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+
+      res.json({ ...updatedUser, password: undefined });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   app.get("/api/admin/orders", requireAdmin, async (req, res) => {
     try {
       const orders = await storage.getOrders();
@@ -483,7 +594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, subcategoryId, material, sizes, colors, images, stock_quantity, is_featured } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, images, stock_quantity, is_featured } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -496,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subcategoryId,
         material,
         sizes: Array.isArray(sizes) ? sizes : [],
-        colors: Array.isArray(colors) ? colors : [],
+        sizePricing: sizePricing || {},
         images: Array.isArray(images) ? images : [],
         stock_quantity: parseInt(stock_quantity) || 0,
         is_featured: Boolean(is_featured),
@@ -510,11 +621,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload product image
+  app.post("/api/admin/upload-product-image", requireAdmin, upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Get the image URL
+      const imageUrl = getImageUrl(req.file.path);
+      
+      res.status(200).json({ 
+        success: true,
+        imageUrl,
+        filename: req.file.filename,
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
   // Update product route
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, subcategoryId, material, sizes, colors, images, stock_quantity, is_featured, is_active } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, images, stock_quantity, is_featured, is_active } = req.body;
       
       const updates: any = {};
       
@@ -528,7 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (subcategoryId !== undefined) updates.subcategoryId = subcategoryId;
       if (material !== undefined) updates.material = material;
       if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
-      if (colors !== undefined) updates.colors = Array.isArray(colors) ? colors : [];
+      if (sizePricing !== undefined) updates.sizePricing = sizePricing;
       if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
       if (stock_quantity !== undefined) updates.stock_quantity = parseInt(stock_quantity) || 0;
       if (is_featured !== undefined) updates.is_featured = Boolean(is_featured);

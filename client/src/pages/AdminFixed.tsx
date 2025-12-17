@@ -9,7 +9,7 @@ import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { OrdersTable, UsersTable, ProductsTable, CollectionsTable } from "@/components/admin/tables";
-import { AddProductDialog, AddCategoryDialog, AddSubcategoryDialog, EditProductDialog } from "@/components/admin/dialogs";
+import { AddProductDialog, AddCategoryDialog, AddSubcategoryDialog, EditProductDialog, AddUserDialog, EditUserDialog } from "@/components/admin/dialogs";
 import { CategoriesSection } from "@/components/admin/CategoriesSection";
 import { getProductStatus, getNextStatus, getProductStatusBadgeVariant, getStatusBadgeVariant, getPaymentBadgeVariant } from "@/lib/adminHelpers";
 
@@ -23,7 +23,10 @@ export default function Admin() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isSubcategoryDialogOpen, setIsSubcategoryDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<any>(null);
 
   const [productForm, setProductForm] = useState({
     name: '',
@@ -33,14 +36,11 @@ export default function Admin() {
     subcategoryId: '',
     material: '',
     sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Black', 'White'],
+    sizePricing: { 'S': '45.00', 'M': '48.00', 'L': '52.00', 'XL': '56.00' } as Record<string, string>,
     images: [],
     stock_quantity: '50',
     is_featured: false,
   });
-
-  const [newImageUrl, setNewImageUrl] = useState('');
-  const [editNewImageUrl, setEditNewImageUrl] = useState('');
 
   const [categoryForm, setCategoryForm] = useState({
     name: '',
@@ -109,12 +109,11 @@ export default function Admin() {
         subcategoryId: '',
         material: '',
         sizes: ['S', 'M', 'L', 'XL'],
-        colors: ['Black', 'White'],
+        sizePricing: { 'S': '45.00', 'M': '48.00', 'L': '52.00', 'XL': '56.00' } as Record<string, string>,
         images: [],
         stock_quantity: '50',
         is_featured: false,
       });
-      setNewImageUrl('');
       toast({
         title: "Product Created",
         description: "Product created successfully.",
@@ -150,6 +149,67 @@ export default function Admin() {
       toast({
         title: "Error",
         description: "Failed to create category.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: (userData: any) =>
+      apiRequest("POST", "/api/admin/users", userData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setIsUserDialogOpen(false);
+      toast({
+        title: "User Created",
+        description: "User created successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiRequest("DELETE", `/api/admin/users/${userId}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "User Deleted",
+        description: "User deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
+      apiRequest("PATCH", `/api/admin/users/${userId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+      setIsEditUserDialogOpen(false);
+      setEditingUser(null);
+      toast({
+        title: "User Updated",
+        description: "User updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user.",
         variant: "destructive",
       });
     },
@@ -230,7 +290,6 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setIsEditDialogOpen(false);
       setEditingProduct(null);
-      setEditNewImageUrl('');
       toast({
         title: "Product Updated",
         description: "Product updated successfully.",
@@ -246,53 +305,11 @@ export default function Admin() {
   });
 
   // Functions that depend on state
-  const addImageUrl = () => {
-    const url = newImageUrl.trim();
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      setProductForm((prev: any) => ({
-        ...prev,
-        images: [...prev.images, url]
-      }));
-      setNewImageUrl('');
-      toast({
-        title: "Image Added",
-        description: "Product image URL added successfully.",
-      });
-    } else {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid image URL starting with http:// or https://",
-        variant: "destructive",
-      });
-    }
-  };
-
   const removeImage = (indexToRemove: number) => {
     setProductForm((prev: any) => ({
       ...prev,
       images: prev.images.filter((_: any, index: number) => index !== indexToRemove)
     }));
-  };
-
-  const addEditImageUrl = () => {
-    const url = editNewImageUrl.trim();
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      setEditingProduct((prev: any) => ({
-        ...prev,
-        images: [...prev.images, url]
-      }));
-      setEditNewImageUrl('');
-      toast({
-        title: "Image Added",
-        description: "Product image URL added successfully.",
-      });
-    } else {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid image URL starting with http:// or https://",
-        variant: "destructive",
-      });
-    }
   };
 
   const removeEditImage = (indexToRemove: number) => {
@@ -306,10 +323,9 @@ export default function Admin() {
     setEditingProduct({
       ...product,
       price: product.price.toString(),
-      // stock_quantity: product.stock_quantity.toString(),
       stock_quantity: product.stock_quantity,
       sizes: product.sizes || [],
-      colors: product.colors || [],
+      sizePricing: product.sizePricing || {},
     });
     setIsEditDialogOpen(true);
   };
@@ -426,10 +442,7 @@ export default function Admin() {
                 productForm={productForm}
                 setProductForm={setProductForm}
                 categories={categories}
-                newImageUrl={newImageUrl}
-                setNewImageUrl={setNewImageUrl}
                 removeImage={removeImage}
-                addImageUrl={addImageUrl}
                 onSubmit={() => createProductMutation.mutate(productForm)}
                 isPending={createProductMutation.isPending}
               />
@@ -442,10 +455,7 @@ export default function Admin() {
             editingProduct={editingProduct}
             setEditingProduct={setEditingProduct}
             categories={categories}
-            editNewImageUrl={editNewImageUrl}
-            setEditNewImageUrl={setEditNewImageUrl}
             removeEditImage={removeEditImage}
-            addEditImageUrl={addEditImageUrl}
             onSubmit={() => updateProductMutation.mutate({ id: editingProduct.id, productData: editingProduct })}
             isPending={updateProductMutation.isPending}
           />
@@ -488,7 +498,35 @@ export default function Admin() {
 
         {/* Users Tab */}
         <TabsContent value="users">
-          <UsersTable users={users} />
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <AddUserDialog
+                open={isUserDialogOpen}
+                onOpenChange={setIsUserDialogOpen}
+                onSubmit={(userData) => createUserMutation.mutate(userData)}
+                isLoading={createUserMutation.isPending}
+              />
+            </div>
+            <UsersTable
+              users={users}
+              onEditUser={(user) => {
+                setEditingUser(user);
+                setIsEditUserDialogOpen(true);
+              }}
+              onDeleteUser={(userId) => {
+                if (confirm('Are you sure you want to delete this user?')) {
+                  deleteUserMutation.mutate(userId);
+                }
+              }}
+            />
+            <EditUserDialog
+              open={isEditUserDialogOpen}
+              onOpenChange={setIsEditUserDialogOpen}
+              user={editingUser}
+              onSubmit={(userId, data) => updateUserMutation.mutate({ userId, data })}
+              isLoading={updateUserMutation.isPending}
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

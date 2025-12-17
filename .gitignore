@@ -41,3 +41,7 @@ cookies.txt
 
 # Build artifacts
 *.tsbuildinfo
+
+# Uploaded files
+storage/uploads/*
+!storage/uploads/.gitkeep

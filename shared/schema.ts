@@ -31,12 +31,12 @@ export const products = mysqlTable("products", {
   name: text("name").notNull(),
   slug: text("slug").notNull(),
   description: text("description"),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Base price (for display/sorting)
   categoryId: varchar("category_id", { length: 255 }),
   subcategoryId: varchar("subcategory_id", { length: 255 }),
   material: text("material"),
-  sizes: json("sizes"),
-  colors: json("colors"),
+  sizes: json("sizes"), // Array of size names
+  sizePricing: json("size_pricing"), // Object: { "S": "45.00", "M": "48.00", "L": "52.00" }
   images: json("images"),
   is_active: boolean("is_active").default(true),
   is_featured: boolean("is_featured").default(false),
