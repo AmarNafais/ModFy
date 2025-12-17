@@ -1027,4 +1027,13 @@ export class MemStorage implements IStorage {
 
 import { DatabaseStorage } from "./dbStorage";
 
-export const storage = new DatabaseStorage();
+let storageInstance: DatabaseStorage | null = null;
+
+export const storage = new Proxy({} as DatabaseStorage, {
+  get(target, prop) {
+    if (!storageInstance) {
+      storageInstance = new DatabaseStorage();
+    }
+    return (storageInstance as any)[prop];
+  }
+});
