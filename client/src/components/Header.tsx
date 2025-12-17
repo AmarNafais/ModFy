@@ -4,6 +4,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,8 +24,25 @@ export default function Header({ onCartOpen }: HeaderProps) {
   const { itemCount: wishlistCount } = useWishlist();
   const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+
+  // Fetch categories for the mega menu
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+  });
 
   const is_active = (path: string) => location === path;
+
+  // Group categories by parent
+  const mainCategories = Array.isArray(categories)
+    ? categories.filter((cat: any) => !cat.parent_id)
+    : [];
+
+  const getSubcategories = (parentId: string) => {
+    return Array.isArray(categories)
+      ? categories.filter((cat: any) => cat.parent_id === parentId)
+      : [];
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-luxury-white/95 backdrop-blur-sm border-b border-luxury-muted">
@@ -35,9 +53,66 @@ export default function Header({ onCartOpen }: HeaderProps) {
             <Link href="/collections" data-testid="link-collections" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/collections') ? 'text-gray-900' : ''}`}>
               COLLECTIONS
             </Link>
-            <Link href="/shop" data-testid="link-shop" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/shop') ? 'text-gray-900' : ''}`}>
-              SHOP
-            </Link>
+            <div
+              className="relative"
+              onMouseEnter={() => setShowCategoryMenu(true)}
+              onMouseLeave={() => setShowCategoryMenu(false)}
+            >
+              <Link href="/shop" data-testid="link-shop" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/shop') ? 'text-gray-900' : ''}`}>
+                SHOP
+              </Link>
+
+              {/* Mega Menu */}
+              {showCategoryMenu && mainCategories.length > 0 && (
+                <div className="absolute left-0 top-full pt-2 z-50">
+                  <div className="bg-white border border-gray-200 shadow-lg rounded-md p-6 min-w-[600px]">
+                    <div className="grid grid-cols-2 gap-8">
+                      {mainCategories.map((category: any) => {
+                        const subcategories = getSubcategories(category.id);
+                        return (
+                          <div key={category.id} className="space-y-3">
+                            <a 
+                              href={`/shop?categoryId=${category.id}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                window.history.pushState({}, '', `/shop?categoryId=${category.id}`);
+                                window.dispatchEvent(new Event('locationchange'));
+                                setShowCategoryMenu(false);
+                              }}
+                            >
+                              <h3 className="font-medium text-sm tracking-wide uppercase hover:text-gray-600 transition-colors cursor-pointer">
+                                {category.name}
+                              </h3>
+                            </a>
+                            {subcategories.length > 0 && (
+                              <ul className="space-y-2 pl-2">
+                                {subcategories.map((sub: any) => (
+                                  <li key={sub.id}>
+                                    <a 
+                                      href={`/shop?categoryId=${category.id}&subcategoryId=${sub.id}`}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        window.history.pushState({}, '', `/shop?categoryId=${category.id}&subcategoryId=${sub.id}`);
+                                        window.dispatchEvent(new Event('locationchange'));
+                                        setShowCategoryMenu(false);
+                                      }}
+                                    >
+                                      <span className="text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
+                                        {sub.name}
+                                      </span>
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <Link href="/about" data-testid="link-about" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/about') ? 'text-gray-900' : ''}`}>
               ABOUT
             </Link>
@@ -146,16 +221,79 @@ export default function Header({ onCartOpen }: HeaderProps) {
                   COLLECTIONS
                 </a>
               </Link>
-              <Link href="/shop" data-testid="link-shop-mobile">
-                <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+              
+              {/* Mobile Shop with Categories */}
+              <div>
+                <button
+                  onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+                  className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors w-full text-left flex items-center justify-between"
+                  data-testid="button-shop-mobile"
+                >
                   SHOP
-                </a>
-              </Link>
+                  <span className="text-xs">{showCategoryMenu ? '▼' : '▶'}</span>
+                </button>
+                
+                {showCategoryMenu && (
+                  <div className="mt-2 pl-4 space-y-3">
+                    {mainCategories.map((category: any) => {
+                      const subcategories = getSubcategories(category.id);
+                      return (
+                        <div key={category.id} className="space-y-2">
+                          <a 
+                            href={`/shop?categoryId=${category.id}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.history.pushState({}, '', `/shop?categoryId=${category.id}`);
+                              window.dispatchEvent(new Event('locationchange'));
+                              setIsMobileMenuOpen(false);
+                              setShowCategoryMenu(false);
+                            }}
+                          >
+                            <div className="font-medium text-xs tracking-wide uppercase hover:text-gray-600 transition-colors cursor-pointer">
+                              {category.name}
+                            </div>
+                          </a>
+                          {subcategories.length > 0 && (
+                            <ul className="space-y-1.5 pl-3">
+                              {subcategories.map((sub: any) => (
+                                <li key={sub.id}>
+                                  <a 
+                                    href={`/shop?categoryId=${category.id}&subcategoryId=${sub.id}`}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      window.history.pushState({}, '', `/shop?categoryId=${category.id}&subcategoryId=${sub.id}`);
+                                      window.dispatchEvent(new Event('locationchange'));
+                                      setIsMobileMenuOpen(false);
+                                      setShowCategoryMenu(false);
+                                    }}
+                                  >
+                                    <span className="text-xs text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
+                                      {sub.name}
+                                    </span>
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              
               <Link href="/about" data-testid="link-about-mobile">
                 <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
                   ABOUT
                 </a>
               </Link>
+              {(user as any)?.role === 'admin' && (
+                <Link href="/admin" data-testid="link-admin-mobile">
+                  <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+                    ADMIN
+                  </a>
+                </Link>
+              )}
             </div>
           </div>
         )}

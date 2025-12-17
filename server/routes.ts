@@ -148,10 +148,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { categoryId, is_featured, is_active } = req.query;
+      const { categoryId, subcategoryId, is_featured, is_active } = req.query;
       const filters: any = {};
       
       if (categoryId) filters.categoryId = categoryId as string;
+      if (subcategoryId) filters.subcategoryId = subcategoryId as string;
       if (is_featured !== undefined) filters.is_featured = is_featured === 'true';
       if (is_active !== undefined) filters.is_active = is_active === 'true';
 
@@ -482,7 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, colors, images, stock_quantity, is_featured } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -492,6 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
         price,
         categoryId,
+        subcategoryId,
         material,
         sizes: Array.isArray(sizes) ? sizes : [],
         colors: Array.isArray(colors) ? colors : [],
@@ -512,7 +514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured, is_active } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, colors, images, stock_quantity, is_featured, is_active } = req.body;
       
       const updates: any = {};
       
@@ -523,6 +525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (description !== undefined) updates.description = description;
       if (price !== undefined) updates.price = price;
       if (categoryId !== undefined) updates.categoryId = categoryId;
+      if (subcategoryId !== undefined) updates.subcategoryId = subcategoryId;
       if (material !== undefined) updates.material = material;
       if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
       if (colors !== undefined) updates.colors = Array.isArray(colors) ? colors : [];
@@ -546,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/categories", requireAdmin, async (req, res) => {
     try {
-      const { name, description, imageUrl } = req.body;
+      const { name, description, imageUrl, parentId } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -555,6 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         slug,
         description,
         imageUrl,
+        parentId: parentId || null,
         is_active: true,
       });
       
@@ -562,6 +566,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log("Deleting category:", id);
+      
+      // Get all subcategories
+      const allCategories = await storage.getCategories();
+      const subcategories = allCategories.filter((cat: any) => cat.parent_id === id);
+      console.log("Found subcategories:", subcategories.length);
+      
+      // Delete all products in this category and subcategories
+      const categoriesToDelete = [id, ...subcategories.map((cat: any) => cat.id)];
+      const allProducts = await storage.getProducts();
+      const productsToDelete = allProducts.filter((product: any) => 
+        categoriesToDelete.includes(product.categoryId)
+      );
+      console.log("Found products to delete:", productsToDelete.length);
+      
+      for (const product of productsToDelete) {
+        console.log("Deleting product:", product.id);
+        await storage.deleteProduct(product.id);
+      }
+      
+      // Delete all subcategories
+      for (const subcat of subcategories) {
+        console.log("Deleting subcategory:", subcat.id);
+        await storage.deleteCategory(subcat.id);
+      }
+      
+      // Delete the category itself
+      console.log("Deleting main category:", id);
+      await storage.deleteCategory(id);
+      console.log("Category deleted successfully");
+      
+      res.json({ message: "Category and related items deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
     }
   });
 

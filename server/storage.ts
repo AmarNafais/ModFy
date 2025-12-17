@@ -24,6 +24,7 @@ export interface IStorage {
   getCategory(id: string): Promise<Category | undefined>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
 
   // Product operations
   getProducts(filters?: { categoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]>;
@@ -663,6 +664,10 @@ export class MemStorage implements IStorage {
     return category;
   }
 
+  async deleteCategory(id: string): Promise<void> {
+    this.categories.delete(id);
+  }
+
   // Product operations
   async getProducts(filters?: { categoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]> {
     let products = Array.from(this.products.values());
@@ -1027,4 +1032,13 @@ export class MemStorage implements IStorage {
 
 import { DatabaseStorage } from "./dbStorage";
 
-export const storage = new DatabaseStorage();
+let storageInstance: DatabaseStorage | null = null;
+
+export const storage = new Proxy({} as DatabaseStorage, {
+  get(target, prop) {
+    if (!storageInstance) {
+      storageInstance = new DatabaseStorage();
+    }
+    return (storageInstance as any)[prop];
+  }
+});
