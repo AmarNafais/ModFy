@@ -24,6 +24,7 @@ export default function Admin() {
 
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isSubcategoryDialogOpen, setIsSubcategoryDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
 
@@ -47,6 +48,7 @@ export default function Admin() {
     name: '',
     description: '',
     imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+    parentId: '',
   });
 
   const isAdmin = Boolean(!isLoading && user && (user as any).role === 'admin');
@@ -138,6 +140,7 @@ export default function Admin() {
         name: '',
         description: '',
         imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+        parentId: '',
       });
       toast({
         title: "Category Created",
@@ -148,6 +151,25 @@ export default function Admin() {
       toast({
         title: "Error",
         description: "Failed to create category.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (categoryId: string) =>
+      apiRequest("DELETE", `/api/admin/categories/${categoryId}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/product-types"] });
+      toast({
+        title: "Category Deleted",
+        description: "Category and related items deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete category.",
         variant: "destructive",
       });
     },
@@ -457,7 +479,7 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="product-types" className="flex items-center gap-2" data-testid="tab-product-types">
             <Settings className="w-4 h-4" />
-            Product Types
+            Categories
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2" data-testid="tab-users">
             <Users className="w-4 h-4" />
@@ -1390,102 +1412,266 @@ export default function Admin() {
         {/* Product Types Tab */}
         <TabsContent value="product-types">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
                 Product Types (Categories)
               </CardTitle>
-              <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2" data-testid="button-create-category">
-                    <Plus className="w-4 h-4" />
-                    Create Category
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg w-full mx-4 sm:mx-auto max-h-[70vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Create New Category</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div>
-                      <Label htmlFor="category-name">Category Name</Label>
-                      <Input
-                        id="category-name"
-                        value={categoryForm.name}
-                        onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                        placeholder="Enter category name"
-                        data-testid="input-category-name"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="category-description">Description</Label>
-                      <Textarea
-                        id="category-description"
-                        value={categoryForm.description}
-                        onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                        placeholder="Enter category description"
-                        data-testid="textarea-category-description"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="category-image">Image URL</Label>
-                      <Input
-                        id="category-image"
-                        value={categoryForm.imageUrl}
-                        onChange={(e) => setCategoryForm({ ...categoryForm, imageUrl: e.target.value })}
-                        placeholder="https://example.com/image.jpg"
-                        data-testid="input-category-image"
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsCategoryDialogOpen(false)}
-                        data-testid="button-cancel-category"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => createCategoryMutation.mutate(categoryForm)}
-                        disabled={createCategoryMutation.isPending}
-                        data-testid="button-submit-category"
-                      >
-                        {createCategoryMutation.isPending ? 'Creating...' : 'Create Category'}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(categories) && categories.map((category: any) => (
-                    <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
-                      <TableCell className="font-medium" data-testid={`text-category-name-${category.id}`}>
-                        {category.name}
-                      </TableCell>
-                      <TableCell data-testid={`text-category-description-${category.id}`}>
-                        {category.description}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={category.is_active ? "default" : "secondary"} data-testid={`badge-category-active-${category.id}`}>
-                          {category.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
+            <CardContent className="space-y-8">
+              {/* Main Categories Table */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium">Main Categories</h3>
+                  <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="flex items-center gap-2"
+                        data-testid="button-create-main-category"
+                        onClick={() => setCategoryForm({ ...categoryForm, parentId: '' })}
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Main Category
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg w-full mx-4 sm:mx-auto max-h-[70vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Create New Category</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div>
+                          <Label htmlFor="category-name">Category Name</Label>
+                          <Input
+                            id="category-name"
+                            value={categoryForm.name}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                            placeholder="Enter category name"
+                            data-testid="input-category-name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="category-description">Description</Label>
+                          <Textarea
+                            id="category-description"
+                            value={categoryForm.description}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                            placeholder="Enter category description"
+                            data-testid="textarea-category-description"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="category-image">Image URL</Label>
+                          <Input
+                            id="category-image"
+                            value={categoryForm.imageUrl}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, imageUrl: e.target.value })}
+                            placeholder="https://example.com/image.jpg"
+                            data-testid="input-category-image"
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsCategoryDialogOpen(false)}
+                            data-testid="button-cancel-category"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => createCategoryMutation.mutate(categoryForm)}
+                            disabled={createCategoryMutation.isPending}
+                            data-testid="button-submit-category"
+                          >
+                            {createCategoryMutation.isPending ? 'Creating...' : 'Create Category'}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.isArray(categories) && categories.filter((cat: any) => !cat.parent_id).map((category: any) => (
+                      <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
+                        <TableCell className="font-medium" data-testid={`text-category-name-${category.id}`}>
+                          {category.name}
+                        </TableCell>
+                        <TableCell data-testid={`text-category-description-${category.id}`}>
+                          {category.description || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={category.is_active ? "default" : "secondary"} data-testid={`badge-category-active-${category.id}`}>
+                            {category.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteCategoryMutation.mutate(category.id)}
+                            disabled={deleteCategoryMutation.isPending}
+                            data-testid={`button-delete-category-${category.id}`}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Subcategories Table */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium">Subcategories</h3>
+                  <Dialog open={isSubcategoryDialogOpen} onOpenChange={setIsSubcategoryDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        className="flex items-center gap-2"
+                        data-testid="button-create-subcategory"
+                        onClick={() => setCategoryForm({ ...categoryForm, parentId: 'none' })}
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Subcategory
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg w-full mx-4 sm:mx-auto max-h-[70vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Create New Subcategory</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div>
+                          <Label htmlFor="subcategory-name">Subcategory Name</Label>
+                          <Input
+                            id="subcategory-name"
+                            value={categoryForm.name}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                            placeholder="Enter subcategory name"
+                            data-testid="input-subcategory-name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="subcategory-parent">Parent Category (Required)</Label>
+                          <Select
+                            value={categoryForm.parentId || "none"}
+                            onValueChange={(value) => setCategoryForm({ ...categoryForm, parentId: value === "none" ? "" : value })}
+                          >
+                            <SelectTrigger data-testid="select-subcategory-parent">
+                              <SelectValue placeholder="Select parent category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.isArray(categories) && categories.filter((cat: any) => !cat.parent_id).map((category: any) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="subcategory-description">Description</Label>
+                          <Textarea
+                            id="subcategory-description"
+                            value={categoryForm.description}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                            placeholder="Enter subcategory description"
+                            data-testid="textarea-subcategory-description"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="subcategory-image">Image URL</Label>
+                          <Input
+                            id="subcategory-image"
+                            value={categoryForm.imageUrl}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, imageUrl: e.target.value })}
+                            placeholder="https://example.com/image.jpg"
+                            data-testid="input-subcategory-image"
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsSubcategoryDialogOpen(false)}
+                            data-testid="button-cancel-subcategory"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              createCategoryMutation.mutate(categoryForm);
+                              setIsSubcategoryDialogOpen(false);
+                            }}
+                            disabled={createCategoryMutation.isPending || !categoryForm.parentId}
+                            data-testid="button-submit-subcategory"
+                          >
+                            {createCategoryMutation.isPending ? 'Creating...' : 'Create Subcategory'}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Parent Category</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.isArray(categories) && categories.filter((cat: any) => cat.parent_id).map((category: any) => {
+                      const parentCategory = categories.find((c: any) => c.id === category.parent_id);
+                      return (
+                        <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
+                          <TableCell className="font-medium" data-testid={`text-category-name-${category.id}`}>
+                            {category.name}
+                          </TableCell>
+                          <TableCell data-testid={`text-category-parent-${category.id}`}>
+                            {parentCategory ? parentCategory.name : '-'}
+                          </TableCell>
+                          <TableCell data-testid={`text-category-description-${category.id}`}>
+                            {category.description || '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={category.is_active ? "default" : "secondary"} data-testid={`badge-category-active-${category.id}`}>
+                              {category.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteCategoryMutation.mutate(category.id)}
+                              disabled={deleteCategoryMutation.isPending}
+                              data-testid={`button-delete-category-${category.id}`}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

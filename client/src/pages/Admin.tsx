@@ -44,6 +44,7 @@ export default function Admin() {
     name: '',
     description: '',
     imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+    parentId: '',
   });
 
   // All queries need to be called consistently
@@ -188,6 +189,7 @@ export default function Admin() {
         name: '',
         description: '',
         imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+        parentId: '',
       });
       toast({
         title: "Category Created",
@@ -308,7 +310,7 @@ export default function Admin() {
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="collections">Collections</TabsTrigger>
-          <TabsTrigger value="product-types">Product Types</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
 
@@ -656,13 +658,13 @@ export default function Admin() {
           </Card>
         </TabsContent>
 
-        {/* Product Types Tab */}
-        <TabsContent value="product-types">
+        {/* Categories Tab */}
+        <TabsContent value="categories">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                Product Types (Categories)
+                Categories
               </CardTitle>
               <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
                 <DialogTrigger asChild>
@@ -685,6 +687,25 @@ export default function Admin() {
                         placeholder="Enter category name"
                         data-testid="input-category-name"
                       />
+                    </div>
+                    <div>
+                      <Label htmlFor="category-parent">Parent Category (Optional)</Label>
+                      <Select
+                        value={categoryForm.parentId}
+                        onValueChange={(value) => setCategoryForm({ ...categoryForm, parentId: value })}
+                      >
+                        <SelectTrigger data-testid="select-category-parent">
+                          <SelectValue placeholder="None (Main Category)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None (Main Category)</SelectItem>
+                          {Array.isArray(categories) && categories.filter((cat: any) => !cat.parentId).map((category: any) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="category-description">Description</Label>
@@ -733,28 +754,39 @@ export default function Admin() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Parent Category</TableHead>
                     <TableHead>Slug</TableHead>
-                    <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
-                      <TableCell className="font-mono text-sm text-gray-600">{category.slug}</TableCell>
-                      <TableCell>{category.description}</TableCell>
-                      <TableCell>
-                        <Badge variant={category.is_active ? "default" : "secondary"}>
-                          {category.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(category.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {categories.map((category) => {
+                    const parentCategory = category.parentId
+                      ? categories.find((c: any) => c.id === category.parentId)
+                      : null;
+                    return (
+                      <TableRow key={category.id}>
+                        <TableCell className="font-medium">{category.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={category.parentId ? "outline" : "default"}>
+                            {category.parentId ? 'Subcategory' : 'Main'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{parentCategory ? parentCategory.name : '-'}</TableCell>
+                        <TableCell className="font-mono text-sm text-gray-600">{category.slug}</TableCell>
+                        <TableCell>
+                          <Badge variant={category.is_active ? "default" : "secondary"}>
+                            {category.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(category.createdAt).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>

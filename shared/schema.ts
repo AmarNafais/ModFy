@@ -21,6 +21,7 @@ export const categories = mysqlTable("categories", {
   slug: text("slug").notNull(),
   description: text("description"),
   imageUrl: text("image_url"),
+  parentId: varchar("parent_id", { length: 255 }),
   is_active: boolean("is_active").default(true),
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });

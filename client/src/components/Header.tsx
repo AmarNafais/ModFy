@@ -4,6 +4,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,8 +24,25 @@ export default function Header({ onCartOpen }: HeaderProps) {
   const { itemCount: wishlistCount } = useWishlist();
   const { user, isAuthenticated, logout, isLoggingOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+
+  // Fetch categories for the mega menu
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+  });
 
   const is_active = (path: string) => location === path;
+
+  // Group categories by parent
+  const mainCategories = Array.isArray(categories)
+    ? categories.filter((cat: any) => !cat.parent_id)
+    : [];
+
+  const getSubcategories = (parentId: string) => {
+    return Array.isArray(categories)
+      ? categories.filter((cat: any) => cat.parent_id === parentId)
+      : [];
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-luxury-white/95 backdrop-blur-sm border-b border-luxury-muted">
@@ -35,9 +53,50 @@ export default function Header({ onCartOpen }: HeaderProps) {
             <Link href="/collections" data-testid="link-collections" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/collections') ? 'text-gray-900' : ''}`}>
               COLLECTIONS
             </Link>
-            <Link href="/shop" data-testid="link-shop" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/shop') ? 'text-gray-900' : ''}`}>
-              SHOP
-            </Link>
+            <div
+              className="relative"
+              onMouseEnter={() => setShowCategoryMenu(true)}
+              onMouseLeave={() => setShowCategoryMenu(false)}
+            >
+              <Link href="/shop" data-testid="link-shop" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/shop') ? 'text-gray-900' : ''}`}>
+                SHOP
+              </Link>
+
+              {/* Mega Menu */}
+              {showCategoryMenu && mainCategories.length > 0 && (
+                <div className="absolute left-0 top-full pt-2 z-50">
+                  <div className="bg-white border border-gray-200 shadow-lg rounded-md p-6 min-w-[600px]">
+                    <div className="grid grid-cols-2 gap-8">
+                      {mainCategories.map((category: any) => {
+                        const subcategories = getSubcategories(category.id);
+                        return (
+                          <div key={category.id} className="space-y-3">
+                            <Link href={`/shop?category=${category.slug}`}>
+                              <h3 className="font-medium text-sm tracking-wide uppercase hover:text-gray-600 transition-colors">
+                                {category.name}
+                              </h3>
+                            </Link>
+                            {subcategories.length > 0 && (
+                              <ul className="space-y-2 pl-2">
+                                {subcategories.map((sub: any) => (
+                                  <li key={sub.id}>
+                                    <Link href={`/shop?category=${sub.slug}`}>
+                                      <span className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                                        {sub.name}
+                                      </span>
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <Link href="/about" data-testid="link-about" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/about') ? 'text-gray-900' : ''}`}>
               ABOUT
             </Link>

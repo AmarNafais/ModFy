@@ -255,13 +255,17 @@ export class DatabaseStorage implements IStorage {
   async createCategory(category: InsertCategory): Promise<Category> {
     const id = randomUUID();
     await this.pool.execute(
-      'INSERT INTO categories (id, name, slug, description, image_url) VALUES (?, ?, ?, ?, ?)',
-      [id, category.name, category.slug, category.description, category.imageUrl]
+      'INSERT INTO categories (id, name, slug, description, image_url, parent_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, category.name, category.slug, category.description, category.imageUrl, category.parentId || null, category.is_active ?? true]
     );
 
     const newCategory = await this.getCategory(id);
     if (!newCategory) throw new Error("Failed to create category");
     return newCategory;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await this.pool.execute('DELETE FROM categories WHERE id = ?', [id]);
   }
 
   // Product operations

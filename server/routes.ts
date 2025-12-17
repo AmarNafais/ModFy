@@ -546,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/categories", requireAdmin, async (req, res) => {
     try {
-      const { name, description, imageUrl } = req.body;
+      const { name, description, imageUrl, parentId } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -555,6 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         slug,
         description,
         imageUrl,
+        parentId: parentId || null,
         is_active: true,
       });
       
@@ -562,6 +563,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log("Deleting category:", id);
+      
+      // Get all subcategories
+      const allCategories = await storage.getCategories();
+      const subcategories = allCategories.filter((cat: any) => cat.parent_id === id);
+      console.log("Found subcategories:", subcategories.length);
+      
+      // Delete all products in this category and subcategories
+      const categoriesToDelete = [id, ...subcategories.map((cat: any) => cat.id)];
+      const allProducts = await storage.getProducts();
+      const productsToDelete = allProducts.filter((product: any) => 
+        categoriesToDelete.includes(product.categoryId)
+      );
+      console.log("Found products to delete:", productsToDelete.length);
+      
+      for (const product of productsToDelete) {
+        console.log("Deleting product:", product.id);
+        await storage.deleteProduct(product.id);
+      }
+      
+      // Delete all subcategories
+      for (const subcat of subcategories) {
+        console.log("Deleting subcategory:", subcat.id);
+        await storage.deleteCategory(subcat.id);
+      }
+      
+      // Delete the category itself
+      console.log("Deleting main category:", id);
+      await storage.deleteCategory(id);
+      console.log("Category deleted successfully");
+      
+      res.json({ message: "Category and related items deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
     }
   });
 
