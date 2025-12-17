@@ -221,16 +221,79 @@ export default function Header({ onCartOpen }: HeaderProps) {
                   COLLECTIONS
                 </a>
               </Link>
-              <Link href="/shop" data-testid="link-shop-mobile">
-                <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+              
+              {/* Mobile Shop with Categories */}
+              <div>
+                <button
+                  onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+                  className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors w-full text-left flex items-center justify-between"
+                  data-testid="button-shop-mobile"
+                >
                   SHOP
-                </a>
-              </Link>
+                  <span className="text-xs">{showCategoryMenu ? '▼' : '▶'}</span>
+                </button>
+                
+                {showCategoryMenu && (
+                  <div className="mt-2 pl-4 space-y-3">
+                    {mainCategories.map((category: any) => {
+                      const subcategories = getSubcategories(category.id);
+                      return (
+                        <div key={category.id} className="space-y-2">
+                          <a 
+                            href={`/shop?categoryId=${category.id}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.history.pushState({}, '', `/shop?categoryId=${category.id}`);
+                              window.dispatchEvent(new Event('locationchange'));
+                              setIsMobileMenuOpen(false);
+                              setShowCategoryMenu(false);
+                            }}
+                          >
+                            <div className="font-medium text-xs tracking-wide uppercase hover:text-gray-600 transition-colors cursor-pointer">
+                              {category.name}
+                            </div>
+                          </a>
+                          {subcategories.length > 0 && (
+                            <ul className="space-y-1.5 pl-3">
+                              {subcategories.map((sub: any) => (
+                                <li key={sub.id}>
+                                  <a 
+                                    href={`/shop?categoryId=${category.id}&subcategoryId=${sub.id}`}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      window.history.pushState({}, '', `/shop?categoryId=${category.id}&subcategoryId=${sub.id}`);
+                                      window.dispatchEvent(new Event('locationchange'));
+                                      setIsMobileMenuOpen(false);
+                                      setShowCategoryMenu(false);
+                                    }}
+                                  >
+                                    <span className="text-xs text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
+                                      {sub.name}
+                                    </span>
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              
               <Link href="/about" data-testid="link-about-mobile">
                 <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
                   ABOUT
                 </a>
               </Link>
+              {(user as any)?.role === 'admin' && (
+                <Link href="/admin" data-testid="link-admin-mobile">
+                  <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+                    ADMIN
+                  </a>
+                </Link>
+              )}
             </div>
           </div>
         )}
