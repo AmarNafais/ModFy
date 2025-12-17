@@ -8,6 +8,13 @@
       "when": 1755868206179,
       "tag": "0000_clumsy_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1765985305362,
+      "tag": "0001_known_pestilence",
+      "breakpoints": true
     }
   ]
 }
