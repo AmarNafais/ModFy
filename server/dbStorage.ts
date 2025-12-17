@@ -269,7 +269,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Product operations
-  async getProducts(filters?: { categoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]> {
+  async getProducts(filters?: { categoryId?: string; subcategoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]> {
     let query = `
       SELECT p.*, c.id as category_id, c.name as category_name, c.slug as category_slug, 
              c.description as category_description, c.image_url as category_imageUrl
@@ -282,6 +282,10 @@ export class DatabaseStorage implements IStorage {
     if (filters?.categoryId) {
       query += ' AND p.category_id = ?';
       params.push(filters.categoryId);
+    }
+    if (filters?.subcategoryId) {
+      query += ' AND p.subcategory_id = ?';
+      params.push(filters.subcategoryId);
     }
     if (filters?.is_featured !== undefined) {
       query += ' AND p.is_featured = ?';

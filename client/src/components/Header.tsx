@@ -71,20 +71,36 @@ export default function Header({ onCartOpen }: HeaderProps) {
                         const subcategories = getSubcategories(category.id);
                         return (
                           <div key={category.id} className="space-y-3">
-                            <Link href={`/shop?category=${category.slug}`}>
-                              <h3 className="font-medium text-sm tracking-wide uppercase hover:text-gray-600 transition-colors">
+                            <a 
+                              href={`/shop?categoryId=${category.id}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                window.history.pushState({}, '', `/shop?categoryId=${category.id}`);
+                                window.dispatchEvent(new Event('locationchange'));
+                                setShowCategoryMenu(false);
+                              }}
+                            >
+                              <h3 className="font-medium text-sm tracking-wide uppercase hover:text-gray-600 transition-colors cursor-pointer">
                                 {category.name}
                               </h3>
-                            </Link>
+                            </a>
                             {subcategories.length > 0 && (
                               <ul className="space-y-2 pl-2">
                                 {subcategories.map((sub: any) => (
                                   <li key={sub.id}>
-                                    <Link href={`/shop?category=${sub.slug}`}>
-                                      <span className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                                    <a 
+                                      href={`/shop?categoryId=${category.id}&subcategoryId=${sub.id}`}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        window.history.pushState({}, '', `/shop?categoryId=${category.id}&subcategoryId=${sub.id}`);
+                                        window.dispatchEvent(new Event('locationchange'));
+                                        setShowCategoryMenu(false);
+                                      }}
+                                    >
+                                      <span className="text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
                                         {sub.name}
                                       </span>
-                                    </Link>
+                                    </a>
                                   </li>
                                 ))}
                               </ul>
