@@ -51,7 +51,10 @@ export class DatabaseStorage implements IStorage {
       queueLimit: 0
     });
     
-    this.seedData();
+    // Auto-seed on startup if AUTO_SEED=true (disabled by default)
+    if (process.env.AUTO_SEED === 'true') {
+      this.seedData();
+    }
   }
 
   private async seedData() {
