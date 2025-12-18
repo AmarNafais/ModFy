@@ -8,6 +8,8 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<void>;
   
   // Auth operations
   registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User>;
@@ -18,6 +20,7 @@ export interface IStorage {
   getOrder(id: string): Promise<OrderWithItems | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<void>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -599,6 +602,23 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  async deleteUser(id: string): Promise<void> {
+    this.users.delete(id);
+  }
+
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = {
+      ...user,
+      ...updates,
+      updated_at: new Date(),
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
   // Auth operations
   async registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User> {
     // Check if user already exists
@@ -987,6 +1007,17 @@ export class MemStorage implements IStorage {
     const updatedOrder = { ...order, status, updated_at: new Date() };
     this.orders.set(id, updatedOrder);
     return updatedOrder;
+  }
+
+  async deleteOrder(id: string): Promise<void> {
+    // Delete order items first
+    const orderItemsToDelete = Array.from(this.orderItems.values()).filter(
+      item => item.orderId === id
+    );
+    orderItemsToDelete.forEach(item => this.orderItems.delete(item.id));
+    
+    // Delete the order
+    this.orders.delete(id);
   }
 
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {

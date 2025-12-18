@@ -111,14 +111,14 @@ export class DatabaseStorage implements IStorage {
 
       // Seed products
       const productData = [
-        ["prod-1", "Signature Boxer Brief", "signature-boxer-brief", "Our signature boxer brief with premium comfort and support. Made with the finest materials for all-day comfort.", "48.00", "cat-1", "Premium Cotton", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify(["Black", "White", "Navy", "Gray"]), JSON.stringify(["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"]), 120, true, true],
-        ["prod-2", "Essential Brief", "essential-brief", "Classic brief design with modern comfort technology. Perfect for everyday wear.", "42.00", "cat-2", "Organic Cotton", JSON.stringify(["S", "M", "L", "XL"]), JSON.stringify(["Black", "White", "Navy"]), JSON.stringify(["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"]), 85, true, true],
-        ["prod-3", "Performance Trunk", "performance-trunk", "Athletic performance trunk with moisture-wicking technology and enhanced support.", "55.00", "cat-3", "Technical Blend", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify(["Black", "Navy", "Gray", "White"]), JSON.stringify(["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"]), 95, true, true],
+        ["prod-1", "Signature Boxer Brief", "signature-boxer-brief", "Our signature boxer brief with premium comfort and support. Made with the finest materials for all-day comfort.", "48.00", "cat-1", "Premium Cotton", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify({"S": "45.00", "M": "48.00", "L": "52.00", "XL": "56.00", "XXL": "60.00"}), JSON.stringify(["Black", "White", "Navy", "Gray"]), JSON.stringify(["https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"]), 120, true, true],
+        ["prod-2", "Essential Brief", "essential-brief", "Classic brief design with modern comfort technology. Perfect for everyday wear.", "42.00", "cat-2", "Organic Cotton", JSON.stringify(["S", "M", "L", "XL"]), JSON.stringify({"S": "40.00", "M": "42.00", "L": "45.00", "XL": "48.00"}), JSON.stringify(["Black", "White", "Navy"]), JSON.stringify(["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600"]), 85, true, true],
+        ["prod-3", "Performance Trunk", "performance-trunk", "Athletic performance trunk with moisture-wicking technology and enhanced support.", "55.00", "cat-3", "Technical Blend", JSON.stringify(["S", "M", "L", "XL", "XXL"]), JSON.stringify({"S": "52.00", "M": "55.00", "L": "58.00", "XL": "62.00", "XXL": "66.00"}), JSON.stringify(["Black", "Navy", "Gray", "White"]), JSON.stringify(["https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"]), 95, true, true],
       ];
 
       for (const product of productData) {
         await connection.execute(
-          'INSERT INTO products (id, name, slug, description, price, category_id, material, sizes, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO products (id, name, slug, description, price, category_id, material, sizes, size_pricing, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           product
         );
       }
@@ -177,17 +177,55 @@ export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [rows] = await this.pool.execute('SELECT * FROM users WHERE id = ?', [id]);
-    return Array.isArray(rows) && rows.length > 0 ? rows[0] as User : undefined;
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const row: any = rows[0];
+    return {
+      id: row.id,
+      email: row.email,
+      password: row.password,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      role: row.role,
+      isEmailVerified: row.is_email_verified,
+      createdAt: row.created_at,
+      updated_at: row.updated_at,
+    } as User;
   }
 
   async getAllUsers(): Promise<User[]> {
     const [rows] = await this.pool.execute('SELECT * FROM users');
-    return Array.isArray(rows) ? (rows as User[]) : [];
+    if (!Array.isArray(rows)) return [];
+    
+    return rows.map((row: any) => ({
+      id: row.id,
+      email: row.email,
+      password: row.password,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      role: row.role,
+      isEmailVerified: row.is_email_verified,
+      createdAt: row.created_at,
+      updated_at: row.updated_at,
+    })) as User[];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [rows] = await this.pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    return Array.isArray(rows) && rows.length > 0 ? rows[0] as User : undefined;
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const row: any = rows[0];
+    return {
+      id: row.id,
+      email: row.email,
+      password: row.password,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      role: row.role,
+      isEmailVerified: row.is_email_verified,
+      createdAt: row.created_at,
+      updated_at: row.updated_at,
+    } as User;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -207,6 +245,44 @@ export class DatabaseStorage implements IStorage {
     const user = await this.getUser(id);
     if (!user) throw new Error("Failed to create user");
     return user;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await this.pool.execute('DELETE FROM users WHERE id = ?', [id]);
+  }
+
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const setFields: string[] = [];
+    const values: any[] = [];
+
+    if (updates.firstName !== undefined) {
+      setFields.push('first_name = ?');
+      values.push(updates.firstName);
+    }
+    if (updates.lastName !== undefined) {
+      setFields.push('last_name = ?');
+      values.push(updates.lastName);
+    }
+    if (updates.role !== undefined) {
+      setFields.push('role = ?');
+      values.push(updates.role);
+    }
+    if (updates.isEmailVerified !== undefined) {
+      setFields.push('is_email_verified = ?');
+      values.push(updates.isEmailVerified);
+    }
+
+    if (setFields.length === 0) {
+      return this.getUser(id);
+    }
+
+    values.push(id);
+    await this.pool.execute(
+      `UPDATE users SET ${setFields.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    return this.getUser(id);
   }
 
   // Auth operations
@@ -315,7 +391,8 @@ export class DatabaseStorage implements IStorage {
       subcategoryId: row.subcategory_id,
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
-      colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+      sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
+
       images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
@@ -356,6 +433,7 @@ export class DatabaseStorage implements IStorage {
       subcategoryId: row.subcategory_id,
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+      sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
       colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
       images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
       is_active: Boolean(row.is_active),
@@ -397,6 +475,7 @@ export class DatabaseStorage implements IStorage {
       subcategoryId: row.subcategory_id,
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+      sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
       colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
       images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
       is_active: Boolean(row.is_active),
@@ -419,17 +498,28 @@ export class DatabaseStorage implements IStorage {
     const productData = {
       ...product,
       id,
-      sizes: Array.isArray(product.sizes) ? JSON.stringify(product.sizes) : product.sizes,
-      colors: Array.isArray(product.colors) ? JSON.stringify(product.colors) : product.colors,
-      images: Array.isArray(product.images) ? JSON.stringify(product.images) : product.images,
+      sizes: Array.isArray(product.sizes) ? JSON.stringify(product.sizes) : (product.sizes || null),
+      sizePricing: product.sizePricing ? JSON.stringify(product.sizePricing) : null,
+      images: Array.isArray(product.images) ? JSON.stringify(product.images) : (product.images || null),
     };
 
     await this.pool.execute(
-      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, colors, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, size_pricing, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
-        id, productData.name, productData.slug, productData.description, productData.price, 
-        productData.categoryId, productData.subcategoryId || null, productData.material, productData.sizes, productData.colors, 
-        productData.images, productData.stock_quantity, productData.is_active, productData.is_featured
+        id, 
+        productData.name || null, 
+        productData.slug || null, 
+        productData.description || null, 
+        productData.price || null, 
+        productData.categoryId || null, 
+        productData.subcategoryId || null, 
+        productData.material || null, 
+        productData.sizes || null, 
+        productData.sizePricing || null, 
+        productData.images || null, 
+        productData.stock_quantity || 0, 
+        productData.is_active ?? true, 
+        productData.is_featured ?? false
       ]
     );
 
@@ -447,8 +537,8 @@ export class DatabaseStorage implements IStorage {
     if (updates.sizes) {
       updated_data.sizes = Array.isArray(updates.sizes) ? JSON.stringify(updates.sizes) : updates.sizes;
     }
-    if (updates.colors) {
-      updated_data.colors = Array.isArray(updates.colors) ? JSON.stringify(updates.colors) : updates.colors;
+    if (updates.sizePricing) {
+      updated_data.size_pricing = typeof updates.sizePricing === 'object' ? JSON.stringify(updates.sizePricing) : updates.sizePricing;
     }
     if (updates.images) {
       updated_data.images = Array.isArray(updates.images) ? JSON.stringify(updates.images) : updates.images;
@@ -458,6 +548,7 @@ export class DatabaseStorage implements IStorage {
     const columnMapping: Record<string, string> = {
       categoryId: 'category_id',
       subcategoryId: 'subcategory_id',
+      sizePricing: 'size_pricing',
       stockQuantity: 'stock_quantity',
       stock_quantity: 'stock_quantity',
       isActive: 'is_active',
@@ -586,6 +677,7 @@ export class DatabaseStorage implements IStorage {
         categoryId: row.category_id,
         material: row.material,
         sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+        sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
         colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
         images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
         is_active: Boolean(row.is_active),
@@ -742,21 +834,21 @@ export class DatabaseStorage implements IStorage {
       user,
       items: Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => ({
         id: item.id,
-        orderId: item.orderId,
-        productId: item.productId,
+        orderId: item.order_id,
+        productId: item.product_id,
         size: item.size,
         color: item.color,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice,
-        createdAt: item.createdAt,
+        unitPrice: item.unit_price,
+        totalPrice: item.total_price,
+        createdAt: item.created_at,
         product: {
-          id: item.productId,
+          id: item.product_id,
           name: item.name,
           slug: item.slug,
           description: item.description,
           price: item.price,
-          categoryId: item.categoryId,
+          categoryId: item.category_id,
           material: item.material,
           sizes: typeof item.sizes === 'string' ? JSON.parse(item.sizes) : item.sizes,
           colors: typeof item.colors === 'string' ? JSON.parse(item.colors) : item.colors,
@@ -841,6 +933,14 @@ export class DatabaseStorage implements IStorage {
     return order;
   }
 
+  async deleteOrder(id: string): Promise<void> {
+    // Delete order items first (foreign key constraint)
+    await this.pool.execute('DELETE FROM order_items WHERE order_id = ?', [id]);
+    
+    // Delete the order
+    await this.pool.execute('DELETE FROM orders WHERE id = ?', [id]);
+  }
+
   // Wishlist operations
   async getWishlistItems(userId: string): Promise<WishlistItemWithProduct[]> {
     if (!userId) {
@@ -923,7 +1023,21 @@ export class DatabaseStorage implements IStorage {
 
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {
     const [rows] = await this.pool.execute('SELECT * FROM user_profiles WHERE user_id = ?', [userId]);
-    return Array.isArray(rows) && rows.length > 0 ? rows[0] as UserProfile : undefined;
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const row = rows[0] as any;
+    return {
+      id: row.id,
+      userId: row.user_id,
+      fullName: row.full_name,
+      phoneNumber: row.phone_number,
+      addressLine1: row.address_line_1,
+      addressLine2: row.address_line_2,
+      city: row.city,
+      postalCode: row.postal_code,
+      createdAt: row.created_at,
+      updated_at: row.updated_at
+    } as UserProfile;
   }
 
   async createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
@@ -931,13 +1045,31 @@ export class DatabaseStorage implements IStorage {
     
     if (existingProfile) {
       await this.pool.execute(
-        'UPDATE user_profiles SET phone_number = ?, address = ?, dateOfBirth = ?, gender = ?, updated_at = ? WHERE user_id = ?',
-        [profile.phoneNumber, JSON.stringify(profile.address), profile.dateOfBirth, profile.gender, new Date(), profile.userId]
+        'UPDATE user_profiles SET full_name = ?, phone_number = ?, address_line_1 = ?, address_line_2 = ?, city = ?, postal_code = ?, updated_at = ? WHERE user_id = ?',
+        [
+          profile.fullName || null, 
+          profile.phoneNumber || null, 
+          profile.addressLine1 || null, 
+          profile.addressLine2 || null, 
+          profile.city || null, 
+          profile.postalCode || null, 
+          new Date(), 
+          profile.userId
+        ]
       );
     } else {
       await this.pool.execute(
-        'INSERT INTO user_profiles (id, user_id, phone_number, address, dateOfBirth, gender) VALUES (?, ?, ?, ?, ?, ?)',
-        [randomUUID(), profile.userId, profile.phoneNumber, JSON.stringify(profile.address), profile.dateOfBirth, profile.gender]
+        'INSERT INTO user_profiles (id, user_id, full_name, phone_number, address_line_1, address_line_2, city, postal_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          randomUUID(), 
+          profile.userId, 
+          profile.fullName || null, 
+          profile.phoneNumber || null, 
+          profile.addressLine1 || null, 
+          profile.addressLine2 || null, 
+          profile.city || null, 
+          profile.postalCode || null
+        ]
       );
     }
 

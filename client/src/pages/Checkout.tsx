@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ShoppingBag, MapPin, Phone, CreditCard, MessageCircle, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -34,6 +35,7 @@ export default function Checkout() {
   const queryClient = useQueryClient();
   const [_, setLocation] = useLocation();
   const { cartItems, total, clearCart } = useCart();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch user profile for prefilling (optional - no auth required)
@@ -55,7 +57,7 @@ export default function Checkout() {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
-      email: profile?.email || "",
+      email: "",
       fullName: "",
       phoneNumber: "",
       addressLine1: "",
@@ -64,17 +66,23 @@ export default function Checkout() {
       postalCode: "",
       notes: "",
     },
-    values: profile ? {
-      email: profile.email || "",
-      fullName: profile.fullName || "",
-      phoneNumber: profile.phoneNumber || "",
-      addressLine1: profile.addressLine1 || "",
-      addressLine2: profile.addressLine2 || "",
-      city: profile.city || "",
-      postalCode: profile.postalCode || "",
-      notes: "",
-    } : undefined,
   });
+
+  // Update form values when profile loads
+  useEffect(() => {
+    if (profile || user) {
+      form.reset({
+        email: user?.email || profile?.email || "",
+        fullName: profile?.fullName || "",
+        phoneNumber: profile?.phoneNumber || "",
+        addressLine1: profile?.addressLine1 || "",
+        addressLine2: profile?.addressLine2 || "",
+        city: profile?.city || "",
+        postalCode: profile?.postalCode || "",
+        notes: "",
+      });
+    }
+  }, [profile, user, form]);
 
   // Generate order number
   const generateOrderNumber = () => {

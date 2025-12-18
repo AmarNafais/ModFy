@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
+import { useState } from "react";
 
 interface Category {
   id: string;
@@ -15,13 +16,10 @@ interface Category {
 interface EditProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editingProduct: any;
+  editingProduct: any; // Contains sizePricing: Record<string, string>
   setEditingProduct: (product: any) => void;
   categories: Category[];
-  editNewImageUrl: string;
-  setEditNewImageUrl: (url: string) => void;
   removeEditImage: (index: number) => void;
-  addEditImageUrl: () => void;
   onSubmit: () => void;
   isPending: boolean;
 }
@@ -32,13 +30,81 @@ export function EditProductDialog({
   editingProduct,
   setEditingProduct,
   categories,
-  editNewImageUrl,
-  setEditNewImageUrl,
   removeEditImage,
-  addEditImageUrl,
   onSubmit,
   isPending,
 }: EditProductDialogProps) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        
+        // Get main category and subcategory names for organized storage
+        let mainCategoryName = 'uncategorized';
+        let subCategoryName = '';
+        
+        if (editingProduct.subcategoryId) {
+          // If subcategory is selected, find it and its parent
+          const subcategory = categories.find(c => c.id === editingProduct.subcategoryId);
+          if (subcategory) {
+            subCategoryName = subcategory.name;
+            const mainCategory = categories.find(c => c.id === subcategory.parent_id);
+            if (mainCategory) {
+              mainCategoryName = mainCategory.name;
+            }
+          }
+        } else if (editingProduct.categoryId) {
+          // Only main category selected
+          const category = categories.find(c => c.id === editingProduct.categoryId);
+          if (category) {
+            mainCategoryName = category.name;
+          }
+        }
+        
+        const productName = editingProduct.name || 'unnamed';
+        
+        // IMPORTANT: Append text fields BEFORE the file so multer can access them in destination callback
+        formData.append('categoryName', mainCategoryName);
+        formData.append('subcategoryName', subCategoryName);
+        formData.append('productName', productName);
+        formData.append('image', file);
+
+        const response = await fetch('/api/admin/upload-product-image', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        
+        // Add the new image URL to the product
+        setEditingProduct({
+          ...editingProduct,
+          images: [...(editingProduct.images || []), data.imageUrl]
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      alert('Failed to upload images. Please try again.');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
   if (!editingProduct) return null;
 
   return (
@@ -160,10 +226,15 @@ export function EditProductDialog({
                         {size}
                         <button
                           type="button"
-                          onClick={() => setEditingProduct({
-                            ...editingProduct,
-                            sizes: editingProduct.sizes.filter(s => s !== size)
-                          })}
+                          onClick={() => {
+                            const newSizePricing = { ...editingProduct.sizePricing };
+                            delete newSizePricing[size];
+                            setEditingProduct({
+                              ...editingProduct,
+                              sizes: editingProduct.sizes.filter(s => s !== size),
+                              sizePricing: newSizePricing
+                            });
+                          }}
                           className="ml-1 hover:text-gray-300"
                           data-testid={`button-remove-edit-size-${size.toLowerCase()}`}
                         >
@@ -181,7 +252,8 @@ export function EditProductDialog({
                   if (!editingProduct.sizes.includes(size)) {
                     setEditingProduct({
                       ...editingProduct,
-                      sizes: [...editingProduct.sizes, size]
+                      sizes: [...editingProduct.sizes, size],
+                      sizePricing: { ...(editingProduct.sizePricing || {}), [size]: editingProduct.price }
                     });
                   }
                 }}>
@@ -209,7 +281,8 @@ export function EditProductDialog({
                         if (value && !editingProduct.sizes.includes(value)) {
                           setEditingProduct({
                             ...editingProduct,
-                            sizes: [...editingProduct.sizes, value]
+                            sizes: [...editingProduct.sizes, value],
+                            sizePricing: { ...(editingProduct.sizePricing || {}), [value]: editingProduct.price }
                           });
                           (e.target as HTMLInputElement).value = '';
                         }
@@ -227,7 +300,8 @@ export function EditProductDialog({
                       if (value && !editingProduct.sizes.includes(value)) {
                         setEditingProduct({
                           ...editingProduct,
-                          sizes: [...editingProduct.sizes, value]
+                          sizes: [...editingProduct.sizes, value],
+                          sizePricing: { ...(editingProduct.sizePricing || {}), [value]: editingProduct.price }
                         });
                         input.value = '';
                       }
@@ -239,96 +313,33 @@ export function EditProductDialog({
                 </div>
               </div>
             </div>
+          </div>
 
-            <div>
-              <Label>Available Colors</Label>
-              <div className="space-y-3">
-                {/* Selected colors display */}
-                <div className="flex flex-wrap gap-2 min-h-[32px] p-2 border rounded-md bg-gray-50">
-                  {editingProduct.colors && editingProduct.colors.length > 0 ? (
-                    editingProduct.colors.map((color, index) => (
-                      <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-black text-white text-xs rounded">
-                        {color}
-                        <button
-                          type="button"
-                          onClick={() => setEditingProduct({
-                            ...editingProduct,
-                            colors: editingProduct.colors.filter(c => c !== color)
-                          })}
-                          className="ml-1 hover:text-gray-300"
-                          data-testid={`button-remove-edit-color-${color.toLowerCase()}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-gray-400 text-sm">No colors selected</span>
-                  )}
-                </div>
-
-                {/* Add common colors */}
-                <Select onValueChange={(color) => {
-                  if (!editingProduct.colors.includes(color)) {
-                    setEditingProduct({
-                      ...editingProduct,
-                      colors: [...editingProduct.colors, color]
-                    });
-                  }
-                }}>
-                  <SelectTrigger data-testid="select-edit-add-color">
-                    <SelectValue placeholder="Add common color" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['Black', 'White', 'Gray', 'Navy', 'Charcoal', 'Blue', 'Red', 'Green', 'Brown', 'Beige'].filter(color =>
-                      !editingProduct.colors.includes(color)
-                    ).map((color) => (
-                      <SelectItem key={color} value={color}>
-                        {color}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Add custom color */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add custom color"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        const value = (e.target as HTMLInputElement).value.trim();
-                        if (value && !editingProduct.colors.includes(value)) {
-                          setEditingProduct({
-                            ...editingProduct,
-                            colors: [...editingProduct.colors, value]
-                          });
-                          (e.target as HTMLInputElement).value = '';
-                        }
-                      }
-                    }}
-                    data-testid="input-edit-custom-color"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
-                      const value = input.value.trim();
-                      if (value && !editingProduct.colors.includes(value)) {
-                        setEditingProduct({
-                          ...editingProduct,
-                          colors: [...editingProduct.colors, value]
-                        });
-                        input.value = '';
-                      }
-                    }}
-                    data-testid="button-edit-add-custom-color"
-                  >
-                    Add
-                  </Button>
-                </div>
-              </div>
+          {/* Size Pricing Section */}
+          <div>
+            <Label>Size Pricing (LKR)</Label>
+            <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-3 border rounded-md">
+              {editingProduct.sizes && editingProduct.sizes.length > 0 ? (
+                editingProduct.sizes.map((size) => (
+                  <div key={size} className="flex items-center gap-2">
+                    <Label className="w-12 text-right">{size}:</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={(editingProduct.sizePricing && editingProduct.sizePricing[size]) || ''}
+                      onChange={(e) => setEditingProduct({
+                        ...editingProduct,
+                        sizePricing: { ...(editingProduct.sizePricing || {}), [size]: e.target.value }
+                      })}
+                      placeholder="0.00"
+                      className="flex-1"
+                      data-testid={`input-edit-size-price-${size.toLowerCase()}`}
+                    />
+                  </div>
+                ))
+              ) : (
+                <span className="text-gray-400 text-sm col-span-2">Add sizes to set pricing</span>
+              )}
             </div>
           </div>
 
@@ -361,50 +372,66 @@ export function EditProductDialog({
             <Label>Product Images</Label>
             <div className="space-y-4">
               {/* Current Images */}
-              <div className="grid grid-cols-3 gap-4">
-                {editingProduct.images.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image}
-                      alt={`Product ${index + 1}`}
-                      className="w-full h-20 object-cover rounded-md border"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeEditImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                      data-testid={`button-remove-edit-image-${index}`}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
+              {editingProduct.images && editingProduct.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-4">
+                  {editingProduct.images.map((image, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={image}
+                        alt={`Product ${index + 1}`}
+                        className="w-full h-20 object-cover rounded-md border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeEditImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        data-testid={`button-remove-edit-image-${index}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              {/* Add Image URL */}
-              <div className="flex gap-2">
-                <Input
-                  type="url"
-                  placeholder="Enter image URL (e.g., https://imgur.com/...jpg)"
-                  value={editNewImageUrl}
-                  onChange={(e) => setEditNewImageUrl(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addEditImageUrl();
-                    }
-                  }}
-                  data-testid="input-edit-image-url"
+              {/* Upload Images */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <input
+                  type="file"
+                  id="edit-file-upload"
+                  multiple
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={uploading || !editingProduct.name || !editingProduct.categoryId}
+                  data-testid="input-edit-file-upload"
                 />
-                <Button
-                  type="button"
-                  onClick={addEditImageUrl}
-                  disabled={!editNewImageUrl.trim()}
-                  data-testid="button-add-edit-image"
+                <label
+                  htmlFor="edit-file-upload"
+                  className={`cursor-pointer flex flex-col items-center gap-2 ${
+                    uploading || !editingProduct.name || !editingProduct.categoryId ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Image
-                </Button>
+                  <Upload className="w-8 h-8 text-gray-400" />
+                  <div className="text-sm text-gray-600">
+                    {uploading ? (
+                      <span className="font-medium">Uploading...</span>
+                    ) : (
+                      <>
+                        <span className="font-medium text-blue-600 hover:text-blue-700">Click to upload</span>
+                        {' or drag and drop'}
+                      </>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG, GIF or WebP
+                  </p>
+                  {(!editingProduct.name || !editingProduct.categoryId) && (
+                    <p className="text-xs text-red-500 mt-2">
+                      Please enter product name and select category first
+                    </p>
+                  )}
+                </label>
               </div>
             </div>
           </div>
