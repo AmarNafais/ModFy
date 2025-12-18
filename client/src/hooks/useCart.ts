@@ -57,15 +57,14 @@ export function useCart() {
   // Remove from cart mutation
   const removeFromCartMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest("DELETE", `/api/cart/${id}`);
-      // Don't try to parse JSON from 204 No Content response
-      if (response.status === 204) {
-        return null;
-      }
-      return response;
+      await apiRequest("DELETE", `/api/cart/${id}`);
+      return id;
     },
     onSuccess: () => {
+      // Force refetch from server instead of manually updating cache
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.refetchQueries({ queryKey: ["/api/cart"] });
+      
       toast({
         title: "Removed from cart",
         description: "Product has been removed from your cart.",
@@ -145,7 +144,11 @@ export function useCart() {
   // Calculate totals
   const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = cartItems.reduce((sum, item) => {
-    const price = parseFloat(item.product?.price || "0");
+    // Use size-specific price if available, otherwise use base price
+    let price = parseFloat(item.product?.price || "0");
+    if (item.size && item.product?.sizePricing && item.product.sizePricing[item.size]) {
+      price = parseFloat(item.product.sizePricing[item.size]);
+    }
     return sum + (price * item.quantity);
   }, 0);
 

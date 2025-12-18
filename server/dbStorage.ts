@@ -699,7 +699,17 @@ export class DatabaseStorage implements IStorage {
   // Cart operations
   async getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]> {
     let query = `
-      SELECT ci.*, p.* 
+      SELECT 
+        ci.id as cart_item_id,
+        ci.user_id,
+        ci.session_id,
+        ci.product_id,
+        ci.size,
+        ci.color,
+        ci.quantity,
+        ci.created_at as cart_created_at,
+        ci.updated_at as cart_updated_at,
+        p.* 
       FROM cart_items ci
       LEFT JOIN products p ON ci.product_id = p.id
       WHERE `;
@@ -718,18 +728,20 @@ export class DatabaseStorage implements IStorage {
 
     const [rows] = await this.pool.execute(query, params);
     
+    console.log('getCartItems - raw rows from DB:', rows);
+    
     if (!Array.isArray(rows)) return [];
     
     return rows.map((row: any) => ({
-      id: row.id,
+      id: row.cart_item_id,
       userId: row.user_id,
       sessionId: row.session_id,
       productId: row.product_id,
       size: row.size,
       color: row.color,
       quantity: row.quantity,
-      createdAt: row.created_at,
-      updated_at: row.updated_at,
+      createdAt: row.cart_created_at,
+      updated_at: row.cart_updated_at,
       product: {
         id: row.product_id,
         name: row.name,
@@ -797,8 +809,24 @@ export class DatabaseStorage implements IStorage {
     return Array.isArray(rows) && rows.length > 0 ? rows[0] as CartItem : undefined;
   }
 
-  async removeFromCart(id: string): Promise<void> {
-    await this.pool.execute('DELETE FROM cart_items WHERE id = ?', [id]);
+  async removeFromCart(id: string, sessionId?: string, userId?: string): Promise<void> {
+    console.log('Deleting cart item with id:', id, 'userId:', userId, 'sessionId:', sessionId);
+    
+    let query = 'DELETE FROM cart_items WHERE id = ?';
+    const params: any[] = [id];
+    
+    // Add user/session verification for security
+    if (userId) {
+      query += ' AND user_id = ?';
+      params.push(userId);
+    } else if (sessionId) {
+      query += ' AND session_id = ?';
+      params.push(sessionId);
+    }
+    
+    const [result]: any = await this.pool.execute(query, params);
+    console.log('Delete result:', result);
+    console.log('Affected rows:', result.affectedRows);
   }
 
   async clearCart(sessionId?: string, userId?: string): Promise<void> {
@@ -1258,5 +1286,135 @@ export class DatabaseStorage implements IStorage {
       console.error("Error deleting size chart:", error);
       return false;
     }
+  }
+
+  // Review methods
+  async getProductReviews(productId: string): Promise<any[]> {
+    const [rows] = await this.pool.execute(
+      `SELECT r.*, u.first_name, u.last_name 
+       FROM reviews r
+       LEFT JOIN users u ON r.user_id = u.id
+       WHERE r.product_id = ?
+       ORDER BY r.created_at DESC`,
+      [productId]
+    );
+    
+    if (!Array.isArray(rows)) return [];
+    
+    return rows.map((row: any) => ({
+      id: row.id,
+      productId: row.product_id,
+      userId: row.user_id,
+      sessionId: row.session_id,
+      rating: row.rating,
+      title: row.title,
+      comment: row.comment,
+      isVerifiedPurchase: Boolean(row.is_verified_purchase),
+      createdAt: row.created_at,
+      user: {
+        id: row.user_id,
+        firstName: row.first_name || 'Guest',
+        lastName: row.last_name || 'User'
+      }
+    }));
+  }
+
+  async createReview(reviewData: any): Promise<any> {
+    // Check if user has already reviewed this product
+    let query = 'SELECT id FROM reviews WHERE product_id = ?';
+    const params: any[] = [reviewData.productId];
+    
+    if (reviewData.userId) {
+      query += ' AND user_id = ?';
+      params.push(reviewData.userId);
+    } else if (reviewData.sessionId) {
+      query += ' AND session_id = ?';
+      params.push(reviewData.sessionId);
+    }
+    
+    const [existing] = await this.pool.execute(query, params);
+    
+    if (Array.isArray(existing) && existing.length > 0) {
+      throw new Error('You have already reviewed this product');
+    }
+    
+    // Check if user has purchased this product (only for authenticated users)
+    let isVerifiedPurchase = false;
+    if (reviewData.userId) {
+      const [orders] = await this.pool.execute(
+        `SELECT oi.id 
+         FROM order_items oi
+         JOIN orders o ON oi.order_id = o.id
+         WHERE o.user_id = ? AND oi.product_id = ? AND o.payment_status = 'paid'
+         LIMIT 1`,
+        [reviewData.userId, reviewData.productId]
+      );
+      
+      isVerifiedPurchase = Array.isArray(orders) && orders.length > 0;
+    }
+    
+    // Generate UUID for the review
+    const reviewId = crypto.randomUUID();
+    
+    await this.pool.execute(
+      `INSERT INTO reviews (id, product_id, user_id, session_id, rating, title, comment, is_verified_purchase)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        reviewId,
+        reviewData.productId,
+        reviewData.userId || null,
+        reviewData.sessionId || null,
+        reviewData.rating,
+        reviewData.title || null,
+        reviewData.comment || null,
+        isVerifiedPurchase
+      ]
+    );
+    
+    const [newReview] = await this.pool.execute('SELECT * FROM reviews WHERE id = ?', [reviewId]);
+    
+    if (!Array.isArray(newReview) || newReview.length === 0) {
+      throw new Error('Failed to create review');
+    }
+    
+    return newReview[0];
+  }
+
+  async getProductRating(productId: string): Promise<{ averageRating: number; totalReviews: number }> {
+    const [rows] = await this.pool.execute(
+      `SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews
+       FROM reviews
+       WHERE product_id = ?`,
+      [productId]
+    );
+    
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return { averageRating: 0, totalReviews: 0 };
+    }
+    
+    const row = rows[0] as any;
+    return {
+      averageRating: parseFloat(row.avg_rating) || 0,
+      totalReviews: parseInt(row.total_reviews) || 0
+    };
+  }
+
+  async deleteReview(reviewId: string, sessionId?: string, userId?: string): Promise<boolean> {
+    let query = 'DELETE FROM reviews WHERE id = ?';
+    const params: any[] = [reviewId];
+    
+    // Add ownership verification
+    if (userId) {
+      query += ' AND user_id = ?';
+      params.push(userId);
+    } else if (sessionId) {
+      query += ' AND session_id = ?';
+      params.push(sessionId);
+    } else {
+      return false;
+    }
+    
+    const [result]: any = await this.pool.execute(query, params);
+    return result.affectedRows > 0;
   }
 }

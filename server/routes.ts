@@ -191,6 +191,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       console.log('Cart GET - found items:', cartItems.length);
+      cartItems.forEach((item: any) => {
+        console.log('Cart item:', { id: item.id, productId: item.productId, userId: item.userId, sessionId: item.sessionId });
+      });
       res.json(cartItems);
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -243,7 +246,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/cart/:id", async (req, res) => {
     try {
-      await storage.removeFromCart(req.params.id);
+      const userId = req.session.userId;
+      const sessionId = req.sessionID;
+      
+      console.log('DELETE /api/cart/:id called with id:', req.params.id);
+      console.log('User context - userId:', userId, 'sessionId:', sessionId);
+      
+      await storage.removeFromCart(req.params.id, sessionId, userId);
+      console.log('Item deleted successfully, sending 204');
       res.status(204).send();
     } catch (error) {
       console.error("Error removing from cart:", error);
@@ -1092,6 +1102,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.status(500).json({ error: "Failed to create order" });
+    }
+  });
+
+  // Review routes
+  app.get("/api/products/:productId/reviews", async (req, res) => {
+    try {
+      const reviews = await storage.getProductReviews(req.params.productId);
+      const rating = await storage.getProductRating(req.params.productId);
+      res.json({ reviews, rating });
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  app.post("/api/products/:productId/reviews", async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const sessionId = req.sessionID;
+
+      const reviewData = {
+        productId: req.params.productId,
+        userId: userId || null,
+        sessionId: userId ? null : sessionId,
+        rating: req.body.rating,
+        title: req.body.title,
+        comment: req.body.comment,
+      };
+
+      const review = await storage.createReview(reviewData);
+      res.status(201).json(review);
+    } catch (error: any) {
+      console.error("Error creating review:", error);
+      if (error.message === 'You have already reviewed this product') {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to create review" });
+    }
+  });
+
+  app.delete("/api/products/:productId/reviews/:reviewId", async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const sessionId = req.sessionID;
+      
+      const deleted = await storage.deleteReview(req.params.reviewId, sessionId, userId);
+      
+      if (!deleted) {
+        return res.status(403).json({ message: "You can only delete your own reviews" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      res.status(500).json({ message: "Failed to delete review" });
     }
   });
 
