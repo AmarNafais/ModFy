@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Heart, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SizeChartDisplay } from "@/components/SizeChartDisplay";
+import ReviewSection from "@/components/ReviewSection";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -331,6 +332,11 @@ export default function ProductDetail() {
                 <summary className="text-sm font-medium tracking-wide cursor-pointer">SIZE GUIDE</summary>
                 <div className="mt-4 text-sm text-gray-600 font-light">
                   <p>Refer to our size guide for the perfect fit. All measurements are in inches.</p>
+                  {(product as any).sizeChart && (
+                    <div className="mt-4">
+                      <SizeChartDisplay sizeChart={(product as any).sizeChart} />
+                    </div>
+                  )}
                 </div>
               </details>
 
@@ -342,15 +348,11 @@ export default function ProductDetail() {
               </details>
             </div>
 
-            {/* Size Chart Display */}
-            {(product as any).sizeChart && (
-              <div className="mt-8">
-                <SizeChartDisplay sizeChart={(product as any).sizeChart} />
-              </div>
-            )}
-
           </div>
         </div>
+
+        {/* Reviews Section */}
+        {product && <ReviewSection productId={product.id} />}
       </div>
     </div>
   );
