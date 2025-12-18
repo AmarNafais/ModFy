@@ -573,6 +573,7 @@ export default function Admin() {
         <TabsContent value="products">
           <ProductsTable
             products={products}
+            categories={categories}
             onEdit={openEditDialog}
             onDelete={(productId) => deleteProductMutation.mutate(productId)}
             onToggleStatus={(product) => {
