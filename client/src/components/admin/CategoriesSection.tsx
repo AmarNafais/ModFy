@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Trash2 } from "lucide-react";
+import { Package, Edit, Trash2 } from "lucide-react";
 
 interface Category {
   id: string;
@@ -14,6 +14,7 @@ interface Category {
 
 interface CategoriesSectionProps {
   categories: Category[];
+  onEdit: (category: Category) => void;
   onDelete: (categoryId: string) => void;
   isDeleting: boolean;
   addCategoryTrigger: React.ReactNode;
@@ -22,6 +23,7 @@ interface CategoriesSectionProps {
 
 export function CategoriesSection({
   categories,
+  onEdit,
   onDelete,
   isDeleting,
   addCategoryTrigger,
@@ -69,16 +71,27 @@ export function CategoriesSection({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDelete(category.id)}
-                      disabled={isDeleting}
-                      data-testid={`button-delete-category-${category.id}`}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(category)}
+                        data-testid={`button-edit-category-${category.id}`}
+                        className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDelete(category.id)}
+                        disabled={isDeleting}
+                        data-testid={`button-delete-category-${category.id}`}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -122,16 +135,27 @@ export function CategoriesSection({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDelete(category.id)}
-                        disabled={isDeleting}
-                        data-testid={`button-delete-category-${category.id}`}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(category)}
+                          data-testid={`button-edit-category-${category.id}`}
+                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onDelete(category.id)}
+                          disabled={isDeleting}
+                          data-testid={`button-delete-category-${category.id}`}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

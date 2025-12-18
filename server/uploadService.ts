@@ -66,6 +66,43 @@ export const upload = multer({
   // No file size limit
 });
 
+// Configure storage for category images
+const categoryStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    // Get category name from request body
+    const categoryName = req.body.categoryName || 'uncategorized';
+    
+    // Sanitize folder name
+    const sanitizedCategory = categoryName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    
+    // Create directory path: storage/uploads/categories/category-name/
+    const uploadPath = path.join(baseUploadDir, 'categories', sanitizedCategory);
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    
+    cb(null, uploadPath);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
+    // Generate unique filename: timestamp-originalname
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext);
+    const sanitizedBasename = basename.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
+    
+    cb(null, `${sanitizedBasename}-${uniqueSuffix}${ext}`);
+  }
+});
+
+// Configure multer for category uploads
+export const categoryUpload = multer({
+  storage: categoryStorage,
+  fileFilter: fileFilter,
+  // No file size limit
+});
+
 // Helper function to delete old product images
 export async function deleteProductImages(categoryName: string, productName: string): Promise<void> {
   const sanitizedCategory = categoryName.toLowerCase().replace(/[^a-z0-9-]/g, '-');

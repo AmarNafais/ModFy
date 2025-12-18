@@ -10,12 +10,30 @@ export default function Shop() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
+  });
+
   // Update state when URL params change
   useEffect(() => {
     const updateFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const catId = params.get('categoryId');
+      const catSlug = params.get('category');
       const subId = params.get('subcategoryId');
+
+      // If we have a category slug instead of ID, find the matching category
+      if (catSlug && !catId && categories.length > 0) {
+        const matchingCategory = categories.find((c: any) => c.slug === catSlug);
+        if (matchingCategory) {
+          console.log('Found category by slug:', catSlug, '-> ID:', matchingCategory.id);
+          setSelectedCategory(matchingCategory.id);
+          setSelectedSubcategory("");
+          setSearchQuery("");
+          return;
+        }
+      }
+
       console.log('URL changed - categoryId:', catId, 'subcategoryId:', subId);
       setSelectedCategory(catId || "");
       setSelectedSubcategory(subId || "");
@@ -27,7 +45,7 @@ export default function Shop() {
 
     // Listen for popstate (back/forward buttons)
     window.addEventListener('popstate', updateFromUrl);
-    
+
     // Listen for custom navigation event (when links are clicked)
     window.addEventListener('locationchange', updateFromUrl);
 
@@ -35,11 +53,7 @@ export default function Shop() {
       window.removeEventListener('popstate', updateFromUrl);
       window.removeEventListener('locationchange', updateFromUrl);
     };
-  }, []);
-
-  const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
-  });
+  }, [categories]);
 
   const queryKey = useMemo(() => {
     const filters: any = { is_active: true };
@@ -135,8 +149,8 @@ export default function Shop() {
               window.history.pushState({}, '', '/shop');
             }}
             className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === "" && selectedSubcategory === ""
-                ? "bg-luxury-black text-white"
-                : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
+              ? "bg-luxury-black text-white"
+              : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
               }`}
             data-testid="filter-all"
           >
@@ -152,8 +166,8 @@ export default function Shop() {
                 window.history.pushState({}, '', `/shop?categoryId=${category.id}`);
               }}
               className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === category.id && !selectedSubcategory
-                  ? "bg-luxury-black text-white"
-                  : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
+                ? "bg-luxury-black text-white"
+                : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
                 }`}
               data-testid={`filter-${category.slug}`}
             >
