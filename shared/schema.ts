@@ -47,25 +47,6 @@ export const products = mysqlTable("products", {
   updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
-export const collections = mysqlTable("collections", {
-  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
-  name: text("name").notNull(),
-  slug: text("slug").notNull(),
-  description: text("description"),
-  imageUrl: text("image_url"),
-  is_active: boolean("is_active").default(true),
-  season: text("season"),
-  year: int("year"),
-  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
-
-export const collectionProducts = mysqlTable("collection_products", {
-  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
-  collectionId: varchar("collection_id", { length: 255 }),
-  productId: varchar("product_id", { length: 255 }),
-  order: int("order").default(0),
-});
-
 export const cartItems = mysqlTable("cart_items", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
   sessionId: text("session_id"),
@@ -166,11 +147,6 @@ export const insertProductSchema = createInsertSchema(products).omit({
   updated_at: true,
 });
 
-export const insertCollectionSchema = createInsertSchema(collections).omit({
-  id: true,
-  createdAt: true,
-});
-
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   id: true,
   createdAt: true,
@@ -216,9 +192,6 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
-
-export type Collection = typeof collections.$inferSelect;
-export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
