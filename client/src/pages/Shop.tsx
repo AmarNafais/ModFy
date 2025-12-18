@@ -9,6 +9,7 @@ export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("name");
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
@@ -68,7 +69,7 @@ export default function Shop() {
   });
 
   // Filter products based on search query
-  const products = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) {
       return allProducts;
     }
@@ -81,6 +82,28 @@ export default function Shop() {
       product.category?.name.toLowerCase().includes(query)
     );
   }, [allProducts, searchQuery]);
+
+  // Sort products based on selected sort option
+  const products = useMemo(() => {
+    const sorted = [...filteredProducts];
+
+    switch (sortBy) {
+      case "name":
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case "price-low":
+        return sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      case "price-high":
+        return sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      case "newest":
+        return sorted.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
+        });
+      default:
+        return sorted;
+    }
+  }, [filteredProducts, sortBy]);
 
   return (
     <div className="pt-24 pb-16">
@@ -208,7 +231,12 @@ export default function Shop() {
               <p className="text-sm text-gray-600 font-light">
                 Showing {products.length} product{products.length !== 1 ? 's' : ''}
               </p>
-              <select className="text-sm border border-luxury-muted px-3 py-2 focus:outline-none focus:border-luxury-black" data-testid="select-sort">
+              <select
+                className="text-sm border border-luxury-muted px-3 py-2 focus:outline-none focus:border-luxury-black"
+                data-testid="select-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
                 <option value="name">Sort by Name</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>

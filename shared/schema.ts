@@ -116,6 +116,19 @@ export const sizeCharts = mysqlTable("size_charts", {
   updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
+export const reviews = mysqlTable("reviews", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  productId: varchar("product_id", { length: 255 }).notNull(),
+  userId: varchar("user_id", { length: 255 }),
+  sessionId: text("session_id"),
+  rating: int("rating").notNull(),
+  title: text("title"),
+  comment: text("comment"),
+  isVerifiedPurchase: boolean("is_verified_purchase").default(false),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -181,6 +194,12 @@ export const insertSizeChartSchema = createInsertSchema(sizeCharts).omit({
   updated_at: true,
 });
 
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  updated_at: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -227,3 +246,10 @@ export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 
 export type SizeChart = typeof sizeCharts.$inferSelect;
 export type InsertSizeChart = z.infer<typeof insertSizeChartSchema>;
+
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+
+export type ReviewWithUser = Review & {
+  user: Pick<User, 'id' | 'firstName' | 'lastName'>;
+};
