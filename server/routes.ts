@@ -582,6 +582,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/admin/orders/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const order = await storage.getOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      await storage.deleteOrder(id);
+      res.json({ message: "Order deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      res.status(500).json({ message: "Failed to delete order" });
+    }
+  });
+
   app.get("/api/admin/product-types", requireAdmin, async (req, res) => {
     try {
       const categories = await storage.getCategories();
@@ -897,14 +914,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create order items from cart items
       for (const cartItem of cartItems) {
+        // Get the correct price based on size if sizePricing exists
+        const product = cartItem.product as any;
+        let unitPrice = product.price;
+        if (cartItem.size && product.sizePricing && product.sizePricing[cartItem.size]) {
+          unitPrice = product.sizePricing[cartItem.size];
+        }
+        
         await storage.createOrderItem({
           orderId: order.id,
           productId: cartItem.productId,
           size: cartItem.size || null,
           color: cartItem.color || null,
           quantity: cartItem.quantity,
-          unitPrice: cartItem.product.price,
-          totalPrice: (parseFloat(cartItem.product.price) * cartItem.quantity).toFixed(2),
+          unitPrice: String(unitPrice),
+          totalPrice: (parseFloat(String(unitPrice)) * cartItem.quantity).toFixed(2),
         });
       }
       
@@ -931,17 +955,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             city: delivery?.city ?? '',
             postalCode: delivery?.postalCode ?? '',
           },
-          items: cartItems.map(item => ({
-            productName: item.product.name,
-            quantity: item.quantity,
-            price: String((item.product as any).price),
-            imageUrl: (() => {
-              const firstImage = (item.product as any)?.images?.[0];
-              return typeof firstImage === 'string' && firstImage.startsWith('http')
-                ? firstImage
-                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
-            })(),
-          })),
+          items: cartItems.map(item => {
+            const product = item.product as any;
+            let unitPrice = product.price;
+            if (item.size && product.sizePricing && product.sizePricing[item.size]) {
+              unitPrice = product.sizePricing[item.size];
+            }
+            return {
+              productName: item.product.name,
+              quantity: item.quantity,
+              size: item.size,
+              price: String(unitPrice),
+              imageUrl: (() => {
+                const firstImage = product?.images?.[0];
+                return typeof firstImage === 'string' && firstImage.startsWith('http')
+                  ? firstImage
+                  : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+              })(),
+            };
+          }),
         });
       } catch (emailError) {
         console.error("Failed to send order confirmation email:", emailError);

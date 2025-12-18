@@ -20,6 +20,7 @@ export interface IStorage {
   getOrder(id: string): Promise<OrderWithItems | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<void>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -1006,6 +1007,17 @@ export class MemStorage implements IStorage {
     const updatedOrder = { ...order, status, updated_at: new Date() };
     this.orders.set(id, updatedOrder);
     return updatedOrder;
+  }
+
+  async deleteOrder(id: string): Promise<void> {
+    // Delete order items first
+    const orderItemsToDelete = Array.from(this.orderItems.values()).filter(
+      item => item.orderId === id
+    );
+    orderItemsToDelete.forEach(item => this.orderItems.delete(item.id));
+    
+    // Delete the order
+    this.orders.delete(id);
   }
 
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {

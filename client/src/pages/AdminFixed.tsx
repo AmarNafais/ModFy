@@ -95,6 +95,25 @@ export default function Admin() {
     },
   });
 
+  const deleteOrderMutation = useMutation({
+    mutationFn: (orderId: string) =>
+      apiRequest("DELETE", `/api/admin/orders/${orderId}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({
+        title: "Order Deleted",
+        description: "Order deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete order.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createProductMutation = useMutation({
     mutationFn: (productData: any) =>
       apiRequest("POST", "/api/admin/products", productData),
@@ -412,6 +431,11 @@ export default function Admin() {
           <OrdersTable
             orders={orders}
             onStatusChange={handleStatusChange}
+            onDeleteOrder={(orderId) => {
+              if (confirm('Are you sure you want to delete this order?')) {
+                deleteOrderMutation.mutate(orderId);
+              }
+            }}
             getStatusBadgeVariant={getStatusBadgeVariant}
             getPaymentBadgeVariant={getPaymentBadgeVariant}
           />

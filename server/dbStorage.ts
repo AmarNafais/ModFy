@@ -677,6 +677,7 @@ export class DatabaseStorage implements IStorage {
         categoryId: row.category_id,
         material: row.material,
         sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
+        sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
         colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
         images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
         is_active: Boolean(row.is_active),
@@ -833,21 +834,21 @@ export class DatabaseStorage implements IStorage {
       user,
       items: Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => ({
         id: item.id,
-        orderId: item.orderId,
-        productId: item.productId,
+        orderId: item.order_id,
+        productId: item.product_id,
         size: item.size,
         color: item.color,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice,
-        createdAt: item.createdAt,
+        unitPrice: item.unit_price,
+        totalPrice: item.total_price,
+        createdAt: item.created_at,
         product: {
-          id: item.productId,
+          id: item.product_id,
           name: item.name,
           slug: item.slug,
           description: item.description,
           price: item.price,
-          categoryId: item.categoryId,
+          categoryId: item.category_id,
           material: item.material,
           sizes: typeof item.sizes === 'string' ? JSON.parse(item.sizes) : item.sizes,
           colors: typeof item.colors === 'string' ? JSON.parse(item.colors) : item.colors,
@@ -932,6 +933,14 @@ export class DatabaseStorage implements IStorage {
     return order;
   }
 
+  async deleteOrder(id: string): Promise<void> {
+    // Delete order items first (foreign key constraint)
+    await this.pool.execute('DELETE FROM order_items WHERE order_id = ?', [id]);
+    
+    // Delete the order
+    await this.pool.execute('DELETE FROM orders WHERE id = ?', [id]);
+  }
+
   // Wishlist operations
   async getWishlistItems(userId: string): Promise<WishlistItemWithProduct[]> {
     if (!userId) {
@@ -1014,7 +1023,21 @@ export class DatabaseStorage implements IStorage {
 
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {
     const [rows] = await this.pool.execute('SELECT * FROM user_profiles WHERE user_id = ?', [userId]);
-    return Array.isArray(rows) && rows.length > 0 ? rows[0] as UserProfile : undefined;
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const row = rows[0] as any;
+    return {
+      id: row.id,
+      userId: row.user_id,
+      fullName: row.full_name,
+      phoneNumber: row.phone_number,
+      addressLine1: row.address_line_1,
+      addressLine2: row.address_line_2,
+      city: row.city,
+      postalCode: row.postal_code,
+      createdAt: row.created_at,
+      updated_at: row.updated_at
+    } as UserProfile;
   }
 
   async createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
@@ -1022,13 +1045,31 @@ export class DatabaseStorage implements IStorage {
     
     if (existingProfile) {
       await this.pool.execute(
-        'UPDATE user_profiles SET phone_number = ?, address = ?, dateOfBirth = ?, gender = ?, updated_at = ? WHERE user_id = ?',
-        [profile.phoneNumber, JSON.stringify(profile.address), profile.dateOfBirth, profile.gender, new Date(), profile.userId]
+        'UPDATE user_profiles SET full_name = ?, phone_number = ?, address_line_1 = ?, address_line_2 = ?, city = ?, postal_code = ?, updated_at = ? WHERE user_id = ?',
+        [
+          profile.fullName || null, 
+          profile.phoneNumber || null, 
+          profile.addressLine1 || null, 
+          profile.addressLine2 || null, 
+          profile.city || null, 
+          profile.postalCode || null, 
+          new Date(), 
+          profile.userId
+        ]
       );
     } else {
       await this.pool.execute(
-        'INSERT INTO user_profiles (id, user_id, phone_number, address, dateOfBirth, gender) VALUES (?, ?, ?, ?, ?, ?)',
-        [randomUUID(), profile.userId, profile.phoneNumber, JSON.stringify(profile.address), profile.dateOfBirth, profile.gender]
+        'INSERT INTO user_profiles (id, user_id, full_name, phone_number, address_line_1, address_line_2, city, postal_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          randomUUID(), 
+          profile.userId, 
+          profile.fullName || null, 
+          profile.phoneNumber || null, 
+          profile.addressLine1 || null, 
+          profile.addressLine2 || null, 
+          profile.city || null, 
+          profile.postalCode || null
+        ]
       );
     }
 
