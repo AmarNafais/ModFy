@@ -28,18 +28,23 @@ export default function ProductDetail() {
   // Calculate display price based on selected size
   const displayPrice = () => {
     if (!product) return "0.00";
-    
+
     // If size is selected and sizePricing exists, use size-specific price
     if (selectedSize && product.sizePricing && product.sizePricing[selectedSize]) {
       return parseFloat(product.sizePricing[selectedSize]).toFixed(2);
     }
-    
+
     // Otherwise, use base price
     return parseFloat(product.price).toFixed(2);
   };
 
   const handleAddToCart = () => {
-    if (!product || !selectedSize) {
+    if (!product) return;
+
+    // If hideSizes is true, use 'FREE' as the size automatically
+    const sizeToUse = (product as any).hideSizes ? 'FREE' : selectedSize;
+
+    if (!sizeToUse) {
       toast({
         title: "Please select options",
         description: "Please select size before adding to cart.",
@@ -49,7 +54,7 @@ export default function ProductDetail() {
     }
 
     addToCart(product.id, {
-      size: selectedSize,
+      size: sizeToUse,
       color: "",
       quantity,
     });
@@ -226,22 +231,31 @@ export default function ProductDetail() {
             )}
 
             {/* Size Selection */}
-            {product.sizes && product.sizes.length > 0 && (
+            {(product as any).hideSizes ? (
               <div className="mb-6">
                 <h3 className="text-sm font-medium tracking-wide mb-3">SIZE</h3>
-                <Select value={selectedSize} onValueChange={setSelectedSize}>
-                  <SelectTrigger className="w-full" data-testid="select-size">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.sizes.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-center font-medium" data-testid="free-size-label">
+                  Free Size
+                </div>
               </div>
+            ) : (
+              product.sizes && product.sizes.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium tracking-wide mb-3">SIZE</h3>
+                  <Select value={selectedSize} onValueChange={setSelectedSize}>
+                    <SelectTrigger className="w-full" data-testid="select-size">
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {product.sizes.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )
             )}
 
 
@@ -288,7 +302,7 @@ export default function ProductDetail() {
             <div className="space-y-3">
               <Button
                 onClick={handleAddToCart}
-                disabled={isAddingToCart || !selectedSize || (product.stock_quantity !== null && product.stock_quantity <= 0)}
+                disabled={isAddingToCart || (!(product as any).hideSizes && !selectedSize) || (product.stock_quantity !== null && product.stock_quantity <= 0)}
                 className="w-full bg-luxury-black text-white hover:bg-gray-800 py-3 text-sm font-medium tracking-wide transition-colors"
                 data-testid="button-add-to-cart"
               >

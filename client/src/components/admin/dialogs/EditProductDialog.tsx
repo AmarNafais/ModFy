@@ -41,16 +41,16 @@ export function EditProductDialog({
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    
+
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const formData = new FormData();
-        
+
         // Get main category and subcategory names for organized storage
         let mainCategoryName = 'uncategorized';
         let subCategoryName = '';
-        
+
         if (editingProduct.subcategoryId) {
           // If subcategory is selected, find it and its parent
           const subcategory = categories.find(c => c.id === editingProduct.subcategoryId);
@@ -68,9 +68,9 @@ export function EditProductDialog({
             mainCategoryName = category.name;
           }
         }
-        
+
         const productName = editingProduct.name || 'unnamed';
-        
+
         // IMPORTANT: Append text fields BEFORE the file so multer can access them in destination callback
         formData.append('categoryName', mainCategoryName);
         formData.append('subcategoryName', subCategoryName);
@@ -88,7 +88,7 @@ export function EditProductDialog({
         }
 
         const data = await response.json();
-        
+
         // Add the new image URL to the product
         setEditingProduct({
           ...editingProduct,
@@ -213,135 +213,153 @@ export function EditProductDialog({
             </div>
           </div>
 
+          {/* Hide Sizes Toggle */}
+          <div className="flex items-center space-x-2 p-4 border rounded-md bg-gray-50">
+            <input
+              type="checkbox"
+              id="edit-product-hide-sizes"
+              checked={editingProduct.hideSizes || false}
+              onChange={(e) => setEditingProduct({ ...editingProduct, hideSizes: e.target.checked })}
+              data-testid="checkbox-edit-hide-sizes"
+            />
+            <Label htmlFor="edit-product-hide-sizes" className="cursor-pointer">
+              Hide sizes (Show as "Free Size")
+            </Label>
+          </div>
+
           {/* Sizes and Colors Section */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Available Sizes</Label>
-              <div className="space-y-3">
-                {/* Selected sizes display */}
-                <div className="flex flex-wrap gap-2 min-h-[32px] p-2 border rounded-md bg-gray-50">
-                  {editingProduct.sizes && editingProduct.sizes.length > 0 ? (
-                    editingProduct.sizes.map((size, index) => (
-                      <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-black text-white text-xs rounded">
-                        {size}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newSizePricing = { ...editingProduct.sizePricing };
-                            delete newSizePricing[size];
+          {!editingProduct.hideSizes && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Available Sizes</Label>
+                <div className="space-y-3">
+                  {/* Selected sizes display */}
+                  <div className="flex flex-wrap gap-2 min-h-[32px] p-2 border rounded-md bg-gray-50">
+                    {editingProduct.sizes && editingProduct.sizes.length > 0 ? (
+                      editingProduct.sizes.map((size, index) => (
+                        <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-black text-white text-xs rounded">
+                          {size}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newSizePricing = { ...editingProduct.sizePricing };
+                              delete newSizePricing[size];
+                              setEditingProduct({
+                                ...editingProduct,
+                                sizes: editingProduct.sizes.filter(s => s !== size),
+                                sizePricing: newSizePricing
+                              });
+                            }}
+                            className="ml-1 hover:text-gray-300"
+                            data-testid={`button-remove-edit-size-${size.toLowerCase()}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-400 text-sm">No sizes selected</span>
+                    )}
+                  </div>
+
+                  {/* Add common sizes */}
+                  <Select onValueChange={(size) => {
+                    if (!editingProduct.sizes.includes(size)) {
+                      setEditingProduct({
+                        ...editingProduct,
+                        sizes: [...editingProduct.sizes, size],
+                        sizePricing: { ...(editingProduct.sizePricing || {}), [size]: editingProduct.price }
+                      });
+                    }
+                  }}>
+                    <SelectTrigger data-testid="select-edit-add-size">
+                      <SelectValue placeholder="Add common size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size =>
+                        !editingProduct.sizes.includes(size)
+                      ).map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Add custom size */}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add custom size"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          const value = (e.target as HTMLInputElement).value.trim();
+                          if (value && !editingProduct.sizes.includes(value)) {
                             setEditingProduct({
                               ...editingProduct,
-                              sizes: editingProduct.sizes.filter(s => s !== size),
-                              sizePricing: newSizePricing
+                              sizes: [...editingProduct.sizes, value],
+                              sizePricing: { ...(editingProduct.sizePricing || {}), [value]: editingProduct.price }
                             });
-                          }}
-                          className="ml-1 hover:text-gray-300"
-                          data-testid={`button-remove-edit-size-${size.toLowerCase()}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-gray-400 text-sm">No sizes selected</span>
-                  )}
-                </div>
-
-                {/* Add common sizes */}
-                <Select onValueChange={(size) => {
-                  if (!editingProduct.sizes.includes(size)) {
-                    setEditingProduct({
-                      ...editingProduct,
-                      sizes: [...editingProduct.sizes, size],
-                      sizePricing: { ...(editingProduct.sizePricing || {}), [size]: editingProduct.price }
-                    });
-                  }
-                }}>
-                  <SelectTrigger data-testid="select-edit-add-size">
-                    <SelectValue placeholder="Add common size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].filter(size =>
-                      !editingProduct.sizes.includes(size)
-                    ).map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Add custom size */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add custom size"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        const value = (e.target as HTMLInputElement).value.trim();
+                            (e.target as HTMLInputElement).value = '';
+                          }
+                        }
+                      }}
+                      data-testid="input-edit-custom-size"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
+                        const value = input.value.trim();
                         if (value && !editingProduct.sizes.includes(value)) {
                           setEditingProduct({
                             ...editingProduct,
                             sizes: [...editingProduct.sizes, value],
                             sizePricing: { ...(editingProduct.sizePricing || {}), [value]: editingProduct.price }
                           });
-                          (e.target as HTMLInputElement).value = '';
+                          input.value = '';
                         }
-                      }
-                    }}
-                    data-testid="input-edit-custom-size"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
-                      const value = input.value.trim();
-                      if (value && !editingProduct.sizes.includes(value)) {
-                        setEditingProduct({
-                          ...editingProduct,
-                          sizes: [...editingProduct.sizes, value],
-                          sizePricing: { ...(editingProduct.sizePricing || {}), [value]: editingProduct.price }
-                        });
-                        input.value = '';
-                      }
-                    }}
-                    data-testid="button-edit-add-custom-size"
-                  >
-                    Add
-                  </Button>
+                      }}
+                      data-testid="button-edit-add-custom-size"
+                    >
+                      Add
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Size Pricing Section */}
-          <div>
-            <Label>Size Pricing (LKR)</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-3 border rounded-md">
-              {editingProduct.sizes && editingProduct.sizes.length > 0 ? (
-                editingProduct.sizes.map((size) => (
-                  <div key={size} className="flex items-center gap-2">
-                    <Label className="w-12 text-right">{size}:</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={(editingProduct.sizePricing && editingProduct.sizePricing[size]) || ''}
-                      onChange={(e) => setEditingProduct({
-                        ...editingProduct,
-                        sizePricing: { ...(editingProduct.sizePricing || {}), [size]: e.target.value }
-                      })}
-                      placeholder="0.00"
-                      className="flex-1"
-                      data-testid={`input-edit-size-price-${size.toLowerCase()}`}
-                    />
-                  </div>
-                ))
-              ) : (
-                <span className="text-gray-400 text-sm col-span-2">Add sizes to set pricing</span>
-              )}
+          {!editingProduct.hideSizes && (
+            <div>
+              <Label>Size Pricing (LKR)</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-3 border rounded-md">
+                {editingProduct.sizes && editingProduct.sizes.length > 0 ? (
+                  editingProduct.sizes.map((size) => (
+                    <div key={size} className="flex items-center gap-2">
+                      <Label className="w-12 text-right">{size}:</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={(editingProduct.sizePricing && editingProduct.sizePricing[size]) || ''}
+                        onChange={(e) => setEditingProduct({
+                          ...editingProduct,
+                          sizePricing: { ...(editingProduct.sizePricing || {}), [size]: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        className="flex-1"
+                        data-testid={`input-edit-size-price-${size.toLowerCase()}`}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-gray-400 text-sm col-span-2">Add sizes to set pricing</span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -408,9 +426,8 @@ export function EditProductDialog({
                 />
                 <label
                   htmlFor="edit-file-upload"
-                  className={`cursor-pointer flex flex-col items-center gap-2 ${
-                    uploading || !editingProduct.name || !editingProduct.categoryId ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`cursor-pointer flex flex-col items-center gap-2 ${uploading || !editingProduct.name || !editingProduct.categoryId ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   <Upload className="w-8 h-8 text-gray-400" />
                   <div className="text-sm text-gray-600">

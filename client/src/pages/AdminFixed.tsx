@@ -37,6 +37,7 @@ export default function Admin() {
     material: '',
     sizes: ['S', 'M', 'L', 'XL'],
     sizePricing: { 'S': '45.00', 'M': '48.00', 'L': '52.00', 'XL': '56.00' } as Record<string, string>,
+    hideSizes: false,
     images: [],
     stock_quantity: '50',
     is_featured: false,
@@ -129,6 +130,7 @@ export default function Admin() {
         material: '',
         sizes: ['S', 'M', 'L', 'XL'],
         sizePricing: { 'S': '45.00', 'M': '48.00', 'L': '52.00', 'XL': '56.00' } as Record<string, string>,
+        hideSizes: false,
         images: [],
         stock_quantity: '50',
         is_featured: false,
@@ -345,6 +347,7 @@ export default function Admin() {
       stock_quantity: product.stock_quantity,
       sizes: product.sizes || [],
       sizePricing: product.sizePricing || {},
+      hideSizes: product.hideSizes || false,
     });
     setIsEditDialogOpen(true);
   };
