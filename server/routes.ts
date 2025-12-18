@@ -608,7 +608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, images, stock_quantity, is_featured } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -623,6 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sizes: Array.isArray(sizes) ? sizes : [],
         sizePricing: sizePricing || {},
         hideSizes: Boolean(hideSizes),
+        sizeChartId: sizeChartId || null,
         images: Array.isArray(images) ? images : [],
         stock_quantity: parseInt(stock_quantity) || 0,
         is_featured: Boolean(is_featured),
@@ -661,7 +662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, images, stock_quantity, is_featured, is_active } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured, is_active } = req.body;
       
       const updates: any = {};
       
@@ -677,6 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
       if (sizePricing !== undefined) updates.sizePricing = sizePricing;
       if (hideSizes !== undefined) updates.hideSizes = Boolean(hideSizes);
+      if (sizeChartId !== undefined) updates.sizeChartId = sizeChartId || null;
       if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
       if (stock_quantity !== undefined) updates.stock_quantity = parseInt(stock_quantity) || 0;
       if (is_featured !== undefined) updates.is_featured = Boolean(is_featured);
@@ -755,6 +757,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Size Charts routes
+  app.get("/api/admin/size-charts", requireAdmin, async (req, res) => {
+    try {
+      const sizeCharts = await storage.getSizeCharts();
+      res.json(sizeCharts);
+    } catch (error) {
+      console.error("Error fetching size charts:", error);
+      res.status(500).json({ message: "Failed to fetch size charts" });
+    }
+  });
+
+  app.post("/api/admin/size-charts", requireAdmin, async (req, res) => {
+    try {
+      const { name, description, chartData, is_active } = req.body;
+      
+      const sizeChart = await storage.createSizeChart({
+        name,
+        description,
+        chartData,
+        is_active: is_active ?? true,
+      });
+      
+      res.status(201).json(sizeChart);
+    } catch (error) {
+      console.error("Error creating size chart:", error);
+      res.status(500).json({ message: "Failed to create size chart" });
+    }
+  });
+
+  app.patch("/api/admin/size-charts/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, chartData, is_active } = req.body;
+      
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (description !== undefined) updates.description = description;
+      if (chartData !== undefined) updates.chartData = chartData;
+      if (is_active !== undefined) updates.is_active = Boolean(is_active);
+      
+      const sizeChart = await storage.updateSizeChart(id, updates);
+      
+      if (!sizeChart) {
+        return res.status(404).json({ message: "Size chart not found" });
+      }
+      
+      res.json(sizeChart);
+    } catch (error) {
+      console.error("Error updating size chart:", error);
+      res.status(500).json({ message: "Failed to update size chart" });
+    }
+  });
+
+  app.delete("/api/admin/size-charts/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteSizeChart(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Size chart not found" });
+      }
+      
+      res.json({ message: "Size chart deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting size chart:", error);
+      res.status(500).json({ message: "Failed to delete size chart" });
     }
   });
 

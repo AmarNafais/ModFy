@@ -3,13 +3,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, ShoppingBag, Package, FileText, Settings } from "lucide-react";
+import { Shield, Users, ShoppingBag, Package, FileText, Settings, Ruler, Plus } from "lucide-react";
 import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { OrdersTable, UsersTable, ProductsTable, CollectionsTable } from "@/components/admin/tables";
+import { SizeChartsTable } from "@/components/admin/tables/SizeChartsTable";
 import { AddProductDialog, AddCategoryDialog, AddSubcategoryDialog, EditProductDialog, AddUserDialog, EditUserDialog } from "@/components/admin/dialogs";
+import { SizeChartDialog } from "@/components/admin/dialogs/SizeChartDialog";
 import { CategoriesSection } from "@/components/admin/CategoriesSection";
 import { getProductStatus, getNextStatus, getProductStatusBadgeVariant, getStatusBadgeVariant, getPaymentBadgeVariant } from "@/lib/adminHelpers";
 
@@ -25,8 +28,11 @@ export default function Admin() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
+  const [isSizeChartDialogOpen, setIsSizeChartDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingSizeChart, setEditingSizeChart] = useState<any>(null);
+  const [sizeChartMode, setSizeChartMode] = useState<"create" | "edit">("create");
 
   const [productForm, setProductForm] = useState({
     name: '',
@@ -38,6 +44,7 @@ export default function Admin() {
     sizes: ['S', 'M', 'L', 'XL'],
     sizePricing: { 'S': '45.00', 'M': '48.00', 'L': '52.00', 'XL': '56.00' } as Record<string, string>,
     hideSizes: false,
+    sizeChartId: '',
     images: [],
     stock_quantity: '50',
     is_featured: false,
@@ -74,6 +81,11 @@ export default function Admin() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ["/api/admin/product-types"],
+    enabled: isAdmin,
+  });
+
+  const { data: sizeCharts = [] } = useQuery({
+    queryKey: ["/api/admin/size-charts"],
     enabled: isAdmin,
   });
 
@@ -274,6 +286,67 @@ export default function Admin() {
     },
   });
 
+  const createSizeChartMutation = useMutation({
+    mutationFn: (sizeChart: any) =>
+      apiRequest("POST", "/api/admin/size-charts", sizeChart),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/size-charts"] });
+      setIsSizeChartDialogOpen(false);
+      setEditingSizeChart(null);
+      toast({
+        title: "Size Chart Created",
+        description: "Size chart created successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create size chart.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateSizeChartMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      apiRequest("PATCH", `/api/admin/size-charts/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/size-charts"] });
+      setIsSizeChartDialogOpen(false);
+      setEditingSizeChart(null);
+      toast({
+        title: "Size Chart Updated",
+        description: "Size chart updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update size chart.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSizeChartMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiRequest("DELETE", `/api/admin/size-charts/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/size-charts"] });
+      toast({
+        title: "Size Chart Deleted",
+        description: "Size chart deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete size chart.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const toggleProductStatusMutation = useMutation({
     mutationFn: ({ productId, is_active, stock_quantity }: { productId: string; is_active: boolean; stock_quantity: number }) =>
       apiRequest("PATCH", `/api/admin/products/${productId}`, { is_active, stock_quantity }),
@@ -356,6 +429,40 @@ export default function Admin() {
     updateOrderStatusMutation.mutate({ orderId, status });
   };
 
+  const handleCreateSizeChart = () => {
+    setSizeChartMode("create");
+    setEditingSizeChart({
+      name: "",
+      description: "",
+      chartData: [["", ""], ["", ""]],
+      is_active: true,
+    });
+    setIsSizeChartDialogOpen(true);
+  };
+
+  const handleEditSizeChart = (chart: any) => {
+    setSizeChartMode("edit");
+    setEditingSizeChart(chart);
+    setIsSizeChartDialogOpen(true);
+  };
+
+  const handleDeleteSizeChart = (id: string) => {
+    if (confirm("Are you sure you want to delete this size chart?")) {
+      deleteSizeChartMutation.mutate(id);
+    }
+  };
+
+  const handleSubmitSizeChart = () => {
+    if (sizeChartMode === "create") {
+      createSizeChartMutation.mutate(editingSizeChart);
+    } else {
+      updateSizeChartMutation.mutate({
+        id: editingSizeChart.id,
+        data: editingSizeChart,
+      });
+    }
+  };
+
   // Early returns after all hooks
   if (isLoading) {
     return (
@@ -406,7 +513,7 @@ export default function Admin() {
 
       {/* Main Tabs */}
       <Tabs defaultValue="orders" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="orders" className="flex items-center gap-2" data-testid="tab-orders">
             <ShoppingBag className="w-4 h-4" />
             Orders
@@ -418,6 +525,10 @@ export default function Admin() {
           <TabsTrigger value="collections" className="flex items-center gap-2" data-testid="tab-collections">
             <FileText className="w-4 h-4" />
             Collections
+          </TabsTrigger>
+          <TabsTrigger value="size-charts" className="flex items-center gap-2" data-testid="tab-size-charts">
+            <Ruler className="w-4 h-4" />
+            Size Charts
           </TabsTrigger>
           <TabsTrigger value="product-types" className="flex items-center gap-2" data-testid="tab-product-types">
             <Settings className="w-4 h-4" />
@@ -469,6 +580,7 @@ export default function Admin() {
                 productForm={productForm}
                 setProductForm={setProductForm}
                 categories={categories}
+                sizeCharts={sizeCharts}
                 removeImage={removeImage}
                 onSubmit={() => createProductMutation.mutate(productForm)}
                 isPending={createProductMutation.isPending}
@@ -482,6 +594,7 @@ export default function Admin() {
             editingProduct={editingProduct}
             setEditingProduct={setEditingProduct}
             categories={categories}
+            sizeCharts={sizeCharts}
             removeEditImage={removeEditImage}
             onSubmit={() => updateProductMutation.mutate({ id: editingProduct.id, productData: editingProduct })}
             isPending={updateProductMutation.isPending}
@@ -491,6 +604,33 @@ export default function Admin() {
         {/* Collections Tab */}
         <TabsContent value="collections">
           <CollectionsTable collections={collections} />
+        </TabsContent>
+
+        {/* Size Charts Tab */}
+        <TabsContent value="size-charts">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Size Charts</h2>
+              <Button onClick={handleCreateSizeChart} data-testid="button-create-size-chart">
+                <Plus className="w-4 h-4 mr-2" /> Create Size Chart
+              </Button>
+            </div>
+            <SizeChartsTable
+              sizeCharts={sizeCharts}
+              onEdit={handleEditSizeChart}
+              onDelete={handleDeleteSizeChart}
+            />
+          </div>
+
+          <SizeChartDialog
+            open={isSizeChartDialogOpen}
+            onOpenChange={setIsSizeChartDialogOpen}
+            sizeChart={editingSizeChart}
+            setSizeChart={setEditingSizeChart}
+            onSubmit={handleSubmitSizeChart}
+            isPending={sizeChartMode === "create" ? createSizeChartMutation.isPending : updateSizeChartMutation.isPending}
+            mode={sizeChartMode}
+          />
         </TabsContent>
 
         {/* Product Types Tab */}

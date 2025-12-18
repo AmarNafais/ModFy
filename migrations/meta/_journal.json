@@ -36,6 +36,13 @@
       "when": 1766043118701,
       "tag": "0004_little_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1766045221371,
+      "tag": "0005_foamy_richard_fisk",
+      "breakpoints": true
     }
   ]
 }

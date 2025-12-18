@@ -19,6 +19,7 @@ interface EditProductDialogProps {
   editingProduct: any; // Contains sizePricing: Record<string, string>
   setEditingProduct: (product: any) => void;
   categories: Category[];
+  sizeCharts: any[];
   removeEditImage: (index: number) => void;
   onSubmit: () => void;
   isPending: boolean;
@@ -30,6 +31,7 @@ export function EditProductDialog({
   editingProduct,
   setEditingProduct,
   categories,
+  sizeCharts,
   removeEditImage,
   onSubmit,
   isPending,
@@ -211,6 +213,26 @@ export function EditProductDialog({
                 data-testid="input-edit-product-stock"
               />
             </div>
+          </div>
+
+          {/* Size Chart Selection */}
+          <div>
+            <Label htmlFor="edit-product-size-chart">Size Chart (Optional)</Label>
+            <Select
+              value={editingProduct.sizeChartId || undefined}
+              onValueChange={(value) => setEditingProduct({ ...editingProduct, sizeChartId: value })}
+            >
+              <SelectTrigger data-testid="select-edit-size-chart">
+                <SelectValue placeholder="Select size chart (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {sizeCharts.filter((chart: any) => chart.is_active).map((chart: any) => (
+                  <SelectItem key={chart.id} value={chart.id}>
+                    {chart.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Hide Sizes Toggle */}

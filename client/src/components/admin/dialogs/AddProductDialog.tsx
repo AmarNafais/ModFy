@@ -23,6 +23,7 @@ interface ProductFormData {
   sizes: string[];
   sizePricing: Record<string, string>; // { "S": "45.00", "M": "48.00" }
   hideSizes: boolean;
+  sizeChartId: string;
   images: string[];
   stock_quantity: string;
   is_featured: boolean;
@@ -34,6 +35,7 @@ interface AddProductDialogProps {
   productForm: ProductFormData;
   setProductForm: (form: ProductFormData) => void;
   categories: Category[];
+  sizeCharts: any[];
   removeImage: (index: number) => void;
   onSubmit: () => void;
   isPending: boolean;
@@ -45,6 +47,7 @@ export function AddProductDialog({
   productForm,
   setProductForm,
   categories,
+  sizeCharts,
   removeImage,
   onSubmit,
   isPending
@@ -254,6 +257,26 @@ export function AddProductDialog({
               />
               <Label htmlFor="product-featured">Featured Product</Label>
             </div>
+          </div>
+
+          {/* Size Chart Selection */}
+          <div>
+            <Label htmlFor="product-size-chart">Size Chart (Optional)</Label>
+            <Select
+              value={productForm.sizeChartId || undefined}
+              onValueChange={(value) => setProductForm({ ...productForm, sizeChartId: value })}
+            >
+              <SelectTrigger data-testid="select-size-chart">
+                <SelectValue placeholder="Select size chart (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {sizeCharts.filter((chart: any) => chart.is_active).map((chart: any) => (
+                  <SelectItem key={chart.id} value={chart.id}>
+                    {chart.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Hide Sizes Toggle */}
