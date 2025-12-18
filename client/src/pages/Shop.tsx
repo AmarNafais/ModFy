@@ -1,19 +1,70 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { type Category, type ProductWithCategory } from "@shared/schema";
 import ProductCard from "@/components/ProductCard";
 
 export default function Shop() {
+  // Read URL params inside useEffect to ensure we get fresh values
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
 
+  // Update state when URL params change
+  useEffect(() => {
+    const updateFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const catId = params.get('categoryId');
+      const catSlug = params.get('category');
+      const subId = params.get('subcategoryId');
+
+      // If we have a category slug instead of ID, find the matching category
+      if (catSlug && !catId && categories.length > 0) {
+        const matchingCategory = categories.find((c: any) => c.slug === catSlug);
+        if (matchingCategory) {
+          console.log('Found category by slug:', catSlug, '-> ID:', matchingCategory.id);
+          setSelectedCategory(matchingCategory.id);
+          setSelectedSubcategory("");
+          setSearchQuery("");
+          return;
+        }
+      }
+
+      console.log('URL changed - categoryId:', catId, 'subcategoryId:', subId);
+      setSelectedCategory(catId || "");
+      setSelectedSubcategory(subId || "");
+      setSearchQuery(""); // Clear search when navigating via menu
+    };
+
+    // Initial load
+    updateFromUrl();
+
+    // Listen for popstate (back/forward buttons)
+    window.addEventListener('popstate', updateFromUrl);
+
+    // Listen for custom navigation event (when links are clicked)
+    window.addEventListener('locationchange', updateFromUrl);
+
+    return () => {
+      window.removeEventListener('popstate', updateFromUrl);
+      window.removeEventListener('locationchange', updateFromUrl);
+    };
+  }, [categories]);
+
+  const queryKey = useMemo(() => {
+    const filters: any = { is_active: true };
+    if (selectedCategory) filters.categoryId = selectedCategory;
+    if (selectedSubcategory) filters.subcategoryId = selectedSubcategory;
+    console.log('Query key updated:', ['/api/products', filters]);
+    return ['/api/products', filters];
+  }, [selectedCategory, selectedSubcategory]);
+
   const { data: allProducts = [], isLoading } = useQuery<ProductWithCategory[]>({
-    queryKey: ['/api/products', { categoryId: selectedCategory || undefined, is_active: true }],
+    queryKey: queryKey,
   });
 
   // Filter products based on search query
@@ -41,6 +92,15 @@ export default function Shop() {
           <p className="text-gray-600 font-light max-w-2xl mx-auto">
             Discover our complete collection of premium men's innerwear designed for comfort, style, and sophistication.
           </p>
+          {/* Active Filter Indicator */}
+          {(selectedCategory || selectedSubcategory) && (
+            <div className="mt-4 text-sm text-gray-600">
+              Filtering: {categories.find((c: any) => c.id === selectedCategory)?.name}
+              {selectedSubcategory && (
+                <> → {categories.find((c: any) => c.id === selectedSubcategory)?.name}</>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -84,26 +144,30 @@ export default function Shop() {
           <button
             onClick={() => {
               setSelectedCategory("");
-              setSearchQuery(""); // Clear search when changing category
+              setSelectedSubcategory("");
+              setSearchQuery("");
+              window.history.pushState({}, '', '/shop');
             }}
-            className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === ""
-                ? "bg-luxury-black text-white"
-                : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
+            className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === "" && selectedSubcategory === ""
+              ? "bg-luxury-black text-white"
+              : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
               }`}
             data-testid="filter-all"
           >
             ALL
           </button>
-          {categories.map((category) => (
+          {categories.filter((cat: any) => !cat.parent_id).map((category) => (
             <button
               key={category.id}
               onClick={() => {
                 setSelectedCategory(category.id);
-                setSearchQuery(""); // Clear search when changing category
+                setSelectedSubcategory("");
+                setSearchQuery("");
+                window.history.pushState({}, '', `/shop?categoryId=${category.id}`);
               }}
-              className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === category.id
-                  ? "bg-luxury-black text-white"
-                  : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
+              className={`px-6 py-2 text-sm font-medium tracking-wide transition-colors ${selectedCategory === category.id && !selectedSubcategory
+                ? "bg-luxury-black text-white"
+                : "border border-luxury-black text-luxury-black hover:bg-luxury-black hover:text-white"
                 }`}
               data-testid={`filter-${category.slug}`}
             >

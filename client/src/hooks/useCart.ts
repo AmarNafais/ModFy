@@ -57,7 +57,12 @@ export function useCart() {
   // Remove from cart mutation
   const removeFromCartMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/cart/${id}`);
+      const response = await apiRequest("DELETE", `/api/cart/${id}`);
+      // Don't try to parse JSON from 204 No Content response
+      if (response.status === 204) {
+        return null;
+      }
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
@@ -66,7 +71,8 @@ export function useCart() {
         description: "Product has been removed from your cart.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Error removing from cart:", error);
       toast({
         title: "Error",
         description: "Failed to remove from cart.",
@@ -78,7 +84,12 @@ export function useCart() {
   // Clear cart mutation
   const clearCartMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("DELETE", "/api/cart/clear");
+      const response = await apiRequest("DELETE", "/api/cart/clear");
+      // Don't try to parse JSON from 204 No Content response
+      if (response.status === 204) {
+        return null;
+      }
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
@@ -87,7 +98,8 @@ export function useCart() {
         description: "All items have been removed from your cart.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Error clearing cart:", error);
       toast({
         title: "Error",
         description: "Failed to clear cart.",

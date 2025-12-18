@@ -3,17 +3,15 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, signupSchema, loginSchema, insertUserProfileSchema, insertOrderSchema, users } from "@shared/schema";
 import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
-import { sendWelcomeEmail, testEmailConnection, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
+import { sendWelcomeEmail, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
 import { db } from "./db";
 import { ObjectStorageService } from "./objectStorage";
+import { upload, categoryUpload, getImageUrl } from "./uploadService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
   app.use(sessionConfig);
   app.use(addUserToRequest);
-  
-  // Test email connection on startup
-  await testEmailConnection();
 
   // Auth routes
   app.post("/api/auth/signup", async (req, res) => {
@@ -148,10 +146,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { categoryId, is_featured, is_active } = req.query;
+      const { categoryId, subcategoryId, is_featured, is_active } = req.query;
       const filters: any = {};
       
       if (categoryId) filters.categoryId = categoryId as string;
+      if (subcategoryId) filters.subcategoryId = subcategoryId as string;
       if (is_featured !== undefined) filters.is_featured = is_featured === 'true';
       if (is_active !== undefined) filters.is_active = is_active === 'true';
 
@@ -173,30 +172,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching product:", error);
       res.status(500).json({ message: "Failed to fetch product" });
-    }
-  });
-
-  // Collections routes
-  app.get("/api/collections", async (_req, res) => {
-    try {
-      const collections = await storage.getCollections();
-      res.json(collections);
-    } catch (error) {
-      console.error("Error fetching collections:", error);
-      res.status(500).json({ message: "Failed to fetch collections" });
-    }
-  });
-
-  app.get("/api/collections/:slug", async (req, res) => {
-    try {
-      const collection = await storage.getCollectionBySlug(req.params.slug);
-      if (!collection) {
-        return res.status(404).json({ message: "Collection not found" });
-      }
-      res.json(collection);
-    } catch (error) {
-      console.error("Error fetching collection:", error);
-      res.status(500).json({ message: "Failed to fetch collection" });
     }
   });
 
@@ -370,6 +345,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, role, isEmailVerified } = req.body;
+
+      // Validate required fields
+      if (!email || !password || !firstName || !lastName) {
+        return res.status(400).json({ message: "Email, password, first name, and last name are required" });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      // Validate password length
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ message: "User with this email already exists" });
+      }
+
+      // Hash the password
+      const bcrypt = await import('bcryptjs');
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Create the user
+      const newUser = await storage.createUser({
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role: role || "customer",
+        isEmailVerified: isEmailVerified ?? false,
+      });
+
+      // Return user without password
+      res.status(201).json({ ...newUser, password: undefined });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Prevent deleting yourself
+      if (req.session?.userId === id) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.deleteUser(id);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { firstName, lastName, role, isEmailVerified } = req.body;
+
+      console.log('PATCH /api/admin/users/:id - Request data:', { id, firstName, lastName, role, isEmailVerified });
+
+      // Validate required fields
+      if (!firstName || !lastName) {
+        return res.status(400).json({ message: "First name and last name are required" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log('PATCH /api/admin/users/:id - User before update:', { id: user.id, firstName: user.firstName, lastName: user.lastName, role: user.role });
+
+      const updatedUser = await storage.updateUser(id, {
+        firstName,
+        lastName,
+        role,
+        isEmailVerified,
+      });
+
+      console.log('PATCH /api/admin/users/:id - User after update:', updatedUser);
+
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+
+      res.json({ ...updatedUser, password: undefined });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   app.get("/api/admin/orders", requireAdmin, async (req, res) => {
     try {
       const orders = await storage.getOrders();
@@ -470,6 +555,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/admin/orders/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const order = await storage.getOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      await storage.deleteOrder(id);
+      res.json({ message: "Order deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      res.status(500).json({ message: "Failed to delete order" });
+    }
+  });
+
   app.get("/api/admin/product-types", requireAdmin, async (req, res) => {
     try {
       const categories = await storage.getCategories();
@@ -482,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -492,9 +594,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description,
         price,
         categoryId,
+        subcategoryId,
         material,
         sizes: Array.isArray(sizes) ? sizes : [],
-        colors: Array.isArray(colors) ? colors : [],
+        sizePricing: sizePricing || {},
+        hideSizes: Boolean(hideSizes),
+        sizeChartId: sizeChartId || null,
         images: Array.isArray(images) ? images : [],
         stock_quantity: parseInt(stock_quantity) || 0,
         is_featured: Boolean(is_featured),
@@ -508,11 +613,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload product image
+  app.post("/api/admin/upload-product-image", requireAdmin, upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Get the image URL
+      const imageUrl = getImageUrl(req.file.path);
+      
+      res.status(200).json({ 
+        success: true,
+        imageUrl,
+        filename: req.file.filename,
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  // Upload category image
+  app.post("/api/admin/upload-category-image", requireAdmin, categoryUpload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Get the image URL
+      const imageUrl = getImageUrl(req.file.path);
+      
+      res.status(200).json({ 
+        success: true,
+        imageUrl,
+        filename: req.file.filename,
+      });
+    } catch (error) {
+      console.error("Error uploading category image:", error);
+      res.status(500).json({ message: "Failed to upload category image" });
+    }
+  });
+
   // Update product route
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, material, sizes, colors, images, stock_quantity, is_featured, is_active } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured, is_active } = req.body;
       
       const updates: any = {};
       
@@ -523,9 +670,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (description !== undefined) updates.description = description;
       if (price !== undefined) updates.price = price;
       if (categoryId !== undefined) updates.categoryId = categoryId;
+      if (subcategoryId !== undefined) updates.subcategoryId = subcategoryId;
       if (material !== undefined) updates.material = material;
       if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
-      if (colors !== undefined) updates.colors = Array.isArray(colors) ? colors : [];
+      if (sizePricing !== undefined) updates.sizePricing = sizePricing;
+      if (hideSizes !== undefined) updates.hideSizes = Boolean(hideSizes);
+      if (sizeChartId !== undefined) updates.sizeChartId = sizeChartId || null;
       if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
       if (stock_quantity !== undefined) updates.stock_quantity = parseInt(stock_quantity) || 0;
       if (is_featured !== undefined) updates.is_featured = Boolean(is_featured);
@@ -546,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/categories", requireAdmin, async (req, res) => {
     try {
-      const { name, description, imageUrl } = req.body;
+      const { name, description, imageUrl, parentId } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -555,6 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         slug,
         description,
         imageUrl,
+        parentId: parentId || null,
         is_active: true,
       });
       
@@ -562,6 +713,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.patch("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, imageUrl, parent_id, image_url } = req.body;
+      
+      const updates: any = {};
+      
+      if (name !== undefined) {
+        updates.name = name;
+        updates.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      }
+      if (description !== undefined) updates.description = description;
+      if (imageUrl !== undefined || image_url !== undefined) {
+        updates.imageUrl = imageUrl || image_url;
+      }
+      if (parent_id !== undefined) {
+        updates.parentId = parent_id === '' ? null : parent_id;
+      }
+      
+      const category = await storage.updateCategory(id, updates);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log("Deleting category:", id);
+      
+      // Get all subcategories
+      const allCategories = await storage.getCategories();
+      const subcategories = allCategories.filter((cat: any) => cat.parent_id === id);
+      console.log("Found subcategories:", subcategories.length);
+      
+      // Delete all products in this category and subcategories
+      const categoriesToDelete = [id, ...subcategories.map((cat: any) => cat.id)];
+      const allProducts = await storage.getProducts();
+      const productsToDelete = allProducts.filter((product: any) => 
+        categoriesToDelete.includes(product.categoryId)
+      );
+      console.log("Found products to delete:", productsToDelete.length);
+      
+      for (const product of productsToDelete) {
+        console.log("Deleting product:", product.id);
+        await storage.deleteProduct(product.id);
+      }
+      
+      // Delete all subcategories
+      for (const subcat of subcategories) {
+        console.log("Deleting subcategory:", subcat.id);
+        await storage.deleteCategory(subcat.id);
+      }
+      
+      // Delete the category itself
+      console.log("Deleting main category:", id);
+      await storage.deleteCategory(id);
+      console.log("Category deleted successfully");
+      
+      res.json({ message: "Category and related items deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Size Charts routes
+  app.get("/api/admin/size-charts", requireAdmin, async (req, res) => {
+    try {
+      const sizeCharts = await storage.getSizeCharts();
+      res.json(sizeCharts);
+    } catch (error) {
+      console.error("Error fetching size charts:", error);
+      res.status(500).json({ message: "Failed to fetch size charts" });
+    }
+  });
+
+  app.post("/api/admin/size-charts", requireAdmin, async (req, res) => {
+    try {
+      const { name, description, chartData, is_active } = req.body;
+      
+      const sizeChart = await storage.createSizeChart({
+        name,
+        description,
+        chartData,
+        is_active: is_active ?? true,
+      });
+      
+      res.status(201).json(sizeChart);
+    } catch (error) {
+      console.error("Error creating size chart:", error);
+      res.status(500).json({ message: "Failed to create size chart" });
+    }
+  });
+
+  app.patch("/api/admin/size-charts/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, chartData, is_active } = req.body;
+      
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (description !== undefined) updates.description = description;
+      if (chartData !== undefined) updates.chartData = chartData;
+      if (is_active !== undefined) updates.is_active = Boolean(is_active);
+      
+      const sizeChart = await storage.updateSizeChart(id, updates);
+      
+      if (!sizeChart) {
+        return res.status(404).json({ message: "Size chart not found" });
+      }
+      
+      res.json(sizeChart);
+    } catch (error) {
+      console.error("Error updating size chart:", error);
+      res.status(500).json({ message: "Failed to update size chart" });
+    }
+  });
+
+  app.delete("/api/admin/size-charts/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteSizeChart(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Size chart not found" });
+      }
+      
+      res.json({ message: "Size chart deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting size chart:", error);
+      res.status(500).json({ message: "Failed to delete size chart" });
     }
   });
 
@@ -720,14 +1013,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create order items from cart items
       for (const cartItem of cartItems) {
+        // Get the correct price based on size if sizePricing exists
+        const product = cartItem.product as any;
+        let unitPrice = product.price;
+        if (cartItem.size && product.sizePricing && product.sizePricing[cartItem.size]) {
+          unitPrice = product.sizePricing[cartItem.size];
+        }
+        
         await storage.createOrderItem({
           orderId: order.id,
           productId: cartItem.productId,
           size: cartItem.size || null,
           color: cartItem.color || null,
           quantity: cartItem.quantity,
-          unitPrice: cartItem.product.price,
-          totalPrice: (parseFloat(cartItem.product.price) * cartItem.quantity).toFixed(2),
+          unitPrice: String(unitPrice),
+          totalPrice: (parseFloat(String(unitPrice)) * cartItem.quantity).toFixed(2),
         });
       }
       
@@ -754,17 +1054,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             city: delivery?.city ?? '',
             postalCode: delivery?.postalCode ?? '',
           },
-          items: cartItems.map(item => ({
-            productName: item.product.name,
-            quantity: item.quantity,
-            price: String((item.product as any).price),
-            imageUrl: (() => {
-              const firstImage = (item.product as any)?.images?.[0];
-              return typeof firstImage === 'string' && firstImage.startsWith('http')
-                ? firstImage
-                : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
-            })(),
-          })),
+          items: cartItems.map(item => {
+            const product = item.product as any;
+            let unitPrice = product.price;
+            if (item.size && product.sizePricing && product.sizePricing[item.size]) {
+              unitPrice = product.sizePricing[item.size];
+            }
+            return {
+              productName: item.product.name,
+              quantity: item.quantity,
+              size: item.size,
+              price: String(unitPrice),
+              imageUrl: (() => {
+                const firstImage = product?.images?.[0];
+                return typeof firstImage === 'string' && firstImage.startsWith('http')
+                  ? firstImage
+                  : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+              })(),
+            };
+          }),
         });
       } catch (emailError) {
         console.error("Failed to send order confirmation email:", emailError);

@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SizeChartDisplay } from "@/components/SizeChartDisplay";
 
 export default function ProductDetail() {
   const { slug } = useParams();
   const [selectedSize, setSelectedSize] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -26,19 +26,37 @@ export default function ProductDetail() {
     enabled: !!slug,
   });
 
+  // Calculate display price based on selected size
+  const displayPrice = () => {
+    if (!product) return "0.00";
+
+    // If size is selected and sizePricing exists, use size-specific price
+    if (selectedSize && product.sizePricing && product.sizePricing[selectedSize]) {
+      return parseFloat(product.sizePricing[selectedSize]).toFixed(2);
+    }
+
+    // Otherwise, use base price
+    return parseFloat(product.price).toFixed(2);
+  };
+
   const handleAddToCart = () => {
-    if (!product || !selectedSize || !selectedColor) {
+    if (!product) return;
+
+    // If hideSizes is true, use 'FREE' as the size automatically
+    const sizeToUse = (product as any).hideSizes ? 'FREE' : selectedSize;
+
+    if (!sizeToUse) {
       toast({
         title: "Please select options",
-        description: "Please select both size and color before adding to cart.",
+        description: "Please select size before adding to cart.",
         variant: "destructive",
       });
       return;
     }
 
     addToCart(product.id, {
-      size: selectedSize,
-      color: selectedColor,
+      size: sizeToUse,
+      color: "",
       quantity,
     });
   };
@@ -164,7 +182,7 @@ export default function ProductDetail() {
                   </h1>
                   <div className="flex items-center gap-4 mb-2">
                     <p className="text-2xl font-medium text-luxury-black" data-testid="product-price">
-                      LKR {parseFloat(product.price).toFixed(2)}
+                      LKR {displayPrice()}
                     </p>
                     <div className="text-sm text-green-600 font-medium">
                       {product.stock_quantity && product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
@@ -214,42 +232,34 @@ export default function ProductDetail() {
             )}
 
             {/* Size Selection */}
-            {product.sizes && product.sizes.length > 0 && (
+            {(product as any).hideSizes ? (
               <div className="mb-6">
                 <h3 className="text-sm font-medium tracking-wide mb-3">SIZE</h3>
-                <Select value={selectedSize} onValueChange={setSelectedSize}>
-                  <SelectTrigger className="w-full" data-testid="select-size">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.sizes.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-center font-medium" data-testid="free-size-label">
+                  Free Size
+                </div>
               </div>
+            ) : (
+              product.sizes && product.sizes.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium tracking-wide mb-3">SIZE</h3>
+                  <Select value={selectedSize} onValueChange={setSelectedSize}>
+                    <SelectTrigger className="w-full" data-testid="select-size">
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {product.sizes.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )
             )}
 
-            {/* Color Selection */}
-            {product.colors && product.colors.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium tracking-wide mb-3">COLOR</h3>
-                <Select value={selectedColor} onValueChange={setSelectedColor}>
-                  <SelectTrigger className="w-full" data-testid="select-color">
-                    <SelectValue placeholder="Select color" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.colors.map((color) => (
-                      <SelectItem key={color} value={color}>
-                        {color}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+
 
             {/* Quantity */}
             <div className="mb-8">
@@ -293,7 +303,7 @@ export default function ProductDetail() {
             <div className="space-y-3">
               <Button
                 onClick={handleAddToCart}
-                disabled={isAddingToCart || !selectedSize || !selectedColor || (product.stock_quantity !== null && product.stock_quantity <= 0)}
+                disabled={isAddingToCart || (!(product as any).hideSizes && !selectedSize) || (product.stock_quantity !== null && product.stock_quantity <= 0)}
                 className="w-full bg-luxury-black text-white hover:bg-gray-800 py-3 text-sm font-medium tracking-wide transition-colors"
                 data-testid="button-add-to-cart"
               >
@@ -331,6 +341,13 @@ export default function ProductDetail() {
                 </div>
               </details>
             </div>
+
+            {/* Size Chart Display */}
+            {(product as any).sizeChart && (
+              <div className="mt-8">
+                <SizeChartDisplay sizeChart={(product as any).sizeChart} />
+              </div>
+            )}
 
           </div>
         </div>

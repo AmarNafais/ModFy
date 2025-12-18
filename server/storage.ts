@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type WishlistItem, type InsertWishlistItem, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems, type WishlistItemWithProduct } from "@shared/schema";
+import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type WishlistItem, type InsertWishlistItem, type SizeChart, type InsertSizeChart, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems, type WishlistItemWithProduct } from "@shared/schema";
 import bcrypt from 'bcryptjs';
 import { randomUUID } from "crypto";
 
@@ -8,6 +8,8 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<void>;
   
   // Auth operations
   registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User>;
@@ -18,12 +20,14 @@ export interface IStorage {
   getOrder(id: string): Promise<OrderWithItems | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<void>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
   getCategory(id: string): Promise<Category | undefined>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
 
   // Product operations
   getProducts(filters?: { categoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]>;
@@ -54,6 +58,13 @@ export interface IStorage {
   // User profile operations
   getUserProfile(userId: string): Promise<UserProfile | undefined>;
   createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+
+  // Size chart operations
+  getSizeCharts(): Promise<SizeChart[]>;
+  getSizeChart(id: string): Promise<SizeChart | undefined>;
+  createSizeChart(sizeChart: InsertSizeChart): Promise<SizeChart>;
+  updateSizeChart(id: string, updates: Partial<InsertSizeChart>): Promise<SizeChart | undefined>;
+  deleteSizeChart(id: string): Promise<boolean>;
 
   // Order operations
   createOrder(order: InsertOrder): Promise<Order>;
@@ -598,6 +609,23 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  async deleteUser(id: string): Promise<void> {
+    this.users.delete(id);
+  }
+
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = {
+      ...user,
+      ...updates,
+      updated_at: new Date(),
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
   // Auth operations
   async registerUser(userData: { email: string; password: string; firstName: string; lastName: string }): Promise<User> {
     // Check if user already exists
@@ -661,6 +689,10 @@ export class MemStorage implements IStorage {
     };
     this.categories.set(id, category);
     return category;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    this.categories.delete(id);
   }
 
   // Product operations
@@ -984,6 +1016,17 @@ export class MemStorage implements IStorage {
     return updatedOrder;
   }
 
+  async deleteOrder(id: string): Promise<void> {
+    // Delete order items first
+    const orderItemsToDelete = Array.from(this.orderItems.values()).filter(
+      item => item.orderId === id
+    );
+    orderItemsToDelete.forEach(item => this.orderItems.delete(item.id));
+    
+    // Delete the order
+    this.orders.delete(id);
+  }
+
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {
     return Array.from(this.userProfiles.values()).find(profile => profile.userId === userId);
   }
@@ -1027,4 +1070,13 @@ export class MemStorage implements IStorage {
 
 import { DatabaseStorage } from "./dbStorage";
 
-export const storage = new DatabaseStorage();
+let storageInstance: DatabaseStorage | null = null;
+
+export const storage = new Proxy({} as DatabaseStorage, {
+  get(target, prop) {
+    if (!storageInstance) {
+      storageInstance = new DatabaseStorage();
+    }
+    return (storageInstance as any)[prop];
+  }
+});

@@ -8,6 +8,41 @@
       "when": 1755868206179,
       "tag": "0000_clumsy_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1765985305362,
+      "tag": "0001_known_pestilence",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1765990541871,
+      "tag": "0002_short_emma_frost",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1766003579631,
+      "tag": "0003_little_stark_industries",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1766043118701,
+      "tag": "0004_little_maximus",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1766045221371,
+      "tag": "0005_foamy_richard_fisk",
+      "breakpoints": true
     }
   ]
 }

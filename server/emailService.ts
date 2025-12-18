@@ -1,7 +1,27 @@
-// import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
-// Initialize SendGrid with API key
-// sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+// Lazy initialization of transporter to ensure env vars are loaded
+let transporter: Transporter | null = null;
+
+function getTransporter(): Transporter {
+  if (!transporter) {
+    console.log('Initializing email transporter...');
+    console.log('SMTP_USER:', process.env.SMTP_USER ? 'SET' : 'NOT SET');
+    console.log('SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
+    
+    transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+  return transporter;
+}
 
 export interface WelcomeEmailData {
   email: string;
@@ -146,33 +166,11 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
       text: `Welcome to MODFY, ${name}! Thank you for joining our exclusive community of men who value premium comfort and sophisticated style. Explore our collection at https://your-domain.replit.app/shop`
     };
 
-    // await transporter.sendMail(mailOptions);
-    console.log(`[DISABLED] Welcome email would be sent to ${email}`);
+    await getTransporter().sendMail(mailOptions);
+    console.log(`Welcome email sent successfully to ${email}`);
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
-    return false;
-  }
-}
-
-// Test the email configuration
-export async function testEmailConnection(): Promise<boolean> {
-  try {
-    const mailOptions = {
-      from: {
-        name: 'MODFY - Test',
-        address: 'amarnafais@gmail.com'
-      },
-      to: 'legacyamar999@gmail.com',
-      subject: 'Email Service Test',
-      text: 'If you receive this, the email service is working correctly.',
-      html: '<p>If you receive this, the email service is working correctly.</p>'
-    };
-    // await transporter.sendMail(mailOptions);
-    console.log('[DISABLED] Email service test');
-    return true;
-  } catch (error) {
-    console.error('Email service error:', error);
     return false;
   }
 }
@@ -192,6 +190,7 @@ export async function sendOrderConfirmationEmail(orderData: {
   items: Array<{
     productName: string;
     quantity: number;
+    size?: string;
     price: string;
     imageUrl: string;
   }>;
@@ -234,23 +233,27 @@ export async function sendOrderConfirmationEmail(orderData: {
         }
         .order-item {
           border-bottom: 1px solid #e9ecef;
-          padding: 15px 0;
+          padding: 20px 0;
+          margin: 10px 0;
           display: flex;
           align-items: center;
-          gap: 15px;
+          gap: 20px;
         }
         .order-item:last-child {
           border-bottom: none;
         }
         .product-image {
-          width: 60px;
-          height: 60px;
+          width: 80px;
+          height: 80px;
           object-fit: cover;
           border-radius: 8px;
           border: 1px solid #e9ecef;
+          margin-right: 25px;
         }
         .product-details {
           flex: 1;
+          line-height: 1.8;
+          padding-right: 15px;
         }
         .product-price {
           text-align: right;
@@ -294,10 +297,11 @@ export async function sendOrderConfirmationEmail(orderData: {
             <h4>Items Ordered:</h4>
             ${orderData.items.map(item => `
               <div class="order-item">
-                <img src="${item.imageUrl}" alt="${item.productName}" class="product-image">
-                <div class="product-details">
-                  <strong>${item.productName}</strong><br>
-                  <span style="color: #666; font-size: 14px;">Quantity: ${item.quantity}</span>
+                <img src="${item.imageUrl}" alt="${item.productName}" class="product-image" style="margin-right: 25px;">
+                <div class="product-details" style="padding-right: 15px;">
+                  <strong style="font-size: 15px;">${item.productName}</strong><br>
+                  ${item.size ? `<span style="color: #666; font-size: 14px; display: block; margin-top: 5px;">Size: ${item.size}</span>` : ''}
+                  <span style="color: #666; font-size: 14px; display: block; margin-top: 5px;">Quantity: ${item.quantity}</span>
                 </div>
                 <div class="product-price">
                   <strong>LKR ${(parseFloat(item.price) * item.quantity).toFixed(2)}</strong><br>
@@ -333,19 +337,37 @@ export async function sendOrderConfirmationEmail(orderData: {
     </html>
     `;
 
-    const mailOptions = {
+    // Send email to customer if email is provided
+    if (orderData.customerEmail) {
+      const customerMailOptions = {
+        from: {
+          name: 'MODFY',
+          address: process.env.SMTP_USER || 'amarnafais@gmail.com'
+        },
+        to: orderData.customerEmail,
+        subject: `Order Confirmation - ${orderData.orderNumber}`,
+        html: orderConfirmationEmailHTML.replace('A new order has been received!', 'Thank you for your order!').replace('Please process this order promptly.', 'We will contact you shortly on WhatsApp to confirm payment and delivery details.'),
+        text: `Thank you for your order! Order Number: ${orderData.orderNumber} for LKR ${orderData.totalAmount}. We will contact you shortly to confirm payment and delivery.`
+      };
+
+      await getTransporter().sendMail(customerMailOptions);
+      console.log(`Order confirmation email sent to customer: ${orderData.customerEmail}`);
+    }
+
+    // Also send notification to admin
+    const adminMailOptions = {
       from: {
         name: 'MODFY - Order System',
-        address: 'amarnafais@gmail.com'
+        address: process.env.SMTP_USER || 'amarnafais@gmail.com'
       },
-      to: "legacyamar999@gmail.com",
+      to: process.env.ADMIN_EMAIL || 'amarnafais@gmail.com',
       subject: `New Order Received - ${orderData.orderNumber}`,
       html: orderConfirmationEmailHTML,
       text: `New order received: ${orderData.orderNumber} for LKR ${orderData.totalAmount}. Customer: ${orderData.customerName}`
     };
 
-    // await transporter.sendMail(mailOptions);
-    console.log(`[DISABLED] Order confirmation email would be sent for order ${orderData.orderNumber}`);
+    await getTransporter().sendMail(adminMailOptions);
+    console.log(`Order notification email sent to admin for order ${orderData.orderNumber}`);
     return true;
   } catch (error) {
     console.error("Failed to send order confirmation email:", error);
@@ -430,8 +452,8 @@ export async function sendOrderStatusUpdateEmail(params: {
       text: `Your order ${orderNumber} status is now ${newStatus}. ${message}`
     };
 
-    // await transporter.sendMail(mailOptions);
-    console.log(`[DISABLED] Order status update email would be sent to ${to} for ${orderNumber}`);
+    await getTransporter().sendMail(mailOptions);
+    console.log(`Order status update email sent successfully to ${to} for order ${orderNumber}`);
     return true;
   } catch (error) {
     console.error('Failed to send order status update email:', error);

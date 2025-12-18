@@ -83,15 +83,15 @@ Update the `.env` file with your configuration:
 
 ```env
 # Database Configuration
-DB_HOST=127.0.0.1
+DB_HOST=localhost
 DB_NAME=modfy
-DB_PASSWORD=your_secure_password
+DB_PASSWORD=yourpassword
 DB_PORT=3306
 DB_USER=mysql
 
 # Application Configuration
-NODE_ENV=development
-PORT=5000
+NODE_ENV=production
+PORT=3000
 ```
 
 ### 4. Setup MySQL Database
@@ -120,7 +120,7 @@ npm run db:migrate
 npm run dev
 ```
 
-The application will be available at **http://localhost:5000**
+The application will be available at **http://localhost:5000** by default (or `PORT` if you override it).
 
 ## 🏗️ Production Build
 
@@ -431,6 +431,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Amar Nafais**
 
 - GitHub: [@AmarNafais](https://github.com/AmarNafais)
+
+## 👥 Contributors
+
+- Amar Nafais — project lead & full-stack development
 
 ## 🙏 Acknowledgments
 
