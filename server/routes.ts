@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, signupSchema, loginSchema, insertUserProfileSchema, insertOrderSchema, users } from "@shared/schema";
 import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
-import { sendWelcomeEmail, testEmailConnection, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
+import { sendWelcomeEmail, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
 import { db } from "./db";
 import { ObjectStorageService } from "./objectStorage";
 import { upload, getImageUrl } from "./uploadService";
@@ -12,9 +12,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
   app.use(sessionConfig);
   app.use(addUserToRequest);
-  
-  // Test email connection on startup
-  await testEmailConnection();
 
   // Auth routes
   app.post("/api/auth/signup", async (req, res) => {
