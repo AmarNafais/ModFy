@@ -392,7 +392,7 @@ export class DatabaseStorage implements IStorage {
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
       sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
-
+      hideSizes: Boolean(row.hide_sizes),
       images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
@@ -434,7 +434,7 @@ export class DatabaseStorage implements IStorage {
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
       sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
-      colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+      hideSizes: Boolean(row.hide_sizes),
       images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
@@ -476,7 +476,7 @@ export class DatabaseStorage implements IStorage {
       material: row.material,
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
       sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
-      colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+      hideSizes: Boolean(row.hide_sizes),
       images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
@@ -504,7 +504,7 @@ export class DatabaseStorage implements IStorage {
     };
 
     await this.pool.execute(
-      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, size_pricing, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, size_pricing, hide_sizes, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         id, 
         productData.name || null, 
@@ -516,6 +516,7 @@ export class DatabaseStorage implements IStorage {
         productData.material || null, 
         productData.sizes || null, 
         productData.sizePricing || null, 
+        productData.hideSizes ?? false, 
         productData.images || null, 
         productData.stock_quantity || 0, 
         productData.is_active ?? true, 
@@ -540,6 +541,9 @@ export class DatabaseStorage implements IStorage {
     if (updates.sizePricing) {
       updated_data.size_pricing = typeof updates.sizePricing === 'object' ? JSON.stringify(updates.sizePricing) : updates.sizePricing;
     }
+    if (updates.hideSizes !== undefined) {
+      updated_data.hide_sizes = Boolean(updates.hideSizes);
+    }
     if (updates.images) {
       updated_data.images = Array.isArray(updates.images) ? JSON.stringify(updates.images) : updates.images;
     }
@@ -549,6 +553,7 @@ export class DatabaseStorage implements IStorage {
       categoryId: 'category_id',
       subcategoryId: 'subcategory_id',
       sizePricing: 'size_pricing',
+      hideSizes: 'hide_sizes',
       stockQuantity: 'stock_quantity',
       stock_quantity: 'stock_quantity',
       isActive: 'is_active',
@@ -675,10 +680,11 @@ export class DatabaseStorage implements IStorage {
         description: row.description,
         price: row.price,
         categoryId: row.category_id,
+        subcategoryId: row.subcategory_id,
         material: row.material,
         sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
         sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
-        colors: typeof row.colors === 'string' ? JSON.parse(row.colors) : row.colors,
+        hideSizes: Boolean(row.hide_sizes),
         images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
         is_active: Boolean(row.is_active),
         is_featured: Boolean(row.is_featured),

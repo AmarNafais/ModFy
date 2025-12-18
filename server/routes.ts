@@ -608,7 +608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, images, stock_quantity, is_featured } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, images, stock_quantity, is_featured } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -622,6 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         material,
         sizes: Array.isArray(sizes) ? sizes : [],
         sizePricing: sizePricing || {},
+        hideSizes: Boolean(hideSizes),
         images: Array.isArray(images) ? images : [],
         stock_quantity: parseInt(stock_quantity) || 0,
         is_featured: Boolean(is_featured),
@@ -660,7 +661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, images, stock_quantity, is_featured, is_active } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, images, stock_quantity, is_featured, is_active } = req.body;
       
       const updates: any = {};
       
@@ -675,6 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (material !== undefined) updates.material = material;
       if (sizes !== undefined) updates.sizes = Array.isArray(sizes) ? sizes : [];
       if (sizePricing !== undefined) updates.sizePricing = sizePricing;
+      if (hideSizes !== undefined) updates.hideSizes = Boolean(hideSizes);
       if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
       if (stock_quantity !== undefined) updates.stock_quantity = parseInt(stock_quantity) || 0;
       if (is_featured !== undefined) updates.is_featured = Boolean(is_featured);

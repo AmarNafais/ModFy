@@ -37,6 +37,7 @@ export const products = mysqlTable("products", {
   material: text("material"),
   sizes: json("sizes"), // Array of size names
   sizePricing: json("size_pricing"), // Object: { "S": "45.00", "M": "48.00", "L": "52.00" }
+  hideSizes: boolean("hide_sizes").default(false), // Hide sizes and show "Free Size"
   images: json("images"),
   is_active: boolean("is_active").default(true),
   is_featured: boolean("is_featured").default(false),
