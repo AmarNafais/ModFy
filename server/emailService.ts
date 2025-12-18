@@ -175,28 +175,6 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
   }
 }
 
-// Test the email configuration
-export async function testEmailConnection(): Promise<boolean> {
-  try {
-    const mailOptions = {
-      from: {
-        name: 'MODFY - Test',
-        address: 'amarnafais@gmail.com'
-      },
-      to: 'legacyamar999@gmail.com',
-      subject: 'Email Service Test',
-      text: 'If you receive this, the email service is working correctly.',
-      html: '<p>If you receive this, the email service is working correctly.</p>'
-    };
-    await getTransporter().sendMail(mailOptions);
-    console.log('Email service test - email sent successfully');
-    return true;
-  } catch (error) {
-    console.error('Email service error:', error);
-    return false;
-  }
-}
-
 export async function sendOrderConfirmationEmail(orderData: {
   orderNumber: string;
   totalAmount: string;
