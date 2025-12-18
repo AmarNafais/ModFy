@@ -2,7 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, Edit, Trash2 } from "lucide-react";
+import { useState, useMemo } from "react";
 
 interface Product {
   id: string;
@@ -12,12 +14,21 @@ interface Product {
   is_featured: boolean;
   is_active: boolean;
   category?: {
+    id: string;
     name: string;
   };
 }
 
+interface Category {
+  id: string;
+  name: string;
+  parentId?: string | null;
+  parent_id?: string | null; // Database returns snake_case
+}
+
 interface ProductsTableProps {
   products: Product[];
+  categories?: Category[];
   onEdit: (product: Product) => void;
   onDelete: (productId: string) => void;
   onToggleStatus: (product: Product) => void;
@@ -30,6 +41,7 @@ interface ProductsTableProps {
 
 export function ProductsTable({
   products,
+  categories = [],
   onEdit,
   onDelete,
   onToggleStatus,
@@ -39,6 +51,20 @@ export function ProductsTable({
   isTogglingStatus,
   addProductTrigger,
 }: ProductsTableProps) {
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Filter to show only main categories (those without a parent)
+  const mainCategories = useMemo(() => {
+    return categories.filter((category) => !category.parentId && !category.parent_id);
+  }, [categories]);
+
+  const filteredProducts = useMemo(() => {
+    if (selectedCategory === "all") {
+      return products;
+    }
+    return products.filter((product) => product.category?.id === selectedCategory);
+  }, [products, selectedCategory]);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -49,6 +75,25 @@ export function ProductsTable({
         {addProductTrigger}
       </CardHeader>
       <CardContent>
+        {/* Category Filter */}
+        <div className="mb-4 flex items-center gap-2">
+          <label htmlFor="category-filter" className="text-sm font-medium">
+            Filter by Category:
+          </label>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger id="category-filter" className="w-[200px]">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {Array.isArray(mainCategories) && mainCategories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -62,7 +107,7 @@ export function ProductsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array.isArray(products) && products.map((product: any) => (
+            {Array.isArray(filteredProducts) && filteredProducts.map((product: any) => (
               <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
                 <TableCell className="font-medium" data-testid={`text-product-name-${product.id}`}>
                   {product.name}
