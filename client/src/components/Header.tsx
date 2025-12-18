@@ -125,8 +125,8 @@ export default function Header({ onCartOpen }: HeaderProps) {
 
           {/* Brand Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" data-testid="link-home" className="text-xl font-light tracking-wider">
-              MODFY
+            <Link href="/" data-testid="link-home" className="flex items-center">
+              <img src="/storage/logo/logo.svg" alt="ModFy" className="h-8" />
             </Link>
           </div>
 

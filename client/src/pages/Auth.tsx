@@ -53,8 +53,8 @@ export default function Auth() {
     },
     onError: (error: any) => {
       console.error("Signup error:", error);
-      const message = error.message.includes("409") 
-        ? "An account with this email already exists" 
+      const message = error.message.includes("409")
+        ? "An account with this email already exists"
         : "Failed to create account. Please try again.";
       toast({
         title: "Signup Failed",
@@ -79,8 +79,8 @@ export default function Auth() {
     },
     onError: (error: any) => {
       console.error("Login error:", error);
-      const message = error.message.includes("401") 
-        ? "Invalid email or password" 
+      const message = error.message.includes("401")
+        ? "Invalid email or password"
         : "Failed to login. Please try again.";
       toast({
         title: "Login Failed",
@@ -102,7 +102,9 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-black mb-2">MODFY</h1>
+          <div className="flex justify-center mb-4">
+            <img src="/storage/logo/logo.svg" alt="ModFy" className="h-12" />
+          </div>
           <p className="text-sm text-gray-600">Premium Men's Innerwear</p>
         </div>
 
@@ -112,8 +114,8 @@ export default function Auth() {
               {isLogin ? "Welcome back" : "Create your account"}
             </CardTitle>
             <p className="text-sm text-gray-600 text-center">
-              {isLogin 
-                ? "Sign in to your account" 
+              {isLogin
+                ? "Sign in to your account"
                 : "Join the MODFY community"}
             </p>
           </CardHeader>
@@ -128,7 +130,7 @@ export default function Auth() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             {...field}
                             type="email"
                             placeholder="Enter your email"
@@ -148,7 +150,7 @@ export default function Auth() {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             {...field}
                             type="password"
                             placeholder="Enter your password"
@@ -161,8 +163,8 @@ export default function Auth() {
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-black hover:bg-gray-800"
                     disabled={loginMutation.isPending}
                     data-testid="button-login"
@@ -182,7 +184,7 @@ export default function Auth() {
                         <FormItem>
                           <FormLabel>First Name</FormLabel>
                           <FormControl>
-                            <Input 
+                            <Input
                               {...field}
                               placeholder="First name"
                               data-testid="input-firstName"
@@ -199,7 +201,7 @@ export default function Auth() {
                         <FormItem>
                           <FormLabel>Last Name</FormLabel>
                           <FormControl>
-                            <Input 
+                            <Input
                               {...field}
                               placeholder="Last name"
                               data-testid="input-lastName"
@@ -235,7 +237,7 @@ export default function Auth() {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             {...field}
                             type="password"
                             placeholder="Create a secure password (min. 8 characters)"
@@ -248,8 +250,8 @@ export default function Auth() {
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-black hover:bg-gray-800"
                     disabled={signupMutation.isPending}
                     data-testid="button-signup"
@@ -267,8 +269,8 @@ export default function Auth() {
                 className="text-sm text-gray-600 hover:text-black transition-colors"
                 data-testid="button-switch-mode"
               >
-                {isLogin 
-                  ? "Don't have an account? Sign up" 
+                {isLogin
+                  ? "Don't have an account? Sign up"
                   : "Already have an account? Sign in"}
               </button>
             </div>
