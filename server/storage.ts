@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type WishlistItem, type InsertWishlistItem, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems, type WishlistItemWithProduct } from "@shared/schema";
+import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type WishlistItem, type InsertWishlistItem, type SizeChart, type InsertSizeChart, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems, type WishlistItemWithProduct } from "@shared/schema";
 import bcrypt from 'bcryptjs';
 import { randomUUID } from "crypto";
 
@@ -58,6 +58,13 @@ export interface IStorage {
   // User profile operations
   getUserProfile(userId: string): Promise<UserProfile | undefined>;
   createOrUpdateUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+
+  // Size chart operations
+  getSizeCharts(): Promise<SizeChart[]>;
+  getSizeChart(id: string): Promise<SizeChart | undefined>;
+  createSizeChart(sizeChart: InsertSizeChart): Promise<SizeChart>;
+  updateSizeChart(id: string, updates: Partial<InsertSizeChart>): Promise<SizeChart | undefined>;
+  deleteSizeChart(id: string): Promise<boolean>;
 
   // Order operations
   createOrder(order: InsertOrder): Promise<Order>;

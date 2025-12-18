@@ -38,6 +38,7 @@ export const products = mysqlTable("products", {
   sizes: json("sizes"), // Array of size names
   sizePricing: json("size_pricing"), // Object: { "S": "45.00", "M": "48.00", "L": "52.00" }
   hideSizes: boolean("hide_sizes").default(false), // Hide sizes and show "Free Size"
+  sizeChartId: varchar("size_chart_id", { length: 255 }),
   images: json("images"),
   is_active: boolean("is_active").default(true),
   is_featured: boolean("is_featured").default(false),
@@ -124,6 +125,16 @@ export const userProfiles = mysqlTable("user_profiles", {
   updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
+export const sizeCharts = mysqlTable("size_charts", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  name: text("name").notNull(),
+  description: text("description"),
+  chartData: json("chart_data").notNull(), // 2D array: [["Size", "Age"], ["S", "5 to 6"], ...]
+  is_active: boolean("is_active").default(true),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -188,6 +199,12 @@ export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
   updated_at: true,
 });
 
+export const insertSizeChartSchema = createInsertSchema(sizeCharts).omit({
+  id: true,
+  createdAt: true,
+  updated_at: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -234,3 +251,6 @@ export type OrderWithItems = Order & {
 
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+
+export type SizeChart = typeof sizeCharts.$inferSelect;
+export type InsertSizeChart = z.infer<typeof insertSizeChartSchema>;

@@ -453,10 +453,14 @@ export class DatabaseStorage implements IStorage {
 
   async getProductBySlug(slug: string): Promise<ProductWithCategory | undefined> {
     const query = `
-      SELECT p.*, c.id as category_id, c.name as category_name, c.slug as category_slug, 
-             c.description as category_description, c.image_url as category_imageUrl
+      SELECT p.*, 
+             c.id as category_id, c.name as category_name, c.slug as category_slug, 
+             c.description as category_description, c.image_url as category_imageUrl,
+             sc.id as size_chart_id, sc.name as size_chart_name, sc.description as size_chart_description, 
+             sc.chart_data as size_chart_data
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN size_charts sc ON p.size_chart_id = sc.id AND sc.is_active = 1
       WHERE p.slug = ?
     `;
     
@@ -465,6 +469,18 @@ export class DatabaseStorage implements IStorage {
     if (!Array.isArray(rows) || rows.length === 0) return undefined;
     
     const row = rows[0] as any;
+    
+    // Parse size chart if exists
+    let sizeChart = null;
+    if (row.size_chart_id) {
+      sizeChart = {
+        id: row.size_chart_id,
+        name: row.size_chart_name,
+        description: row.size_chart_description,
+        chartData: typeof row.size_chart_data === 'string' ? JSON.parse(row.size_chart_data) : row.size_chart_data
+      };
+    }
+    
     return {
       id: row.id,
       name: row.name,
@@ -477,6 +493,8 @@ export class DatabaseStorage implements IStorage {
       sizes: typeof row.sizes === 'string' ? JSON.parse(row.sizes) : row.sizes,
       sizePricing: typeof row.size_pricing === 'string' ? JSON.parse(row.size_pricing) : row.size_pricing,
       hideSizes: Boolean(row.hide_sizes),
+      sizeChartId: row.size_chart_id,
+      sizeChart: sizeChart,
       images: typeof row.images === 'string' ? JSON.parse(row.images) : row.images,
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
@@ -504,7 +522,7 @@ export class DatabaseStorage implements IStorage {
     };
 
     await this.pool.execute(
-      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, size_pricing, hide_sizes, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, size_pricing, hide_sizes, size_chart_id, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         id, 
         productData.name || null, 
@@ -517,6 +535,7 @@ export class DatabaseStorage implements IStorage {
         productData.sizes || null, 
         productData.sizePricing || null, 
         productData.hideSizes ?? false, 
+        productData.sizeChartId || null, 
         productData.images || null, 
         productData.stock_quantity || 0, 
         productData.is_active ?? true, 
@@ -554,6 +573,7 @@ export class DatabaseStorage implements IStorage {
       subcategoryId: 'subcategory_id',
       sizePricing: 'size_pricing',
       hideSizes: 'hide_sizes',
+      sizeChartId: 'size_chart_id',
       stockQuantity: 'stock_quantity',
       stock_quantity: 'stock_quantity',
       isActive: 'is_active',
@@ -1096,5 +1116,110 @@ export class DatabaseStorage implements IStorage {
     if (!Array.isArray(rows) || rows.length === 0) throw new Error("Failed to create order item");
     
     return rows[0] as OrderItem;
+  }
+
+  // Size Chart operations
+  async getSizeCharts(): Promise<SizeChart[]> {
+    const [rows] = await this.pool.execute('SELECT * FROM size_charts ORDER BY name');
+    if (!Array.isArray(rows)) return [];
+    
+    return rows.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      chartData: typeof row.chart_data === 'string' ? JSON.parse(row.chart_data) : row.chart_data,
+      is_active: Boolean(row.is_active),
+      createdAt: row.created_at,
+      updated_at: row.updated_at,
+    }));
+  }
+
+  async getSizeChart(id: string): Promise<SizeChart | undefined> {
+    const [rows] = await this.pool.execute('SELECT * FROM size_charts WHERE id = ?', [id]);
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    
+    const row = rows[0] as any;
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      chartData: typeof row.chart_data === 'string' ? JSON.parse(row.chart_data) : row.chart_data,
+      is_active: Boolean(row.is_active),
+      createdAt: row.created_at,
+      updated_at: row.updated_at,
+    };
+  }
+
+  async createSizeChart(sizeChart: InsertSizeChart): Promise<SizeChart> {
+    const id = randomUUID();
+    const chartDataJson = JSON.stringify(sizeChart.chartData);
+
+    await this.pool.execute(
+      'INSERT INTO size_charts (id, name, description, chart_data, is_active) VALUES (?, ?, ?, ?, ?)',
+      [id, sizeChart.name, sizeChart.description || null, chartDataJson, sizeChart.is_active ?? true]
+    );
+
+    const newChart = await this.getSizeChart(id);
+    if (!newChart) throw new Error("Failed to create size chart");
+    return newChart;
+  }
+
+  async updateSizeChart(id: string, updates: Partial<InsertSizeChart>): Promise<SizeChart | undefined> {
+    const updated_data: any = {
+      ...updates,
+      updated_at: new Date(),
+    };
+
+    if (updates.chartData) {
+      updated_data.chart_data = JSON.stringify(updates.chartData);
+      delete updated_data.chartData;
+    }
+
+    const columnMapping: Record<string, string> = {
+      isActive: 'is_active',
+      is_active: 'is_active',
+      chartData: 'chart_data',
+      chart_data: 'chart_data',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+      updated_at: 'updated_at'
+    };
+
+    const setClause = Object.keys(updated_data)
+      .filter(key => updated_data[key] !== undefined)
+      .map(key => `${columnMapping[key] || key} = ?`)
+      .join(', ');
+
+    const values = Object.keys(updated_data)
+      .filter(key => updated_data[key] !== undefined)
+      .map(key => updated_data[key]);
+
+    if (values.length === 0) {
+      return this.getSizeChart(id);
+    }
+
+    values.push(id);
+
+    await this.pool.execute(
+      `UPDATE size_charts SET ${setClause} WHERE id = ?`,
+      values
+    );
+
+    return this.getSizeChart(id);
+  }
+
+  async deleteSizeChart(id: string): Promise<boolean> {
+    try {
+      // Update any products that reference this size chart
+      await this.pool.execute('UPDATE products SET size_chart_id = NULL WHERE size_chart_id = ?', [id]);
+      
+      // Delete the size chart
+      const [result] = await this.pool.execute('DELETE FROM size_charts WHERE id = ?', [id]);
+      const resultObj = result as any;
+      return resultObj.affectedRows > 0;
+    } catch (error) {
+      console.error("Error deleting size chart:", error);
+      return false;
+    }
   }
 }

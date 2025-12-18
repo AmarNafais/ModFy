@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SizeChartDisplay } from "@/components/SizeChartDisplay";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -340,6 +341,13 @@ export default function ProductDetail() {
                 </div>
               </details>
             </div>
+
+            {/* Size Chart Display */}
+            {(product as any).sizeChart && (
+              <div className="mt-8">
+                <SizeChartDisplay sizeChart={(product as any).sizeChart} />
+              </div>
+            )}
 
           </div>
         </div>
