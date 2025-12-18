@@ -5,13 +5,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, ShoppingBag, Package, FileText, Settings, Ruler, Plus } from "lucide-react";
+import { Shield, Users, ShoppingBag, Package, Settings, Ruler, Plus } from "lucide-react";
 import { Redirect } from "wouter";
 import { useEffect, useState } from "react";
 import { AdminStats } from "@/components/admin/AdminStats";
-import { OrdersTable, UsersTable, ProductsTable, CollectionsTable } from "@/components/admin/tables";
+import { OrdersTable, UsersTable, ProductsTable } from "@/components/admin/tables";
 import { SizeChartsTable } from "@/components/admin/tables/SizeChartsTable";
-import { AddProductDialog, AddCategoryDialog, AddSubcategoryDialog, EditProductDialog, AddUserDialog, EditUserDialog } from "@/components/admin/dialogs";
+import { AddProductDialog, AddCategoryDialog, AddSubcategoryDialog, EditProductDialog, EditCategoryDialog, AddUserDialog, EditUserDialog } from "@/components/admin/dialogs";
 import { SizeChartDialog } from "@/components/admin/dialogs/SizeChartDialog";
 import { CategoriesSection } from "@/components/admin/CategoriesSection";
 import { getProductStatus, getNextStatus, getProductStatusBadgeVariant, getStatusBadgeVariant, getPaymentBadgeVariant } from "@/lib/adminHelpers";
@@ -26,10 +26,12 @@ export default function Admin() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isSubcategoryDialogOpen, setIsSubcategoryDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditCategoryDialogOpen, setIsEditCategoryDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isSizeChartDialogOpen, setIsSizeChartDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [editingSizeChart, setEditingSizeChart] = useState<any>(null);
   const [sizeChartMode, setSizeChartMode] = useState<"create" | "edit">("create");
@@ -71,11 +73,6 @@ export default function Admin() {
 
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
-    enabled: isAdmin,
-  });
-
-  const { data: collections = [] } = useQuery({
-    queryKey: ["/api/collections"],
     enabled: isAdmin,
   });
 
@@ -243,6 +240,27 @@ export default function Admin() {
       toast({
         title: "Error",
         description: error.message || "Failed to update user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, categoryData }: { id: string; categoryData: any }) =>
+      apiRequest("PATCH", `/api/admin/categories/${id}`, categoryData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/product-types"] });
+      setIsEditCategoryDialogOpen(false);
+      setEditingCategory(null);
+      toast({
+        title: "Category Updated",
+        description: "Category updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update category.",
         variant: "destructive",
       });
     },
@@ -513,7 +531,7 @@ export default function Admin() {
 
       {/* Main Tabs */}
       <Tabs defaultValue="orders" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="orders" className="flex items-center gap-2" data-testid="tab-orders">
             <ShoppingBag className="w-4 h-4" />
             Orders
@@ -521,10 +539,6 @@ export default function Admin() {
           <TabsTrigger value="products" className="flex items-center gap-2" data-testid="tab-products">
             <Package className="w-4 h-4" />
             Products
-          </TabsTrigger>
-          <TabsTrigger value="collections" className="flex items-center gap-2" data-testid="tab-collections">
-            <FileText className="w-4 h-4" />
-            Collections
           </TabsTrigger>
           <TabsTrigger value="size-charts" className="flex items-center gap-2" data-testid="tab-size-charts">
             <Ruler className="w-4 h-4" />
@@ -601,11 +615,6 @@ export default function Admin() {
           />
         </TabsContent>
 
-        {/* Collections Tab */}
-        <TabsContent value="collections">
-          <CollectionsTable collections={collections} />
-        </TabsContent>
-
         {/* Size Charts Tab */}
         <TabsContent value="size-charts">
           <div className="space-y-4">
@@ -637,6 +646,10 @@ export default function Admin() {
         <TabsContent value="product-types">
           <CategoriesSection
             categories={categories}
+            onEdit={(category) => {
+              setEditingCategory(category);
+              setIsEditCategoryDialogOpen(true);
+            }}
             onDelete={(categoryId) => deleteCategoryMutation.mutate(categoryId)}
             isDeleting={deleteCategoryMutation.isPending}
             addCategoryTrigger={
@@ -660,6 +673,16 @@ export default function Admin() {
                 isPending={createCategoryMutation.isPending}
               />
             }
+          />
+
+          <EditCategoryDialog
+            open={isEditCategoryDialogOpen}
+            onOpenChange={setIsEditCategoryDialogOpen}
+            editingCategory={editingCategory}
+            setEditingCategory={setEditingCategory}
+            categories={categories}
+            onSubmit={() => updateCategoryMutation.mutate({ id: editingCategory.id, categoryData: editingCategory })}
+            isPending={updateCategoryMutation.isPending}
           />
         </TabsContent>
 

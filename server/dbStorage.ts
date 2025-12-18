@@ -343,6 +343,43 @@ export class DatabaseStorage implements IStorage {
     return newCategory;
   }
 
+  async updateCategory(id: string, updates: Partial<InsertCategory>): Promise<Category | undefined> {
+    const updated_data: any = {
+      ...updates,
+    };
+
+    // Map camelCase to snake_case for database columns
+    const columnMapping: Record<string, string> = {
+      imageUrl: 'image_url',
+      parentId: 'parent_id',
+      isActive: 'is_active',
+      is_active: 'is_active',
+    };
+
+    // Build the SET clause
+    const setClause = Object.keys(updated_data)
+      .filter(key => updated_data[key] !== undefined)
+      .map(key => `${columnMapping[key] || key} = ?`)
+      .join(', ');
+
+    const values = Object.keys(updated_data)
+      .filter(key => updated_data[key] !== undefined)
+      .map(key => updated_data[key]);
+
+    if (values.length === 0) {
+      return this.getCategory(id);
+    }
+
+    values.push(id);
+
+    await this.pool.execute(
+      `UPDATE categories SET ${setClause} WHERE id = ?`,
+      values
+    );
+
+    return this.getCategory(id);
+  }
+
   async deleteCategory(id: string): Promise<void> {
     await this.pool.execute('DELETE FROM categories WHERE id = ?', [id]);
   }

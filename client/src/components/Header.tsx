@@ -51,7 +51,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
           {/* Left Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link href="/collections" data-testid="link-collections" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/collections') ? 'text-gray-900' : ''}`}>
-              COLLECTIONS
+              CATEGORIES
             </Link>
             <div
               className="relative"
@@ -64,14 +64,14 @@ export default function Header({ onCartOpen }: HeaderProps) {
 
               {/* Mega Menu */}
               {showCategoryMenu && mainCategories.length > 0 && (
-                <div className="absolute left-0 top-full pt-2 z-50">
+                <div className="absolute left-0 top-full pt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="bg-white border border-gray-200 shadow-lg rounded-md p-6 min-w-[600px]">
                     <div className="grid grid-cols-2 gap-8">
                       {mainCategories.map((category: any) => {
                         const subcategories = getSubcategories(category.id);
                         return (
                           <div key={category.id} className="space-y-3">
-                            <a 
+                            <a
                               href={`/shop?categoryId=${category.id}`}
                               onClick={(e) => {
                                 e.preventDefault();
@@ -88,7 +88,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
                               <ul className="space-y-2 pl-2">
                                 {subcategories.map((sub: any) => (
                                   <li key={sub.id}>
-                                    <a 
+                                    <a
                                       href={`/shop?categoryId=${category.id}&subcategoryId=${sub.id}`}
                                       onClick={(e) => {
                                         e.preventDefault();
@@ -218,10 +218,10 @@ export default function Header({ onCartOpen }: HeaderProps) {
             <div className="flex flex-col space-y-4">
               <Link href="/collections" data-testid="link-collections-mobile">
                 <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
-                  COLLECTIONS
+                  CATEGORIES
                 </a>
               </Link>
-              
+
               {/* Mobile Shop with Categories */}
               <div>
                 <button
@@ -232,14 +232,14 @@ export default function Header({ onCartOpen }: HeaderProps) {
                   SHOP
                   <span className="text-xs">{showCategoryMenu ? '▼' : '▶'}</span>
                 </button>
-                
+
                 {showCategoryMenu && (
                   <div className="mt-2 pl-4 space-y-3">
                     {mainCategories.map((category: any) => {
                       const subcategories = getSubcategories(category.id);
                       return (
                         <div key={category.id} className="space-y-2">
-                          <a 
+                          <a
                             href={`/shop?categoryId=${category.id}`}
                             onClick={(e) => {
                               e.preventDefault();
@@ -257,7 +257,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
                             <ul className="space-y-1.5 pl-3">
                               {subcategories.map((sub: any) => (
                                 <li key={sub.id}>
-                                  <a 
+                                  <a
                                     href={`/shop?categoryId=${category.id}&subcategoryId=${sub.id}`}
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -281,7 +281,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
                   </div>
                 )}
               </div>
-              
+
               <Link href="/about" data-testid="link-about-mobile">
                 <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
                   ABOUT

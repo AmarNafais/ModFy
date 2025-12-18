@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
+import { useState } from "react";
 
 interface CategoryFormData {
   name: string;
@@ -29,6 +30,42 @@ export function AddCategoryDialog({
   onSubmit,
   isPending
 }: AddCategoryDialogProps) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+
+    try {
+      const file = files[0];
+      const formData = new FormData();
+      const categoryName = categoryForm.name || 'category';
+
+      formData.append('categoryName', categoryName);
+      formData.append('image', file);
+
+      const response = await fetch('/api/admin/upload-category-image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const data = await response.json();
+      setCategoryForm({ ...categoryForm, imageUrl: data.imageUrl });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
@@ -67,14 +104,38 @@ export function AddCategoryDialog({
             />
           </div>
           <div>
-            <Label htmlFor="category-image">Image URL</Label>
-            <Input
-              id="category-image"
-              value={categoryForm.imageUrl}
-              onChange={(e) => setCategoryForm({ ...categoryForm, imageUrl: e.target.value })}
-              placeholder="https://example.com/image.jpg"
-              data-testid="input-category-image"
-            />
+            <Label htmlFor="category-image">Category Image</Label>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="hidden"
+                  id="category-image-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('category-image-upload')?.click()}
+                  disabled={uploading}
+                  className="w-full"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploading ? 'Uploading...' : 'Upload Image'}
+                </Button>
+              </div>
+              {categoryForm.imageUrl && (
+                <div className="relative w-full h-32 border rounded-md overflow-hidden">
+                  <img
+                    src={categoryForm.imageUrl}
+                    alt="Category preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex gap-2 pt-4">
             <Button

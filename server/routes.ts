@@ -6,7 +6,7 @@ import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
 import { sendWelcomeEmail, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
 import { db } from "./db";
 import { ObjectStorageService } from "./objectStorage";
-import { upload, getImageUrl } from "./uploadService";
+import { upload, categoryUpload, getImageUrl } from "./uploadService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
@@ -172,30 +172,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching product:", error);
       res.status(500).json({ message: "Failed to fetch product" });
-    }
-  });
-
-  // Collections routes
-  app.get("/api/collections", async (_req, res) => {
-    try {
-      const collections = await storage.getCollections();
-      res.json(collections);
-    } catch (error) {
-      console.error("Error fetching collections:", error);
-      res.status(500).json({ message: "Failed to fetch collections" });
-    }
-  });
-
-  app.get("/api/collections/:slug", async (req, res) => {
-    try {
-      const collection = await storage.getCollectionBySlug(req.params.slug);
-      if (!collection) {
-        return res.status(404).json({ message: "Collection not found" });
-      }
-      res.json(collection);
-    } catch (error) {
-      console.error("Error fetching collection:", error);
-      res.status(500).json({ message: "Failed to fetch collection" });
     }
   });
 
@@ -658,6 +634,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload category image
+  app.post("/api/admin/upload-category-image", requireAdmin, categoryUpload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Get the image URL
+      const imageUrl = getImageUrl(req.file.path);
+      
+      res.status(200).json({ 
+        success: true,
+        imageUrl,
+        filename: req.file.filename,
+      });
+    } catch (error) {
+      console.error("Error uploading category image:", error);
+      res.status(500).json({ message: "Failed to upload category image" });
+    }
+  });
+
   // Update product route
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
@@ -716,6 +713,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.patch("/api/admin/categories/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, imageUrl, parent_id, image_url } = req.body;
+      
+      const updates: any = {};
+      
+      if (name !== undefined) {
+        updates.name = name;
+        updates.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      }
+      if (description !== undefined) updates.description = description;
+      if (imageUrl !== undefined || image_url !== undefined) {
+        updates.imageUrl = imageUrl || image_url;
+      }
+      if (parent_id !== undefined) {
+        updates.parentId = parent_id === '' ? null : parent_id;
+      }
+      
+      const category = await storage.updateCategory(id, updates);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(500).json({ message: "Failed to update category" });
     }
   });
 
