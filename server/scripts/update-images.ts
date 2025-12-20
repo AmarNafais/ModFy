@@ -169,7 +169,7 @@ function scanProductsFolder() {
         
         // Check if this folder directly contains images (2-level: Category/Product)
         const directImages = fs.readdirSync(subcategoryPath)
-          .filter(f => /\.(jpg|jpeg|png|gif)$/i.test(f));
+          .filter(f => /\.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF)$/i.test(f));
         
         if (directImages.length > 0) {
           // This is a product folder directly under category
@@ -191,7 +191,7 @@ function scanProductsFolder() {
               if (!fs.statSync(productPath).isDirectory()) continue;
               
               const images = fs.readdirSync(productPath)
-                .filter(f => /\.(jpg|jpeg|png|gif)$/i.test(f))
+                .filter(f => /\.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF)$/i.test(f))
                 .map(img => `/storage/uploads/products/${category}/${subcategory}/${product}/${img}`);
               
               if (images.length > 0) {
