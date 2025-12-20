@@ -41,10 +41,32 @@ async function updateProductImages() {
 
     // First pass: update products with images
     for (const dbProduct of dbProducts as any[]) {
-      const productKey = dbProduct.name.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
+      const productKey = dbProduct.name.toLowerCase()
+        .replace(/[\s-_]+/g, ' ')
+        .replace(/\(|\)/g, '')  // Remove parentheses
+        .replace(/v cut/gi, '')  // Remove "V Cut" suffix
+        .trim();
       
-      if (productMap[productKey]) {
-        const { images } = productMap[productKey];
+      // Try exact match first
+      let match = productMap[productKey];
+      
+      // If no exact match, try fuzzy matching
+      if (!match) {
+        for (const [key, value] of Object.entries(productMap)) {
+          const cleanKey = key.replace(/v cut/gi, '').trim();
+          const cleanProductKey = productKey.replace(/v cut/gi, '').trim();
+          
+          if (cleanKey === cleanProductKey || 
+              cleanKey.includes(cleanProductKey) || 
+              cleanProductKey.includes(cleanKey)) {
+            match = value;
+            break;
+          }
+        }
+      }
+      
+      if (match) {
+        const { images } = match;
         
         // Normalize paths to ensure consistent format
         const normalizedImages = images.map(img => {
@@ -145,27 +167,44 @@ function scanProductsFolder() {
         const subcategoryPath = path.join(categoryPath, subcategory);
         if (!fs.statSync(subcategoryPath).isDirectory()) continue;
         
-        try {
-          const products = fs.readdirSync(subcategoryPath);
-          
-          for (const product of products) {
-            const productPath = path.join(subcategoryPath, product);
-            if (!fs.statSync(productPath).isDirectory()) continue;
+        // Check if this folder directly contains images (2-level: Category/Product)
+        const directImages = fs.readdirSync(subcategoryPath)
+          .filter(f => /\.(jpg|jpeg|png|gif)$/i.test(f));
+        
+        if (directImages.length > 0) {
+          // This is a product folder directly under category
+          const images = directImages.map(img => 
+            `/storage/uploads/products/${category}/${subcategory}/${img}`
+          );
+          const productKey = subcategory.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
+          productMap[productKey] = {
+            images,
+            folder: `${category}/${subcategory}`
+          };
+        } else {
+          // This is a subcategory folder, scan for products (3-level: Category/Subcategory/Product)
+          try {
+            const products = fs.readdirSync(subcategoryPath);
             
-            const images = fs.readdirSync(productPath)
-              .filter(f => /\.(jpg|jpeg|png|gif)$/i.test(f))
-              .map(img => `/storage/uploads/products/${category}/${subcategory}/${product}/${img}`);
-            
-            if (images.length > 0) {
-              const productKey = product.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
-              productMap[productKey] = {
-                images,
-                folder: `${category}/${subcategory}/${product}`
-              };
+            for (const product of products) {
+              const productPath = path.join(subcategoryPath, product);
+              if (!fs.statSync(productPath).isDirectory()) continue;
+              
+              const images = fs.readdirSync(productPath)
+                .filter(f => /\.(jpg|jpeg|png|gif)$/i.test(f))
+                .map(img => `/storage/uploads/products/${category}/${subcategory}/${product}/${img}`);
+              
+              if (images.length > 0) {
+                const productKey = product.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
+                productMap[productKey] = {
+                  images,
+                  folder: `${category}/${subcategory}/${product}`
+                };
+              }
             }
+          } catch (e) {
+            // Skip if error reading products
           }
-        } catch (e) {
-          // Skip subcategories with errors
         }
       }
     } catch (e) {
