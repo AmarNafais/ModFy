@@ -12,10 +12,12 @@
 - 💳 **Checkout System** - Streamlined checkout process with order management
 - 👤 **User Authentication** - Secure session-based authentication
 - 📱 **Responsive Design** - Mobile-first approach with beautiful UI
-- 🔍 **Product Catalog** - Browse by categories and collections
+- 🔍 **Product Catalog** - Browse by categories and collections with high-quality images
 - ❤️ **Wishlist** - Save favorite items for later
 - 👔 **Admin Dashboard** - Manage products, orders, and inventory
 - 🎨 **Modern UI** - Built with Tailwind CSS and shadcn/ui components
+- 📸 **Product Images** - Auto image sync and management system
+- 🔄 **Image Auto-Update** - Automatic product image synchronization from storage
 
 ## 🚀 Tech Stack
 
@@ -211,6 +213,7 @@ ModFy/
 | `npm run check` | TypeScript type checking |
 | `npm run db:push` | Push schema changes to database |
 | `npm run db:migrate` | Run database migrations |
+| `npm run update-images` | Sync product images from storage to database |
 
 ## 🌐 Linux Deployment Guide
 
@@ -389,6 +392,122 @@ sudo nginx -t
 pm2 restart all
 sudo systemctl restart nginx
 ```
+
+## 🔄 Updating the Application
+
+```bash
+# Navigate to project directory
+cd /var/www/ModFy
+
+# Pull latest changes
+git pull origin main
+
+# Install new dependencies
+npm install
+
+# Run migrations
+npm run db:migrate
+
+# Rebuild
+npm run build
+
+# Restart with PM2
+pm2 restart modfy-server
+```
+
+## 📸 Product Image Management
+
+### Image Organization
+
+Product images are stored in a hierarchical structure:
+
+```
+storage/uploads/products/
+├── Boys/
+│   ├── Cantex Junior Boxer/
+│   ├── Junior Brief/
+│   ├── Pants/
+│   └── Vest - Boys/
+├── Girls/
+│   ├── Panties - Girls/
+│   └── Vest - Girls/
+├── Mens/
+│   ├── Pants/
+│   ├── Underwear/
+│   ├── Ultimate/
+│   └── Vest/
+└── Women/
+    ├── Panties - Women/
+    └── Vest - Women/
+```
+
+### Current Image Status
+
+- **Total Products:** 64
+- **Products with Images:** 47 (73%)
+- **Total Images:** 226
+- **Storage Size:** 1.2 GB
+- **Image Formats:** JPG, PNG
+
+### Updating Product Images
+
+#### Automatic Image Sync
+
+The project includes an automated image synchronization script. When you add new product images to the storage folder, run:
+
+```bash
+npm run update-images
+# or
+npx ts-node server/scripts/update-images.ts
+```
+
+This script will:
+1. Scan the `storage/uploads/products/` directory
+2. Match folder names with product names in the database
+3. Update the database with correct image paths
+4. Normalize all image paths to ensure consistency
+5. Generate a detailed report of changes
+
+#### Adding New Products with Images
+
+1. **Create the folder structure:**
+   ```
+   storage/uploads/products/[CATEGORY]/[SUBCATEGORY]/[PRODUCT_NAME]/
+   ```
+
+2. **Add image files:**
+   Place JPG/PNG images in the product folder
+
+3. **Create product in database:**
+   ```sql
+   INSERT INTO products (id, name, category_id, is_active, ...)
+   VALUES (...)
+   ```
+
+4. **Run image sync:**
+   ```bash
+   npm run update-images
+   ```
+
+#### Image Path Format
+
+All image paths follow this pattern:
+```
+/storage/uploads/products/[CATEGORY]/[SUBCATEGORY]/[PRODUCT]/[FILENAME]
+
+Examples:
+/storage/uploads/products/Boys/Cantex Junior Boxer/IMG_3599.jpg
+/storage/uploads/products/Mens/Underwear/Classic/IMG_0431.png
+```
+
+### Documentation
+
+For detailed image management instructions, see:
+- [IMAGES.md](IMAGES.md) - Quick reference guide
+- [server/scripts/IMAGE_UPDATE_README.md](server/scripts/IMAGE_UPDATE_README.md) - Complete technical documentation
+- [DOCUMENTATION.md](DOCUMENTATION.md) - Master documentation index
+
+## 🔄 Updating the Application
 
 ## 🔄 Updating the Application
 
