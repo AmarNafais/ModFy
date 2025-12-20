@@ -87,7 +87,7 @@ Update the `.env` file with your configuration:
 # Database Configuration
 DB_HOST=localhost
 DB_NAME=modfy
-DB_PASSWORD=yourpassword
+DB_PASSWORD=your_secure_password
 DB_PORT=3306
 DB_USER=mysql
 
@@ -95,6 +95,8 @@ DB_USER=mysql
 NODE_ENV=production
 PORT=3000
 ```
+
+> ⚠️ **Security Note:** Replace `your_secure_password` with a strong, unique password in production. Never commit real credentials to version control.
 
 ### 4. Setup MySQL Database
 
@@ -506,30 +508,6 @@ For detailed image management instructions, see:
 - [IMAGES.md](IMAGES.md) - Quick reference guide
 - [server/scripts/IMAGE_UPDATE_README.md](server/scripts/IMAGE_UPDATE_README.md) - Complete technical documentation
 - [DOCUMENTATION.md](DOCUMENTATION.md) - Master documentation index
-
-## 🔄 Updating the Application
-
-## 🔄 Updating the Application
-
-```bash
-# Navigate to project directory
-cd /var/www/ModFy
-
-# Pull latest changes
-git pull origin main
-
-# Install new dependencies
-npm install
-
-# Run migrations
-npm run db:migrate
-
-# Rebuild
-npm run build
-
-# Restart with PM2
-pm2 restart modfy-server
-```
 
 ## 🤝 Contributing
 
