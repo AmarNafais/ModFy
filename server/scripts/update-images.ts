@@ -41,32 +41,33 @@ async function updateProductImages() {
 
     // First pass: update products with images
     for (const dbProduct of dbProducts as any[]) {
-      const productKey = dbProduct.name.toLowerCase()
+      let match = null;
+      const productName = dbProduct.name.toLowerCase()
         .replace(/[\s-_]+/g, ' ')
-        .replace(/\(|\)/g, '')  // Remove parentheses
-        .replace(/v cut/gi, '')  // Remove "V Cut" suffix
+        .replace(/\(|\)/g, '')
+        .replace(/v cut/gi, '')
         .trim();
       
-      // Try exact match first
-      let match = productMap[productKey];
-      
-      // If no exact match, try fuzzy matching
-      if (!match) {
-        for (const [key, value] of Object.entries(productMap)) {
-          const cleanKey = key.replace(/v cut/gi, '').trim();
-          const cleanProductKey = productKey.replace(/v cut/gi, '').trim();
-          
-          if (cleanKey === cleanProductKey || 
-              cleanKey.includes(cleanProductKey) || 
-              cleanProductKey.includes(cleanKey)) {
-            match = value;
-            break;
-          }
+      // Try to match with any folder that contains the product name
+      for (const [folderKey, value] of Object.entries(productMap)) {
+        const folderParts = folderKey.split('/').map(p => p.toLowerCase().trim());
+        const productParts = productName.split(' ').filter(p => p.length > 2);
+        
+        // Check if folder path contains enough matching words from product name
+        const matches = productParts.filter(part => 
+          folderParts.some(fp => fp.includes(part) || part.includes(fp))
+        );
+        
+        if (matches.length >= Math.min(2, productParts.length) || 
+            folderKey.includes(productName) || 
+            productName.includes(folderKey.split('/').pop() || '')) {
+          match = value;
+          break;
         }
       }
       
       if (match) {
-        const { images } = match;
+        const { images, folder } = match;
         
         // Normalize paths to ensure consistent format
         const normalizedImages = images.map(img => {
@@ -154,64 +155,39 @@ async function updateProductImages() {
 function scanProductsFolder() {
   const productMap: { [key: string]: { images: string[]; folder: string } } = {};
   
-  const categories = fs.readdirSync(PRODUCTS_DIR);
-  
-  for (const category of categories) {
-    const categoryPath = path.join(PRODUCTS_DIR, category);
-    if (!fs.statSync(categoryPath).isDirectory()) continue;
+  function scanDir(dir: string, relativePath: string = '') {
+    const items = fs.readdirSync(dir);
     
-    try {
-      const subcategories = fs.readdirSync(categoryPath);
+    const imageFiles = items.filter(f => {
+      const fullPath = path.join(dir, f);
+      return fs.statSync(fullPath).isFile() && /\.(jpg|jpeg|png|gif)$/i.test(f);
+    });
+    
+    if (imageFiles.length > 0) {
+      // Found a product folder with images
+      const images = imageFiles.map(img => `/storage/uploads/products/${relativePath}/${img}`);
       
-      for (const subcategory of subcategories) {
-        const subcategoryPath = path.join(categoryPath, subcategory);
-        if (!fs.statSync(subcategoryPath).isDirectory()) continue;
-        
-        // Check if this folder directly contains images (2-level: Category/Product)
-        const directImages = fs.readdirSync(subcategoryPath)
-          .filter(f => /\.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF)$/i.test(f));
-        
-        if (directImages.length > 0) {
-          // This is a product folder directly under category
-          const images = directImages.map(img => 
-            `/storage/uploads/products/${category}/${subcategory}/${img}`
-          );
-          const productKey = subcategory.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
-          productMap[productKey] = {
-            images,
-            folder: `${category}/${subcategory}`
-          };
-        } else {
-          // This is a subcategory folder, scan for products (3-level: Category/Subcategory/Product)
-          try {
-            const products = fs.readdirSync(subcategoryPath);
-            
-            for (const product of products) {
-              const productPath = path.join(subcategoryPath, product);
-              if (!fs.statSync(productPath).isDirectory()) continue;
-              
-              const images = fs.readdirSync(productPath)
-                .filter(f => /\.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF)$/i.test(f))
-                .map(img => `/storage/uploads/products/${category}/${subcategory}/${product}/${img}`);
-              
-              if (images.length > 0) {
-                const productKey = product.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
-                productMap[productKey] = {
-                  images,
-                  folder: `${category}/${subcategory}/${product}`
-                };
-              }
-            }
-          } catch (e) {
-            // Skip if error reading products
-          }
-        }
-      }
-    } catch (e) {
-      // Skip categories with errors
+      // Use folder path as unique key to avoid collisions
+      const folderKey = relativePath.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
+      
+      productMap[folderKey] = {
+        images,
+        folder: relativePath
+      };
+    }
+    
+    const folders = items.filter(f => {
+      const fullPath = path.join(dir, f);
+      return fs.statSync(fullPath).isDirectory();
+    });
+    
+    for (const folder of folders) {
+      const newPath = relativePath ? `${relativePath}/${folder}` : folder;
+      scanDir(path.join(dir, folder), newPath);
     }
   }
   
+  scanDir(PRODUCTS_DIR);
   return productMap;
 }
 
