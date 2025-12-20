@@ -38,36 +38,89 @@ async function updateProductImages() {
     let updated = 0;
     let normalized = 0;
     let failed = 0;
+    const usedFolders = new Set<string>();
 
     // First pass: update products with images
     for (const dbProduct of dbProducts as any[]) {
       let match = null;
+      let bestScore = 0;
+      let bestFolderKey = '';
+      
       const productName = dbProduct.name.toLowerCase()
         .replace(/[\s-_]+/g, ' ')
         .replace(/\(|\)/g, '')
         .replace(/v cut/gi, '')
         .trim();
       
-      // Try to match with any folder that contains the product name
+      // Try to find the best matching folder
       for (const [folderKey, value] of Object.entries(productMap)) {
-        const folderParts = folderKey.split('/').map(p => p.toLowerCase().trim());
-        const productParts = productName.split(' ').filter(p => p.length > 2);
+        // Skip if this folder was already matched to another product
+        if (usedFolders.has(folderKey)) continue;
         
-        // Check if folder path contains enough matching words from product name
-        const matches = productParts.filter(part => 
-          folderParts.some(fp => fp.includes(part) || part.includes(fp))
-        );
+        const folderPath = value.folder.toLowerCase();
+        const folderName = folderPath.split('/').pop() || '';
+        const category = folderPath.split('/')[0] || '';
         
-        if (matches.length >= Math.min(2, productParts.length) || 
-            folderKey.includes(productName) || 
-            productName.includes(folderKey.split('/').pop() || '')) {
+        let score = 0;
+        
+        // Exact match bonus
+        if (folderName.replace(/[\s-_]+/g, ' ') === productName) {
+          score += 100;
+        }
+        
+        // Category match bonus
+        if (productName.includes('boys') && category === 'boys') score += 25;
+        if (productName.includes('girls') && category === 'girls') score += 25;
+        if (productName.includes('mens') || productName.includes('cantex mens')) {
+          if (category === 'mens') score += 25;
+        }
+        if ((productName.includes('women') || (!productName.includes('boys') && !productName.includes('girls') && !productName.includes('mens') && (productName.includes('panties') || productName.includes('feyolina')))) && category === 'women') {
+          score += 25;
+        }
+        if (productName.includes('cantex') && folderPath.includes('cantex')) score += 20;
+        
+        // Product type match (vest, panties, pants, underwear, etc)
+        const productWords = productName.split(' ').filter(w => w.length > 3);
+        const folderWords = folderPath.replace(/[\s-_/]+/g, ' ').split(' ').filter(w => w.length > 3);
+        
+        let wordMatches = 0;
+        for (const word of productWords) {
+          if (folderWords.includes(word)) {
+            wordMatches++;
+            score += 15;
+          }
+        }
+        
+        // Specific product matches with category context
+        if (productName.includes('feyolina')) {
+          if (productName.includes('girls') && folderPath.includes('girls/vest')) score += 40;
+          else if (productName.includes('vest') && !productName.includes('girls') && folderPath.includes('women/vest')) score += 40;
+          else if (productName.includes('panties') && folderPath.includes('women/panties')) score += 40;
+        }
+        
+        if (productName.includes('petticoat')) {
+          if (productName.includes('girls') && folderPath.includes('girls/vest')) score += 40;
+          else if (!productName.includes('girls') && folderPath.includes('women/vest')) score += 40;
+        }
+        
+        if (productName.includes('shorty')) {
+          if (folderPath.includes('girls') && productName.includes('shorty panties')) score += 40;
+          else if (folderPath.includes('women/panties') && !productName.includes('girls')) score += 40;
+        }
+        
+        // Update if this is the best match so far
+        if (score > bestScore && score >= 20) {
+          bestScore = score;
           match = value;
-          break;
+          bestFolderKey = folderKey;
         }
       }
       
       if (match) {
         const { images, folder } = match;
+        
+        // Mark this folder as used
+        usedFolders.add(bestFolderKey);
         
         // Normalize paths to ensure consistent format
         const normalizedImages = images.map(img => {
