@@ -40,7 +40,7 @@ async function updateProductImages() {
     let failed = 0;
 
     // First pass: update products with images
-    for (const dbProduct of dbProducts) {
+    for (const dbProduct of dbProducts as any[]) {
       const productKey = dbProduct.name.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
       
       if (productMap[productKey]) {
@@ -73,7 +73,7 @@ async function updateProductImages() {
       WHERE images IS NOT NULL AND images != '[]'
     `);
     
-    for (const product of allProducts) {
+    for (const product of allProducts as any[]) {
       let images = JSON.parse(product.images);
       let hasIncorrect = false;
       let newImages = [];
@@ -118,8 +118,8 @@ async function updateProductImages() {
     `);
     
     console.log(`📊 Final Status:`);
-    console.log(`   • Active products with images: ${(withImages[0] as any).count}`);
-    console.log(`   • Total images: ${(totalImages[0] as any).total || 0}\n`);
+    console.log(`   • Active products with images: ${(withImages as any[])[0]?.count || 0}`);
+    console.log(`   • Total images: ${(totalImages as any[])[0]?.total || 0}\n`);
     
   } catch (error) {
     console.error('❌ Error:', error);
