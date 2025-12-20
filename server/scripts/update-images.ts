@@ -80,8 +80,8 @@ async function updateProductImages() {
         if (productName.includes('cantex') && folderPath.includes('cantex')) score += 20;
         
         // Product type match (vest, panties, pants, underwear, etc)
-        const productWords = productName.split(' ').filter(w => w.length > 3);
-        const folderWords = folderPath.replace(/[\s-_/]+/g, ' ').split(' ').filter(w => w.length > 3);
+        const productWords = productName.split(' ').filter((w: string) => w.length > 3);
+        const folderWords = folderPath.replace(/[\s-_/]+/g, ' ').split(' ').filter((w: string) => w.length > 3);
         
         let wordMatches = 0;
         for (const word of productWords) {
