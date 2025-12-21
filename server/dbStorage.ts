@@ -442,6 +442,7 @@ export class DatabaseStorage implements IStorage {
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
       stock_quantity: row.stock_quantity,
+      piecesPerPack: row.pieces_per_pack || 1,
       createdAt: row.createdAt,
       updated_at: row.updated_at,
       category: row.category_id ? {
@@ -491,6 +492,7 @@ export class DatabaseStorage implements IStorage {
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
       stock_quantity: row.stock_quantity,
+      piecesPerPack: row.pieces_per_pack || 1,
       createdAt: row.createdAt,
       updated_at: row.updated_at,
       category: row.category_id ? {
@@ -551,6 +553,7 @@ export class DatabaseStorage implements IStorage {
       is_active: Boolean(row.is_active),
       is_featured: Boolean(row.is_featured),
       stock_quantity: row.stock_quantity,
+      piecesPerPack: row.pieces_per_pack || 1,
       createdAt: row.createdAt,
       updated_at: row.updated_at,
       category: row.category_id ? {
@@ -574,7 +577,7 @@ export class DatabaseStorage implements IStorage {
     };
 
     await this.pool.execute(
-      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, size_pricing, hide_sizes, size_chart_id, images, stock_quantity, is_active, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO products (id, name, slug, description, price, category_id, subcategory_id, material, sizes, size_pricing, hide_sizes, size_chart_id, images, stock_quantity, is_active, is_featured, pieces_per_pack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         id, 
         productData.name || null, 
@@ -591,7 +594,8 @@ export class DatabaseStorage implements IStorage {
         productData.images || null, 
         productData.stock_quantity || 0, 
         productData.is_active ?? true, 
-        productData.is_featured ?? false
+        productData.is_featured ?? false,
+        productData.piecesPerPack || 1
       ]
     );
 
@@ -628,6 +632,7 @@ export class DatabaseStorage implements IStorage {
       sizeChartId: 'size_chart_id',
       stockQuantity: 'stock_quantity',
       stock_quantity: 'stock_quantity',
+      piecesPerPack: 'pieces_per_pack',
       isActive: 'is_active',
       is_active: 'is_active',
       isFeatured: 'is_featured',

@@ -213,6 +213,19 @@ export function EditProductDialog({
                 data-testid="input-edit-product-stock"
               />
             </div>
+            <div>
+              <Label htmlFor="edit-pieces-per-pack">Pieces per Pack</Label>
+              <Input
+                id="edit-pieces-per-pack"
+                type="number"
+                min="1"
+                value={editingProduct.piecesPerPack || '1'}
+                onChange={(e) => setEditingProduct({ ...editingProduct, piecesPerPack: e.target.value })}
+                placeholder="1"
+                data-testid="input-edit-pieces-per-pack"
+              />
+              <p className="text-xs text-gray-500 mt-1">Number of pieces in one pack</p>
+            </div>
           </div>
 
           {/* Size Chart Selection */}

@@ -595,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     try {
-      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured, piecesPerPack } = req.body;
       
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       
@@ -614,6 +614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         images: Array.isArray(images) ? images : [],
         stock_quantity: parseInt(stock_quantity) || 0,
         is_featured: Boolean(is_featured),
+        piecesPerPack: parseInt(piecesPerPack) || 1,
         is_active: true,
       });
       
@@ -670,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured, is_active } = req.body;
+      const { name, description, price, categoryId, subcategoryId, material, sizes, sizePricing, hideSizes, sizeChartId, images, stock_quantity, is_featured, is_active, piecesPerPack } = req.body;
       
       const updates: any = {};
       
@@ -691,6 +692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (stock_quantity !== undefined) updates.stock_quantity = parseInt(stock_quantity) || 0;
       if (is_featured !== undefined) updates.is_featured = Boolean(is_featured);
       if (is_active !== undefined) updates.is_active = Boolean(is_active);
+      if (piecesPerPack !== undefined) updates.piecesPerPack = parseInt(piecesPerPack) || 1;
       
       const product = await storage.updateProduct(id, updates);
       

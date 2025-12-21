@@ -43,6 +43,7 @@ export const products = mysqlTable("products", {
   is_active: boolean("is_active").default(true),
   is_featured: boolean("is_featured").default(false),
   stock_quantity: int("stock_quantity").default(0),
+  piecesPerPack: int("pieces_per_pack").default(1), // Number of pieces in the pack
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
   updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });

@@ -28,6 +28,7 @@ export default function AdminProducts() {
         images: [] as string[],
         stock_quantity: '50',
         is_featured: false,
+        piecesPerPack: '1',
     });
 
     const { data: products = [] } = useQuery({
@@ -62,6 +63,7 @@ export default function AdminProducts() {
                 images: [] as string[],
                 stock_quantity: '50',
                 is_featured: false,
+                piecesPerPack: '1',
             });
             toast({
                 title: "Product Created",
@@ -158,6 +160,7 @@ export default function AdminProducts() {
             sizes: product.sizes || [],
             sizePricing: product.sizePricing || {},
             hideSizes: product.hideSizes || false,
+            piecesPerPack: product.piecesPerPack || '1',
         });
         setIsEditDialogOpen(true);
     };
@@ -174,7 +177,6 @@ export default function AdminProducts() {
             <ProductsTable
                 products={products as any[]}
                 categories={categories as any[]}
-                sub_categories={categories as any[]}
                 onEdit={openEditDialog}
                 onDelete={(productId) => deleteProductMutation.mutate(productId)}
                 onToggleStatus={(product) => {
