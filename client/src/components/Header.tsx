@@ -116,6 +116,9 @@ export default function Header({ onCartOpen }: HeaderProps) {
             <Link href="/about" data-testid="link-about" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/about') ? 'text-gray-900' : ''}`}>
               ABOUT
             </Link>
+            <Link href="/contact" data-testid="link-contact" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/contact') ? 'text-gray-900' : ''}`}>
+              CONTACT
+            </Link>
             {(user as any)?.role === 'admin' && (
               <Link href="/admin" data-testid="link-admin" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/admin') ? 'text-gray-900' : ''}`}>
                 ADMIN
@@ -285,6 +288,11 @@ export default function Header({ onCartOpen }: HeaderProps) {
               <Link href="/about" data-testid="link-about-mobile">
                 <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
                   ABOUT
+                </a>
+              </Link>
+              <Link href="/contact" data-testid="link-contact-mobile">
+                <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
+                  CONTACT
                 </a>
               </Link>
               {(user as any)?.role === 'admin' && (

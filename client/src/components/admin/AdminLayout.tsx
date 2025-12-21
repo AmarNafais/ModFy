@@ -10,6 +10,7 @@ import {
     Settings,
     ChevronDown,
     Ruler,
+    Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,11 @@ const navItems: NavItem[] = [
         label: "Analytics",
         href: "/admin/analytics",
         icon: <BarChart3 className="h-4 w-4" />,
+    },
+    {
+        label: "Contact Us",
+        href: "/admin/contact",
+        icon: <Mail className="h-4 w-4" />,
     },
 ];
 

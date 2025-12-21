@@ -9,6 +9,7 @@ import Shop from "@/pages/Shop";
 import ProductDetail from "@/pages/ProductDetail";
 import Collections from "@/pages/Collections";
 import About from "@/pages/About";
+import ContactUs from "@/pages/ContactUs";
 import Auth from "@/pages/Auth";
 import Wishlist from "@/pages/Wishlist";
 import Profile from "@/pages/Profile";
@@ -56,6 +57,11 @@ function Router() {
       <Route path="/about">
         <Layout>
           <About />
+        </Layout>
+      </Route>
+      <Route path="/contact">
+        <Layout>
+          <ContactUs />
         </Layout>
       </Route>
       <Route path="/auth">

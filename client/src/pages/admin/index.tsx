@@ -10,6 +10,7 @@ import Users from "./Users";
 import Categories from "./Categories";
 import SizeCharts from "./SizeCharts";
 import Analytics from "./Analytics";
+import ContactUs from "./ContactUs";
 
 export default function AdminRoot() {
     const { user, isLoading } = useAuth();
@@ -50,6 +51,7 @@ export default function AdminRoot() {
                 <Route path="/admin/categories" component={Categories} />
                 <Route path="/admin/size-charts" component={SizeCharts} />
                 <Route path="/admin/analytics" component={Analytics} />
+                <Route path="/admin/contact" component={ContactUs} />
                 <Route>
                     <Redirect to="/admin" />
                 </Route>
