@@ -136,7 +136,7 @@ async function scanDirectory(dir, baseDir = dir) {
  * Convert HEIC to PNG using ImageMagick
  * Note: Requires ImageMagick to be installed
  */
-async function convertHeicToPng(inputPath, outputPath) {
+async function convertToPng(inputPath, outputPath) {
   try {
     // Ensure output directory exists
     await mkdir(dirname(outputPath), { recursive: true });
@@ -163,26 +163,26 @@ async function convertHeicToPng(inputPath, outputPath) {
  * Copy or convert image to output directory
  */
 async function processImage(file, outputBasePath) {
-  const outputFileName = file.ext.toLowerCase() === '.heic' 
-    ? file.name.replace(/\.heic$/i, '.png')
-    : file.name;
-  
+  const nameBase = file.name.replace(/\.[^.]+$/i, '');
+  const outputFileName = `${nameBase}.png`;
   const outputPath = join(outputBasePath, dirname(file.relativePath), outputFileName);
 
-  if (file.ext.toLowerCase() === '.heic') {
-    return await convertHeicToPng(file.fullPath, outputPath);
-  } else {
-    // Copy existing JPG/PNG files
+  const ext = file.ext.toLowerCase();
+  if (ext === '.png') {
+    // For PNG input, just copy
     try {
       await mkdir(dirname(outputPath), { recursive: true });
       await execPromise(`copy "${file.fullPath}" "${outputPath}"`);
-      console.log(`✓ Copied: ${file.name}`);
+      console.log(`✓ Copied PNG: ${file.name}`);
       return outputPath;
     } catch (error) {
       console.error(`✗ Failed to copy ${file.fullPath}:`, error.message);
       return null;
     }
   }
+
+  // Convert JPG/JPEG/HEIC to PNG
+  return await convertToPng(file.fullPath, outputPath);
 }
 
 /**
@@ -257,7 +257,7 @@ function groupImagesByProduct(files, outputBasePath) {
     const relativeOutputPath = join(
       'products',
       dirname(file.relativePath),
-      file.ext.toLowerCase() === '.heic' ? file.name.replace(/\.heic$/i, '.png') : file.name
+      file.name.replace(/\.[^.]+$/i, '.png')
     ).replace(/\\/g, '/');
 
     products[productKey].images.push(relativeOutputPath);

@@ -15,7 +15,12 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-const PRODUCTS_DIR = path.join(process.cwd(), 'storage', 'uploads', 'products');
+// Source of truth (staging), and target (uploads)
+const STAGING_DIR = path.join(process.cwd(), 'storage', 'products');
+const UPLOADS_DIR = path.join(process.cwd(), 'storage', 'uploads', 'products');
+
+// URLs always point to uploads; if staging is missing we still try uploads directly.
+const PATH_PREFIX = '/storage/uploads/products';
 
 async function updateProductImages() {
   const connection = await pool.getConnection();
@@ -24,6 +29,33 @@ async function updateProductImages() {
     console.log('\n╔════════════════════════════════════════╗');
     console.log('║   PRODUCT IMAGE UPDATE UTILITY        ║');
     console.log('╚════════════════════════════════════════╝\n');
+
+    console.log('📁 Preparing uploads from staging...\n');
+
+    if (!fs.existsSync(STAGING_DIR)) {
+      console.error(`❌ Staging folder missing: ${STAGING_DIR}\n   Expected source images in storage/products.`);
+      return;
+    }
+
+    // Ensure uploads exists and mirror staging into uploads before scanning
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+    // Simple recursive copy (overwrite newer)
+    const copyDir = (src: string, dest: string) => {
+      const entries = fs.readdirSync(src, { withFileTypes: true });
+      for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+        if (entry.isDirectory()) {
+          fs.mkdirSync(destPath, { recursive: true });
+          copyDir(srcPath, destPath);
+        } else {
+          fs.copyFileSync(srcPath, destPath);
+        }
+      }
+    };
+
+    copyDir(STAGING_DIR, UPLOADS_DIR);
 
     console.log('📁 Scanning storage folder structure...\n');
     const productMap = scanProductsFolder();
@@ -124,8 +156,10 @@ async function updateProductImages() {
         
         // Normalize paths to ensure consistent format
         const normalizedImages = images.map(img => {
-          if (!img.startsWith('/storage/uploads/products/')) {
-            return `/storage/uploads${img}`;
+          // Ensure paths are rooted at PATH_PREFIX
+          if (!img.startsWith(PATH_PREFIX + '/')) {
+            const cleaned = img.replace(/^\/storage\//, '').replace(/^uploads\/products\//, '').replace(/^products\//, '');
+            return `${PATH_PREFIX}/${cleaned.replace(/^\/+/, '')}`;
           }
           return img;
         });
@@ -158,11 +192,32 @@ async function updateProductImages() {
         let fixedPath = imgPath;
         
         if (!imgPath.startsWith('/')) {
-          fixedPath = `/storage/uploads/${imgPath}`;
+          fixedPath = `${PATH_PREFIX}/${imgPath}`;
+          hasIncorrect = true;
+        }
+
+        if (!fixedPath.startsWith(PATH_PREFIX + '/')) {
+          // Normalize any prior storage roots
+          fixedPath = `${PATH_PREFIX}/${fixedPath
+            .replace(/^\/storage\/products\//, '')
+            .replace(/^\/storage\/uploads\/products\//, '')
+            .replace(/^\/+/, '')}`;
           hasIncorrect = true;
         }
         
-        newImages.push(fixedPath);
+        // Normalize to lowercase for case-insensitive filesystem
+        const pathParts = fixedPath.split('/');
+        const normalizedPath = pathParts.map((part, idx) => {
+          // Keep /storage/uploads/products as-is, lowercase everything after
+          if (idx <= 3) return part;
+          return part.toLowerCase();
+        }).join('/');
+        
+        if (normalizedPath !== fixedPath) {
+          hasIncorrect = true;
+        }
+        
+        newImages.push(normalizedPath);
       }
       
       if (hasIncorrect) {
@@ -213,12 +268,13 @@ function scanProductsFolder() {
     
     const imageFiles = items.filter(f => {
       const fullPath = path.join(dir, f);
-      return fs.statSync(fullPath).isFile() && /\.(jpg|jpeg|png|gif)$/i.test(f);
+      return fs.statSync(fullPath).isFile() && /\.(jpg|jpeg|png|gif|heic|webp)$/i.test(f);
     });
     
     if (imageFiles.length > 0) {
       // Found a product folder with images
-      const images = imageFiles.map(img => `/storage/uploads/products/${relativePath}/${img}`);
+      // Normalize all paths to lowercase for case-insensitive filesystem compatibility
+      const images = imageFiles.map(img => `${PATH_PREFIX}/${relativePath.toLowerCase()}/${img}`);
       
       // Use folder path as unique key to avoid collisions
       const folderKey = relativePath.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
@@ -240,7 +296,7 @@ function scanProductsFolder() {
     }
   }
   
-  scanDir(PRODUCTS_DIR);
+  scanDir(UPLOADS_DIR);
   return productMap;
 }
 

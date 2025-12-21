@@ -66,7 +66,7 @@ class ImageConverter:
         Path(path).mkdir(parents=True, exist_ok=True)
 
     def convert_heic_to_png(self, input_path, output_path):
-        """Convert HEIC image to PNG"""
+        """Convert image (HEIC/JPG/JPEG/PNG) to PNG"""
         try:
             self.ensure_dir(os.path.dirname(output_path))
             
@@ -77,9 +77,9 @@ class ImageConverter:
             if image.mode in ('RGBA', 'LA', 'P'):
                 rgb_image = Image.new('RGB', image.size, (255, 255, 255))
                 rgb_image.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
-                rgb_image.save(output_path, 'PNG', quality=95)
+                rgb_image.save(output_path, 'PNG')
             else:
-                image.save(output_path, 'PNG', quality=95)
+                image.save(output_path, 'PNG')
             
             self.converted_count += 1
             print(f"✓ Converted: {os.path.basename(input_path)} → {os.path.basename(output_path)}")
@@ -94,14 +94,14 @@ class ImageConverter:
         try:
             self.ensure_dir(os.path.dirname(output_path))
             
-            # Open and save to ensure compatibility
+            # Open and save as PNG to ensure consistent output
             image = Image.open(input_path)
-            if image.mode == 'RGBA':
+            if image.mode in ('RGBA', 'LA', 'P'):
                 rgb_image = Image.new('RGB', image.size, (255, 255, 255))
-                rgb_image.paste(image, mask=image.split()[3])
-                rgb_image.save(output_path, quality=95)
+                rgb_image.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+                rgb_image.save(output_path, 'PNG')
             else:
-                image.save(output_path, quality=95)
+                image.save(output_path, 'PNG')
             
             self.copied_count += 1
             print(f"✓ Copied: {os.path.basename(input_path)}")
@@ -118,20 +118,17 @@ class ImageConverter:
         # Get relative path from base directory
         rel_path = os.path.relpath(input_path, PRODUCTS_BASE_PATH)
         
-        # Create output filename (convert HEIC to PNG)
-        if file_ext == '.heic':
-            output_filename = os.path.splitext(os.path.basename(input_path))[0] + '.png'
-        else:
-            output_filename = os.path.basename(input_path)
+        # Create output filename: always .png
+        output_filename = os.path.splitext(os.path.basename(input_path))[0] + '.png'
         
         # Create output path
         output_dir = os.path.join(OUTPUT_BASE_PATH, os.path.dirname(rel_path))
         output_path = os.path.join(output_dir, output_filename)
         
         # Process image
-        if file_ext.lower() == '.heic':
+        if file_ext.lower() in ['.heic', '.jpg', '.jpeg']:
             return self.convert_heic_to_png(input_path, output_path)
-        elif file_ext.lower() in ['.jpg', '.jpeg', '.png']:
+        elif file_ext.lower() == '.png':
             return self.copy_image(input_path, output_path)
         
         return None
@@ -356,8 +353,8 @@ class DatabaseImporter:
                 # Convert to relative URL path
                 rel_path = os.path.relpath(img_path, PRODUCTS_BASE_PATH)
                 
-                if img_path.lower().endswith('.heic'):
-                    # Image was converted to PNG
+                if os.path.splitext(img_path)[1].lower() in ['.heic', '.jpg', '.jpeg']:
+                    # Image is converted to PNG
                     rel_path = os.path.splitext(rel_path)[0] + '.png'
                 
                 # Convert to forward slashes for web paths
