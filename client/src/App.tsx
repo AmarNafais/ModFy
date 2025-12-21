@@ -13,24 +13,76 @@ import Auth from "@/pages/Auth";
 import Wishlist from "@/pages/Wishlist";
 import Profile from "@/pages/Profile";
 import Checkout from "@/pages/Checkout";
-import Admin from "@/pages/AdminFixed";
+import AdminRoot from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/shop" component={Shop} />
-      <Route path="/collections" component={Collections} />
-      <Route path="/collections/:slug" component={Collections} />
-      <Route path="/products/:slug" component={ProductDetail} />
-      <Route path="/about" component={About} />
-      <Route path="/auth" component={Auth} />
-      <Route path="/wishlist" component={Wishlist} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/checkout" component={Checkout} />
-      <Route path="/admin" component={Admin} />
-      <Route component={NotFound} />
+      {/* Admin routes - no main layout */}
+      <Route path="/admin">
+        <AdminRoot />
+      </Route>
+      <Route path="/admin/:rest*">
+        <AdminRoot />
+      </Route>
+
+      {/* Public routes - with main layout */}
+      <Route path="/">
+        <Layout>
+          <Home />
+        </Layout>
+      </Route>
+      <Route path="/shop">
+        <Layout>
+          <Shop />
+        </Layout>
+      </Route>
+      <Route path="/collections">
+        <Layout>
+          <Collections />
+        </Layout>
+      </Route>
+      <Route path="/collections/:slug">
+        <Layout>
+          <Collections />
+        </Layout>
+      </Route>
+      <Route path="/products/:slug">
+        <Layout>
+          <ProductDetail />
+        </Layout>
+      </Route>
+      <Route path="/about">
+        <Layout>
+          <About />
+        </Layout>
+      </Route>
+      <Route path="/auth">
+        <Layout>
+          <Auth />
+        </Layout>
+      </Route>
+      <Route path="/wishlist">
+        <Layout>
+          <Wishlist />
+        </Layout>
+      </Route>
+      <Route path="/profile">
+        <Layout>
+          <Profile />
+        </Layout>
+      </Route>
+      <Route path="/checkout">
+        <Layout>
+          <Checkout />
+        </Layout>
+      </Route>
+      <Route>
+        <Layout>
+          <NotFound />
+        </Layout>
+      </Route>
     </Switch>
   );
 }
@@ -39,10 +91,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Layout>
-          <Toaster />
-          <Router />
-        </Layout>
+        <Toaster />
+        <Router />
       </TooltipProvider>
     </QueryClientProvider>
   );
