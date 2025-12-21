@@ -1,9 +1,66 @@
 import { useQuery } from "@tanstack/react-query";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, ShoppingBag, TrendingUp, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Package, ShoppingBag, TrendingUp, Users, Search, LayoutDashboard, BarChart3, Ruler } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Link } from "wouter";
+
+interface NavItem {
+    label: string;
+    href: string;
+    icon: React.ReactNode;
+    subItems?: NavItem[];
+}
+
+const navItems: NavItem[] = [
+    {
+        label: "Dashboard",
+        href: "/admin",
+        icon: <LayoutDashboard className="h-4 w-4" />,
+    },
+    {
+        label: "Products",
+        href: "/admin/products",
+        icon: <Package className="h-4 w-4" />,
+        subItems: [
+            {
+                label: "Product List",
+                href: "/admin/products",
+                icon: null,
+            },
+            {
+                label: "Categories",
+                href: "/admin/categories",
+                icon: null,
+            },
+            {
+                label: "Size Charts",
+                href: "/admin/size-charts",
+                icon: null,
+            },
+        ],
+    },
+    {
+        label: "Orders",
+        href: "/admin/orders",
+        icon: <ShoppingBag className="h-4 w-4" />,
+    },
+    {
+        label: "Users",
+        href: "/admin/users",
+        icon: <Users className="h-4 w-4" />,
+    },
+    {
+        label: "Analytics",
+        href: "/admin/analytics",
+        icon: <BarChart3 className="h-4 w-4" />,
+    },
+];
 
 export default function Dashboard() {
+    const [searchQuery, setSearchQuery] = useState<string>("");
     const { data: users = [] } = useQuery({
         queryKey: ["/api/admin/users"],
     });
@@ -25,13 +82,76 @@ export default function Dashboard() {
 
     const recentOrders = Array.isArray(orders) ? orders.slice(0, 5) : [];
 
+    const filteredNavItems = useMemo(() => {
+        if (!searchQuery.trim()) return [];
+
+        const query = searchQuery.toLowerCase();
+        const results: { label: string; href: string; icon: React.ReactNode; isSubItem?: boolean }[] = [];
+
+        navItems.forEach((item) => {
+            // Check main item
+            if (item.label.toLowerCase().includes(query)) {
+                results.push({
+                    label: item.label,
+                    href: item.href,
+                    icon: item.icon,
+                });
+            }
+
+            // Check sub items
+            if (item.subItems) {
+                item.subItems.forEach((subItem) => {
+                    if (subItem.label.toLowerCase().includes(query)) {
+                        results.push({
+                            label: `${item.label} > ${subItem.label}`,
+                            href: subItem.href,
+                            icon: item.icon,
+                            isSubItem: true,
+                        });
+                    }
+                });
+            }
+        });
+
+        return results;
+    }, [searchQuery]);
+
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                <p className="text-muted-foreground">
-                    Welcome to your store management dashboard
-                </p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <p className="text-muted-foreground">
+                        Welcome to your store management dashboard
+                    </p>
+                </div>
+                <div className="relative">
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-[250px]"
+                        />
+                    </div>
+                    {searchQuery.trim() && filteredNavItems.length > 0 && (
+                        <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                            {filteredNavItems.map((item, index) => (
+                                <Link key={index} href={item.href}>
+                                    <a className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 text-sm text-gray-700 border-b border-gray-100 last:border-b-0">
+                                        {item.icon}
+                                        <span className={item.isSubItem ? "text-xs" : ""}>{item.label}</span>
+                                    </a>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                    {searchQuery.trim() && filteredNavItems.length === 0 && (
+                        <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg z-50 p-4 text-sm text-gray-500">
+                            No results found
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Stats Cards */}
