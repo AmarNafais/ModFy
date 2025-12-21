@@ -52,6 +52,9 @@ CATEGORY_MAPPINGS = {
     }
 }
 
+# Case-insensitive access to category mappings
+CATEGORY_MAPPINGS_LOWER = {k.lower(): v for k, v in CATEGORY_MAPPINGS.items()}
+
 class ImageConverter:
     def __init__(self):
         self.converted_count = 0
@@ -158,8 +161,11 @@ class ImageConverter:
             
             if folder_path not in products:
                 folder_parts = parts[:-1]  # Exclude image filename
+                # Normalize gender casing to Title Case for consistency
+                normalized_gender = folder_parts[0].lower()
+                normalized_gender = normalized_gender[:1].upper() + normalized_gender[1:]
                 products[folder_path] = {
-                    'gender': folder_parts[0],
+                    'gender': normalized_gender,
                     'category': folder_parts[1] if len(folder_parts) > 1 else None,
                     'product_type': folder_parts[2] if len(folder_parts) > 2 else None,
                     'folder_path': folder_path,
@@ -320,7 +326,8 @@ class DatabaseImporter:
         for folder_path, product_info in products_dict.items():
             # Get category info
             gender = product_info['gender']
-            category_map = CATEGORY_MAPPINGS.get(gender, {})
+            # Lookup with lowercased key to support lowercase folder names
+            category_map = CATEGORY_MAPPINGS_LOWER.get(gender.lower(), {})
             
             main_cat = category_map.get('main')
             sub_cat = category_map.get('sub')

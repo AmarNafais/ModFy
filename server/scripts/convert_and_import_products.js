@@ -97,6 +97,11 @@ const CATEGORY_MAPPINGS = {
   }
 };
 
+// Case-insensitive access to category mappings
+const CATEGORY_MAPPINGS_LOWER = Object.fromEntries(
+  Object.entries(CATEGORY_MAPPINGS).map(([k, v]) => [k.toLowerCase(), v])
+);
+
 /**
  * Recursively scan directory for image files
  */
@@ -190,8 +195,10 @@ function parseProductFromPath(relativePath) {
   // or: [Gender]/[Category]/[image.ext]
   
   if (parts.length < 2) return null;
-
-  const gender = parts[0]; // Boys, Girls, Mens, Women
+  // Normalize gender for robust folder casing (e.g., boys -> Boys)
+  const genderRaw = parts[0];
+  const genderLower = genderRaw.toLowerCase();
+  const gender = genderLower.charAt(0).toUpperCase() + genderLower.slice(1);
   const category = parts[1]; // e.g., "Underwear", "Pants", "Panties - Women"
   
   let productType = null;
@@ -205,8 +212,9 @@ function parseProductFromPath(relativePath) {
     gender,
     category,
     productType,
-    mainCategory: CATEGORY_MAPPINGS[gender]?.main,
-    subCategory: CATEGORY_MAPPINGS[gender]?.sub,
+    // Use lowercased lookup to support lowercase folder names
+    mainCategory: CATEGORY_MAPPINGS_LOWER[genderLower]?.main,
+    subCategory: CATEGORY_MAPPINGS_LOWER[genderLower]?.sub,
   };
 }
 
