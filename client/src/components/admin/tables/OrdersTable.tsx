@@ -3,7 +3,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ShoppingBag, Trash2, Search } from "lucide-react";
+import { useState, useMemo } from "react";
 
 interface Order {
   id: string;
@@ -27,6 +29,38 @@ interface OrdersTableProps {
 }
 
 export function OrdersTable({ orders, onStatusChange, onDeleteOrder, getStatusBadgeVariant, getPaymentBadgeVariant }: OrdersTableProps) {
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [paymentFilter, setPaymentFilter] = useState<string>("all");
+
+  const filteredOrders = useMemo(() => {
+    let filtered = orders;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((order) =>
+        order.orderNumber.toLowerCase().includes(query) ||
+        (order.user?.firstName && order.user.firstName.toLowerCase().includes(query)) ||
+        (order.user?.lastName && order.user.lastName.toLowerCase().includes(query)) ||
+        order.status.toLowerCase().includes(query) ||
+        order.paymentStatus.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((order) => order.status === statusFilter);
+    }
+
+    // Filter by payment status
+    if (paymentFilter !== "all") {
+      filtered = filtered.filter((order) => order.paymentStatus === paymentFilter);
+    }
+
+    return filtered;
+  }, [orders, searchQuery, statusFilter, paymentFilter]);
+
   return (
     <Card>
       <CardHeader>
@@ -36,6 +70,57 @@ export function OrdersTable({ orders, onStatusChange, onDeleteOrder, getStatusBa
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-6">
+          {/* <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Orders</h3> */}
+          <div className="flex flex-wrap items-center gap-4 justify-between">
+            <div className="flex items-center gap-2">
+              {/* <Search className="h-4 w-4 text-gray-500" /> */}
+              <Input
+                placeholder="Search orders..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-[250px]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+                  Status:
+                </label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger id="status-filter" className="w-[150px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="payment-filter" className="text-sm font-medium text-gray-700">
+                  Payment:
+                </label>
+                <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                  <SelectTrigger id="payment-filter" className="w-[150px]">
+                    <SelectValue placeholder="All Payments" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Payments</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -49,7 +134,7 @@ export function OrdersTable({ orders, onStatusChange, onDeleteOrder, getStatusBa
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array.isArray(orders) && orders.map((order: any) => (
+            {Array.isArray(filteredOrders) && filteredOrders.map((order: any) => (
               <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
                 <TableCell className="font-medium" data-testid={`text-order-number-${order.id}`}>
                   {order.orderNumber}

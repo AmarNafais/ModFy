@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FileText, Search } from "lucide-react";
+import { useState, useMemo } from "react";
 
 interface Collection {
   id: string;
@@ -15,6 +17,21 @@ interface CollectionsTableProps {
 }
 
 export function CollectionsTable({ collections }: CollectionsTableProps) {
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const filteredCollections = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return collections;
+    }
+    const query = searchQuery.toLowerCase();
+    return collections.filter((collection) =>
+      collection.name.toLowerCase().includes(query) ||
+      collection.season.toLowerCase().includes(query) ||
+      collection.year.toString().includes(query) ||
+      (collection.description && collection.description.toLowerCase().includes(query))
+    );
+  }, [collections, searchQuery]);
+
   return (
     <Card>
       <CardHeader>
@@ -24,6 +41,18 @@ export function CollectionsTable({ collections }: CollectionsTableProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Collections</h3>
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search collections by name, season, year, or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -34,7 +63,7 @@ export function CollectionsTable({ collections }: CollectionsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array.isArray(collections) && collections.map((collection: any) => (
+            {Array.isArray(filteredCollections) && filteredCollections.map((collection: any) => (
               <TableRow key={collection.id} data-testid={`row-collection-${collection.id}`}>
                 <TableCell className="font-medium" data-testid={`text-collection-name-${collection.id}`}>
                   {collection.name}

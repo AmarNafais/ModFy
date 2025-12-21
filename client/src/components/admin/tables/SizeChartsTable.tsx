@@ -1,6 +1,10 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Edit, Trash2, Search, Ruler } from "lucide-react";
+import { useState, useMemo } from "react";
 import type { SizeChart } from "@shared/schema";
 
 interface SizeChartsTableProps {
@@ -10,9 +14,69 @@ interface SizeChartsTableProps {
 }
 
 export function SizeChartsTable({ sizeCharts, onEdit, onDelete }: SizeChartsTableProps) {
+    const [searchQuery, setSearchQuery] = useState<string>("");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
+
+    const filteredSizeCharts = useMemo(() => {
+        let filtered = sizeCharts;
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter((chart) =>
+                chart.name.toLowerCase().includes(query) ||
+                (chart.description && chart.description.toLowerCase().includes(query))
+            );
+        }
+
+        // Filter by status
+        if (statusFilter !== "all") {
+            const isActive = statusFilter === "active";
+            filtered = filtered.filter((chart) => chart.is_active === isActive);
+        }
+
+        return filtered;
+    }, [sizeCharts, searchQuery, statusFilter]);
+
     return (
-        <div className="rounded-md border">
-            <Table>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Ruler className="w-5 h-5" />
+                    Size Charts Management
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Size Charts</h3>
+                    <div className="flex flex-wrap items-center gap-4 justify-between">
+                        <div className="flex items-center gap-2">
+                            {/* <Search className="h-4 w-4 text-gray-500" /> */}
+                            <Input
+                                placeholder="Search size charts..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-[250px]"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
+                                Status:
+                            </label>
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger id="status-filter" className="w-[150px]">
+                                    <SelectValue placeholder="All Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+                <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Name</TableHead>
@@ -23,14 +87,14 @@ export function SizeChartsTable({ sizeCharts, onEdit, onDelete }: SizeChartsTabl
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {sizeCharts.length === 0 ? (
+                    {filteredSizeCharts.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={5} className="text-center text-gray-500">
                                 No size charts found
                             </TableCell>
                         </TableRow>
                     ) : (
-                        sizeCharts.map((chart) => (
+                        filteredSizeCharts.map((chart) => (
                             <TableRow key={chart.id}>
                                 <TableCell className="font-medium">{chart.name}</TableCell>
                                 <TableCell>{chart.description || "-"}</TableCell>
@@ -72,6 +136,7 @@ export function SizeChartsTable({ sizeCharts, onEdit, onDelete }: SizeChartsTabl
                     )}
                 </TableBody>
             </Table>
-        </div>
+        </CardContent>
+    </Card>
     );
 }
