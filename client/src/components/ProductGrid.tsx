@@ -10,8 +10,15 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({ categoryId, is_featured, title, showViewAll = false }: ProductGridProps) {
+  const params = {
+    ...(categoryId && { categoryId }),
+    ...(is_featured !== undefined && { is_featured }),
+    is_active: true,
+  };
+  
   const { data: products = [], isLoading } = useQuery<ProductWithCategory[]>({
-    queryKey: ['/api/products', { categoryId, is_featured, is_active: true }],
+    queryKey: ['/api/products', params],
+    enabled: true,
   });
 
   if (isLoading) {
