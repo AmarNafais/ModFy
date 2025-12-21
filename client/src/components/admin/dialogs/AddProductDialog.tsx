@@ -27,6 +27,7 @@ interface ProductFormData {
   images: string[];
   stock_quantity: string;
   is_featured: boolean;
+  piecesPerPack: string;
 }
 
 interface AddProductDialogProps {
@@ -212,7 +213,7 @@ export function AddProductDialog({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="product-material">Material</Label>
               <Input
@@ -234,19 +235,21 @@ export function AddProductDialog({
                 data-testid="input-product-stock"
               />
             </div>
+            <div>
+              <Label htmlFor="pieces-per-pack">Pieces per Pack</Label>
+              <Input
+                id="pieces-per-pack"
+                type="number"
+                min="1"
+                value={productForm.piecesPerPack || '1'}
+                onChange={(e) => setProductForm({ ...productForm, piecesPerPack: e.target.value })}
+                placeholder="1"
+                data-testid="input-pieces-per-pack"
+              />
+              <p className="text-xs text-gray-500 mt-1">Number of pieces in one pack</p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="product-stock">Stock Quantity</Label>
-              <Input
-                id="product-stock"
-                type="number"
-                value={productForm.stock_quantity}
-                onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })}
-                placeholder="50"
-                data-testid="input-product-stock"
-              />
-            </div>
             <div className="flex items-center space-x-2 pt-6">
               <input
                 type="checkbox"

@@ -182,9 +182,16 @@ export default function ProductDetail() {
                     {product.name}
                   </h1>
                   <div className="flex items-center gap-4 mb-2">
-                    <p className="text-2xl font-medium text-luxury-black" data-testid="product-price">
-                      LKR {displayPrice()}
-                    </p>
+                    <div className="flex flex-col">
+                      <p className="text-2xl font-medium text-luxury-black" data-testid="product-price">
+                        LKR {displayPrice()}
+                      </p>
+                      {product.piecesPerPack && (
+                        <span className="text-sm text-gray-600 mt-1">
+                          {product.piecesPerPack === 1 ? '1 piece' : `${product.piecesPerPack} pieces per pack`}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-sm text-green-600 font-medium">
                       {product.stock_quantity && product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
                     </div>
@@ -314,7 +321,7 @@ export default function ProductDetail() {
               {/* Quick info */}
               <div className="text-xs text-gray-500 space-y-1">
                 <p>• Free shipping on orders over LKR 7,500</p>
-                <p>• 30-day returns & exchanges</p>
+                <p>• No returns & exchanges</p>
                 <p>• Premium quality guaranteed</p>
               </div>
             </div>
