@@ -30,7 +30,7 @@ export interface IStorage {
   deleteCategory(id: string): Promise<void>;
 
   // Product operations
-  getProducts(filters?: { categoryId?: string; subcategoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]>;
+  getProducts(filters?: { categoryId?: string; subcategoryId?: string; is_featured?: boolean; is_active?: boolean; search?: string }): Promise<ProductWithCategory[]>;
   getProduct(id: string): Promise<ProductWithCategory | undefined>;
   getProductBySlug(slug: string): Promise<ProductWithCategory | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;

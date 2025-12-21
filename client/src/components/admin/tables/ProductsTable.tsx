@@ -3,12 +3,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, Edit, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Package, Edit, Trash2, Search } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 
 interface Product {
   id: string;
   name: string;
+  description?: string;
   price: number;
   stock_quantity: number;
   is_featured: boolean;
@@ -59,6 +61,7 @@ export function ProductsTable({
 }: ProductsTableProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Reset subcategory filter when main category changes
   useEffect(() => {
@@ -91,8 +94,17 @@ export function ProductsTable({
       filtered = filtered.filter((product) => product.subcategory?.id === selectedSubCategory);
     }
 
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((product) =>
+        product.name.toLowerCase().includes(query) ||
+        (product.description && product.description.toLowerCase().includes(query))
+      );
+    }
+
     return filtered;
-  }, [products, selectedCategory, selectedSubCategory]);
+  }, [products, selectedCategory, selectedSubCategory, searchQuery]);
 
   return (
     <Card>
@@ -106,47 +118,58 @@ export function ProductsTable({
       <CardContent>
         {/* Category Filter */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Products</h3>
-          <div className="flex flex-wrap items-center gap-4">
+          {/* <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Products</h3> */}
+          <div className="flex flex-wrap items-center gap-4 justify-between">
             <div className="flex items-center gap-2">
-              <label htmlFor="category-filter" className="text-sm font-medium text-gray-700">
-                Category:
-              </label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category-filter" className="w-[200px]">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {Array.isArray(mainCategories) && mainCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-[250px]"
+              />
+              {/* <Search className="h-4 w-4 text-gray-500" /> */}
             </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="subcategory-filter" className="text-sm font-medium text-gray-700">
-                Sub Category:
-              </label>
-              <Select 
-                value={selectedSubCategory} 
-                onValueChange={setSelectedSubCategory}
-                disabled={selectedCategory === "all"}
-              >
-                <SelectTrigger id="subcategory-filter" className="w-[200px]">
-                  <SelectValue placeholder={selectedCategory === "all" ? "Select a category first" : "All Sub Categories"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sub Categories</SelectItem>
-                  {Array.isArray(subCategories) && subCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="category-filter" className="text-sm font-medium text-gray-700">
+                  Category:
+                </label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger id="category-filter" className="w-[200px]">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Filter</SelectItem>
+                    {Array.isArray(mainCategories) && mainCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="subcategory-filter" className="text-sm font-medium text-gray-700">
+                  Sub Category:
+                </label>
+                <Select 
+                  value={selectedSubCategory} 
+                  onValueChange={setSelectedSubCategory}
+                  disabled={selectedCategory === "all"}
+                >
+                  <SelectTrigger id="subcategory-filter" className="w-[200px]">
+                    <SelectValue placeholder={selectedCategory === "all" ? "Select a category first" : "All Sub Categories"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Filter</SelectItem>
+                    {Array.isArray(subCategories) && subCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
