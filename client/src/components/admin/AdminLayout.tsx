@@ -94,12 +94,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="flex h-full flex-col">
                     {/* Logo */}
                     <div className="flex h-16 items-center border-b px-6">
-                        <Link href="/admin">
+                        <Link href="/">
                             <a className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                                    <span className="text-lg font-bold text-white">M</span>
-                                </div>
-                                <span className="text-xl font-bold">Modfy</span>
+                                <img
+                                    src="/storage/logo/logo.png"
+                                    alt="Modfy Logo"
+                                    className="h-10 w-auto"
+                                />
                             </a>
                         </Link>
                     </div>
