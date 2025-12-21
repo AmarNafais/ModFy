@@ -129,6 +129,28 @@ export const reviews = mysqlTable("reviews", {
   updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });
 
+export const contactMessages = mysqlTable("contact_messages", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").default("unread"), // unread, read, replied
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+});
+
+export const contactSettings = mysqlTable("contact_settings", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  businessHours: text("business_hours"),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+});
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -200,6 +222,18 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   updated_at: true,
 });
 
+export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
+  id: true,
+  createdAt: true,
+  updated_at: true,
+});
+
+export const insertContactSettingsSchema = createInsertSchema(contactSettings).omit({
+  id: true,
+  createdAt: true,
+  updated_at: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -250,6 +284,12 @@ export type InsertSizeChart = z.infer<typeof insertSizeChartSchema>;
 
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
+
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+
+export type ContactSettings = typeof contactSettings.$inferSelect;
+export type InsertContactSettings = z.infer<typeof insertContactSettingsSchema>;
 
 export type ReviewWithUser = Review & {
   user: Pick<User, 'id' | 'firstName' | 'lastName'>;

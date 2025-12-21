@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCartItemSchema, signupSchema, loginSchema, insertUserProfileSchema, insertOrderSchema, users } from "@shared/schema";
+import { insertCartItemSchema, signupSchema, loginSchema, insertUserProfileSchema, insertOrderSchema, users, contactMessages, contactSettings } from "@shared/schema";
 import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
 import { sendWelcomeEmail, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
 import { db } from "./db";
@@ -1158,6 +1158,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting review:", error);
       res.status(500).json({ message: "Failed to delete review" });
+    }
+  });
+
+  // Contact Us routes
+  // Public: Submit contact form
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const { name, email, phone, subject, message } = req.body;
+
+      if (!name || !email || !subject || !message) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const result = await db.insert(contactMessages).values({
+        name,
+        email,
+        phone: phone || null,
+        subject,
+        message,
+        status: "unread",
+      });
+
+      res.status(201).json({ message: "Contact message submitted successfully" });
+    } catch (error) {
+      console.error("Error submitting contact form:", error);
+      res.status(500).json({ message: "Failed to submit contact form" });
+    }
+  });
+
+  // Admin: Get all contact messages
+  app.get("/api/admin/contact-messages", requireAdmin, async (req, res) => {
+    try {
+      const messages = await db.select().from(contactMessages).orderBy(contactMessages.createdAt);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching contact messages:", error);
+      res.status(500).json({ message: "Failed to fetch contact messages" });
+    }
+  });
+
+  // Admin: Delete contact message
+  app.delete("/api/admin/contact-messages/:id", requireAdmin, async (req, res) => {
+    try {
+      await db.delete(contactMessages).where(contactMessages.id.equals(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting contact message:", error);
+      res.status(500).json({ message: "Failed to delete contact message" });
+    }
+  });
+
+  // Admin: Get contact settings
+  app.get("/api/admin/contact-settings", requireAdmin, async (req, res) => {
+    try {
+      const settings = await db.select().from(contactSettings).limit(1);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching contact settings:", error);
+      res.status(500).json({ message: "Failed to fetch contact settings" });
+    }
+  });
+
+  // Admin: Update contact settings
+  app.post("/api/admin/contact-settings", requireAdmin, async (req, res) => {
+    try {
+      const { email, phone, address, businessHours } = req.body;
+
+      // Check if settings exist
+      const existing = await db.select().from(contactSettings).limit(1);
+
+      if (existing.length > 0) {
+        // Update existing
+        await db
+          .update(contactSettings)
+          .set({
+            email: email || null,
+            phone: phone || null,
+            address: address || null,
+            businessHours: businessHours || null,
+            updated_at: new Date(),
+          })
+          .where(contactSettings.id.equals(existing[0].id));
+      } else {
+        // Create new
+        await db.insert(contactSettings).values({
+          id: "default",
+          email: email || null,
+          phone: phone || null,
+          address: address || null,
+          businessHours: businessHours || null,
+        });
+      }
+
+      res.json({ message: "Contact settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating contact settings:", error);
+      res.status(500).json({ message: "Failed to update contact settings" });
     }
   });
 
