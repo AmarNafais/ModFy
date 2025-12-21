@@ -44,4 +44,4 @@ cookies.txt
 
 # Uploaded files
 storage/uploads/*
-!storage/uploads/.gitkeep
+storage/products/*

@@ -12,10 +12,12 @@
 - 💳 **Checkout System** - Streamlined checkout process with order management
 - 👤 **User Authentication** - Secure session-based authentication
 - 📱 **Responsive Design** - Mobile-first approach with beautiful UI
-- 🔍 **Product Catalog** - Browse by categories and collections
+- 🔍 **Product Catalog** - Browse by categories and collections with high-quality images
 - ❤️ **Wishlist** - Save favorite items for later
 - 👔 **Admin Dashboard** - Manage products, orders, and inventory
 - 🎨 **Modern UI** - Built with Tailwind CSS and shadcn/ui components
+- 📸 **Product Images** - Auto image sync and management system
+- 🔄 **Image Auto-Update** - Automatic product image synchronization from storage
 
 ## 🚀 Tech Stack
 
@@ -85,7 +87,7 @@ Update the `.env` file with your configuration:
 # Database Configuration
 DB_HOST=localhost
 DB_NAME=modfy
-DB_PASSWORD=yourpassword
+DB_PASSWORD=your_secure_password
 DB_PORT=3306
 DB_USER=mysql
 
@@ -93,6 +95,8 @@ DB_USER=mysql
 NODE_ENV=production
 PORT=3000
 ```
+
+> ⚠️ **Security Note:** Replace `your_secure_password` with a strong, unique password in production. Never commit real credentials to version control.
 
 ### 4. Setup MySQL Database
 
@@ -211,6 +215,7 @@ ModFy/
 | `npm run check` | TypeScript type checking |
 | `npm run db:push` | Push schema changes to database |
 | `npm run db:migrate` | Run database migrations |
+| `npm run update-images` | Sync product images from storage to database |
 
 ## 🌐 Linux Deployment Guide
 
@@ -411,6 +416,92 @@ npm run build
 # Restart with PM2
 pm2 restart modfy-server
 ```
+
+## 📸 Product Image Management
+
+### Image Organization
+
+Product images are stored in a hierarchical structure (all lowercase for folders and files):
+
+```
+storage/uploads/products/
+├── boys/
+│   ├── cantex junior boxer/
+│   ├── junior brief/
+│   ├── pants/
+│   └── vest - boys/
+├── girls/
+│   ├── panties - girls/
+│   └── vest - girls/
+├── mens/
+│   ├── pants/
+│   ├── underwear/
+│   ├── ultimate/
+│   └── vest/
+└── women/
+   ├── panties - women/
+   └── vest - women/
+```
+
+### Current Image Status
+
+- **Total Products:** 64
+- **Products with Images:** 47 (73%)
+- **Total Images:** 226
+- **Storage Size:** 1.2 GB
+- **Image Formats:** JPG, PNG
+
+### Updating Product Images
+
+To sync product images from storage to the database, run:
+
+```bash
+npm run update-images
+```
+
+This command will:
+1. Copy images from `storage/products/` to `storage/uploads/products/`
+2. Scan the uploads directory and match folders to product names
+3. Update the database with the resolved image paths
+
+#### Adding New Products with Images
+
+1. **Create the folder structure:**
+   ```
+   storage/uploads/products/[category]/[subcategory]/[product_name]/
+   ```
+
+2. **Add image files:**
+   Place JPG/PNG images in the product folder
+
+3. **Create product in database:**
+   ```sql
+   INSERT INTO products (id, name, category_id, is_active, ...)
+   VALUES (...)
+   ```
+
+4. **Run image sync:**
+   ```bash
+   npm run update-images
+   ```
+
+#### Image Path Format
+
+All image paths follow this pattern (lowercase):
+```
+/storage/uploads/products/[category]/[subcategory]/[product]/[filename]
+
+Examples:
+/storage/uploads/products/boys/cantex junior boxer/img_3599.jpg
+/storage/uploads/products/mens/underwear/classic/img_0431.png
+```
+
+### Documentation
+
+For detailed image management instructions, see:
+- [IMAGES.md](IMAGES.md) - Quick reference guide
+- [server/scripts/IMAGE_UPDATE_README.md](server/scripts/IMAGE_UPDATE_README.md) - Complete technical documentation
+- [DOCUMENTATION.md](DOCUMENTATION.md) - Master documentation index
 
 ## 🤝 Contributing
 
