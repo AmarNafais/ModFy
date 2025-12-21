@@ -387,10 +387,14 @@ export class DatabaseStorage implements IStorage {
   // Product operations
   async getProducts(filters?: { categoryId?: string; subcategoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]> {
     let query = `
-      SELECT p.*, c.id as category_id, c.name as category_name, c.slug as category_slug, 
-             c.description as category_description, c.image_url as category_imageUrl
+      SELECT p.*, 
+             c.id as category_id, c.name as category_name, c.slug as category_slug, 
+             c.description as category_description, c.image_url as category_imageUrl,
+             sc.id as subcategory_id, sc.name as subcategory_name, sc.slug as subcategory_slug, 
+             sc.description as subcategory_description, sc.image_url as subcategory_imageUrl
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories sc ON p.subcategory_id = sc.id
       WHERE 1=1
     `;
     const params: any[] = [];
@@ -442,6 +446,13 @@ export class DatabaseStorage implements IStorage {
         slug: row.category_slug,
         description: row.category_description,
         imageUrl: row.category_imageUrl
+      } : null,
+      subcategory: row.subcategory_id ? {
+        id: row.subcategory_id,
+        name: row.subcategory_name,
+        slug: row.subcategory_slug,
+        description: row.subcategory_description,
+        imageUrl: row.subcategory_imageUrl
       } : null
     }));
   }
