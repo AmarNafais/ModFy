@@ -226,6 +226,7 @@ export type InsertWishlistItem = z.infer<typeof insertWishlistItemSchema>;
 
 export type ProductWithCategory = Product & {
   category: Category | null;
+  subcategory: Category | null;
 };
 
 export type CartItemWithProduct = CartItem & {
