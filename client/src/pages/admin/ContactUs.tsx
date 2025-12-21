@@ -33,6 +33,10 @@ export default function ContactUsAdmin() {
     phone: "+1 (555) 123-4567",
     address: "123 Fashion Street, New York, NY 10001",
     businessHours: "Monday - Friday, 9am - 6pm EST",
+    instagramUrl: "https://www.instagram.com/modfyofficial",
+    facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
+    tiktokUrl: "https://www.tiktok.com/@modfy.official",
+    whatsappUrl: "https://wa.me/1234567890",
   });
 
   // Fetch contact messages
