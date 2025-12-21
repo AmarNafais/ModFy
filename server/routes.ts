@@ -146,13 +146,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Products routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { categoryId, subcategoryId, is_featured, is_active } = req.query;
+      const { categoryId, subcategoryId, is_featured, is_active, search } = req.query;
       const filters: any = {};
       
       if (categoryId) filters.categoryId = categoryId as string;
       if (subcategoryId) filters.subcategoryId = subcategoryId as string;
       if (is_featured !== undefined) filters.is_featured = is_featured === 'true';
       if (is_active !== undefined) filters.is_active = is_active === 'true';
+      if (search) filters.search = search as string;
 
       const products = await storage.getProducts(filters);
       res.json(products);

@@ -385,7 +385,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Product operations
-  async getProducts(filters?: { categoryId?: string; subcategoryId?: string; is_featured?: boolean; is_active?: boolean }): Promise<ProductWithCategory[]> {
+  async getProducts(filters?: { categoryId?: string; subcategoryId?: string; is_featured?: boolean; is_active?: boolean; search?: string }): Promise<ProductWithCategory[]> {
     let query = `
       SELECT p.*, 
              c.id as category_id, c.name as category_name, c.slug as category_slug, 
@@ -414,6 +414,10 @@ export class DatabaseStorage implements IStorage {
     if (filters?.is_active !== undefined) {
       query += ' AND p.is_active = ?';
       params.push(filters.is_active);
+    }
+    if (filters?.search) {
+      query += ' AND (p.name LIKE ? OR p.description LIKE ?)';
+      params.push(`%${filters.search}%`, `%${filters.search}%`);
     }
 
     query += ' ORDER BY p.name';
