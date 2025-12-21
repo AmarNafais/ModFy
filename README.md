@@ -421,26 +421,26 @@ pm2 restart modfy-server
 
 ### Image Organization
 
-Product images are stored in a hierarchical structure:
+Product images are stored in a hierarchical structure (all lowercase for folders and files):
 
 ```
 storage/uploads/products/
-├── Boys/
-│   ├── Cantex Junior Boxer/
-│   ├── Junior Brief/
-│   ├── Pants/
-│   └── Vest - Boys/
-├── Girls/
-│   ├── Panties - Girls/
-│   └── Vest - Girls/
-├── Mens/
-│   ├── Pants/
-│   ├── Underwear/
-│   ├── Ultimate/
-│   └── Vest/
-└── Women/
-    ├── Panties - Women/
-    └── Vest - Women/
+├── boys/
+│   ├── cantex junior boxer/
+│   ├── junior brief/
+│   ├── pants/
+│   └── vest - boys/
+├── girls/
+│   ├── panties - girls/
+│   └── vest - girls/
+├── mens/
+│   ├── pants/
+│   ├── underwear/
+│   ├── ultimate/
+│   └── vest/
+└── women/
+   ├── panties - women/
+   └── vest - women/
 ```
 
 ### Current Image Status
@@ -453,28 +453,22 @@ storage/uploads/products/
 
 ### Updating Product Images
 
-#### Automatic Image Sync
-
-The project includes an automated image synchronization script. When you add new product images to the storage folder, run:
+To sync product images from storage to the database, run:
 
 ```bash
 npm run update-images
-# or
-npx ts-node server/scripts/update-images.ts
 ```
 
-This script will:
-1. Scan the `storage/uploads/products/` directory
-2. Match folder names with product names in the database
-3. Update the database with correct image paths
-4. Normalize all image paths to ensure consistency
-5. Generate a detailed report of changes
+This command will:
+1. Copy images from `storage/products/` to `storage/uploads/products/`
+2. Scan the uploads directory and match folders to product names
+3. Update the database with the resolved image paths
 
 #### Adding New Products with Images
 
 1. **Create the folder structure:**
    ```
-   storage/uploads/products/[CATEGORY]/[SUBCATEGORY]/[PRODUCT_NAME]/
+   storage/uploads/products/[category]/[subcategory]/[product_name]/
    ```
 
 2. **Add image files:**
@@ -493,13 +487,13 @@ This script will:
 
 #### Image Path Format
 
-All image paths follow this pattern:
+All image paths follow this pattern (lowercase):
 ```
-/storage/uploads/products/[CATEGORY]/[SUBCATEGORY]/[PRODUCT]/[FILENAME]
+/storage/uploads/products/[category]/[subcategory]/[product]/[filename]
 
 Examples:
-/storage/uploads/products/Boys/Cantex Junior Boxer/IMG_3599.jpg
-/storage/uploads/products/Mens/Underwear/Classic/IMG_0431.png
+/storage/uploads/products/boys/cantex junior boxer/img_3599.jpg
+/storage/uploads/products/mens/underwear/classic/img_0431.png
 ```
 
 ### Documentation
