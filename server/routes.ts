@@ -1231,15 +1231,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/contact-settings", requireAdmin, async (req, res) => {
     try {
       // Return default settings
-      res.json([
-        {
-          id: "default",
-          email: "support@modfy.com",
-          phone: "+1 (555) 123-4567",
-          address: "123 Fashion Street, New York, NY 10001",
-          businessHours: "Monday - Friday, 9am - 6pm EST",
-        },
-      ]);
+      res.json({
+        id: "default",
+        email: "support@modfy.com",
+        phone: "+1 (555) 123-4567",
+        address: "123 Fashion Street, New York, NY 10001",
+        businessHours: "Monday - Friday, 9am - 6pm EST",
+        instagramUrl: "https://www.instagram.com/modfyofficial",
+        facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
+        tiktokUrl: "https://www.tiktok.com/@modfy.official",
+        whatsappUrl: "https://wa.me/94777466766",
+      });
     } catch (error) {
       console.error("Error fetching contact settings:", error);
       res.status(500).json({ message: "Failed to fetch contact settings" });
@@ -1258,6 +1260,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating contact settings:", error);
       res.status(500).json({ message: "Failed to update contact settings" });
+    }
+  });
+
+  // Public: Get contact settings (no auth required)
+  app.get("/api/contact-settings", async (req, res) => {
+    try {
+      // Return public contact settings
+      res.json({
+        id: "default",
+        email: "support@modfy.com",
+        phone: "+1 (555) 123-4567",
+        address: "123 Fashion Street, New York, NY 10001",
+        businessHours: "Monday - Friday, 9am - 6pm EST",
+        instagramUrl: "https://www.instagram.com/modfyofficial",
+        facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
+        tiktokUrl: "https://www.tiktok.com/@modfy.official",
+        whatsappUrl: "https://wa.me/94777466766",
+      });
+    } catch (error) {
+      console.error("Error fetching contact settings:", error);
+      res.status(500).json({ message: "Failed to fetch contact settings" });
     }
   });
 

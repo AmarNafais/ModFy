@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, MapPin, Instagram, Facebook, MessageCircle, Clock } from "lucide-react";
@@ -13,6 +13,24 @@ export default function ContactUs() {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/api/contact-settings");
+        const data = await response.json();
+        setSettings(data);
+      } catch (error) {
+        console.error("Failed to fetch contact settings:", error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -115,7 +133,7 @@ export default function ContactUs() {
           <h2 className="text-2xl font-light tracking-wide mb-8 text-center">Follow Us</h2>
           <div className="flex justify-center gap-8">
             <a
-              href="https://instagram.com/modfy"
+              href={settings?.instagramUrl || "https://www.instagram.com/modfyofficial"}
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center group"
@@ -127,7 +145,7 @@ export default function ContactUs() {
             </a>
 
             <a
-              href="https://facebook.com/modfy"
+              href={settings?.facebookUrl || "https://www.facebook.com/share/1BPUVhhXYR/"}
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center group"
@@ -139,7 +157,7 @@ export default function ContactUs() {
             </a>
 
             <a
-              href="https://tiktok.com/@modfy"
+              href={settings?.tiktokUrl || "https://www.tiktok.com/@modfy.official"}
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center group"
@@ -153,7 +171,7 @@ export default function ContactUs() {
             </a>
 
             <a
-              href="https://wa.me/1234567890"
+              href={settings?.whatsappUrl || "https://wa.me/94777466766"}
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center group"
