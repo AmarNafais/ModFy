@@ -8,16 +8,47 @@
 
 ## ✨ Features
 
+### 🛍️ Customer Features
 - 🛒 **Shopping Cart** - Add, update, and remove items with real-time updates
 - 💳 **Checkout System** - Streamlined checkout process with order management
-- 👤 **User Authentication** - Secure session-based authentication
+- 👤 **User Authentication** - Secure session-based authentication with bcrypt password hashing
 - 📱 **Responsive Design** - Mobile-first approach with beautiful UI
-- 🔍 **Product Catalog** - Browse by categories and collections with high-quality images
-- ❤️ **Wishlist** - Save favorite items for later
-- 👔 **Admin Dashboard** - Manage products, orders, and inventory
-- 🎨 **Modern UI** - Built with Tailwind CSS and shadcn/ui components
-- 📸 **Product Images** - Auto image sync and management system
-- 🔄 **Image Auto-Update** - Automatic product image synchronization from storage
+- 🔍 **Product Catalog** - Browse by categories, subcategories, and collections
+- ❤️ **Wishlist** - Save favorite items for later shopping
+- ⭐ **Product Reviews** - Rate and review products (verified purchase badges)
+- 📦 **Order Tracking** - View order history and status
+- 👤 **User Profiles** - Manage personal information and saved addresses
+- 📐 **Size Charts** - Interactive size guides for accurate fitting
+- 🎨 **Collections** - Curated product collections and featured items
+- 📞 **Contact Form** - Easy customer support communication
+
+### 👔 Admin Features
+- 📊 **Modern Dashboard** - Comprehensive analytics and statistics
+  - Total revenue, orders, and customer metrics
+  - Recent orders overview with status tracking
+  - Quick stats for pending orders and low stock alerts
+- 📦 **Product Management** - Full CRUD operations for products
+  - Bulk upload and editing capabilities
+  - Image management with auto-sync from storage
+  - Size and pricing variations per product
+  - Stock quantity tracking
+- 🗂️ **Category Management** - Organize products with categories and subcategories
+- 📏 **Size Chart Management** - Create and manage size guides
+- 🛒 **Order Management** - Process and track customer orders
+  - Update order status (pending, processing, shipped, delivered)
+  - View customer details and delivery information
+  - Payment status tracking
+- 👥 **Customer Management** - View and manage registered users
+- 📧 **Contact Messages** - Handle customer inquiries
+- 📈 **Analytics** - Sales and performance insights
+- 🖼️ **Image Auto-Update** - Automatic product image synchronization from storage
+
+### 🔒 Security Features
+- 🔐 **Secure Authentication** - Session-based auth with secure cookies
+- 🔑 **Password Hashing** - bcryptjs for secure password storage
+- 🛡️ **Role-Based Access** - Customer and admin role separation
+- 📧 **Email Verification** - Optional email verification system
+- 🚫 **CSRF Protection** - Secure session management
 
 ## 🚀 Tech Stack
 
@@ -37,11 +68,13 @@
 - **Node.js** - JavaScript runtime
 - **Express.js** - Web application framework
 - **TypeScript** - Full type safety on the backend
-- **MySQL** - Relational database
-- **Drizzle ORM** - Type-safe database toolkit
-- **Express Session** - Session management
-- **bcryptjs** - Password hashing
-- **Nodemailer** - Email notifications
+- **MySQL** - Relational database with full ACID compliance
+- **Drizzle ORM** - Type-safe database toolkit with migrations
+- **Express Session** - Secure session management with MemoryStore
+- **bcryptjs** - Password hashing and encryption
+- **Nodemailer** - Email notifications for orders and user actions
+- **Multer** - File upload handling for product images
+- **Zod** - Runtime schema validation
 
 ### DevOps & Deployment
 - **PM2** - Production process manager
@@ -178,51 +211,107 @@ pm2 startup
 
 ```
 ModFy/
-├── client/                 # Frontend React application
+├── client/                      # Frontend React application
 │   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   │   ├── ui/       # shadcn/ui components
+│   │   ├── components/         # Reusable UI components
+│   │   │   ├── ui/            # shadcn/ui components (30+ components)
+│   │   │   ├── admin/         # Admin-specific components
+│   │   │   │   ├── AdminLayout.tsx
+│   │   │   │   ├── AdminStats.tsx
+│   │   │   │   ├── tables/    # Data table components
+│   │   │   │   └── dialogs/   # Modal dialogs for CRUD
 │   │   │   ├── Header.tsx
 │   │   │   ├── Footer.tsx
-│   │   │   └── ...
-│   │   ├── pages/        # Page components
+│   │   │   ├── ProductCard.tsx
+│   │   │   ├── ProductGrid.tsx
+│   │   │   ├── CartDrawer.tsx
+│   │   │   ├── ReviewSection.tsx
+│   │   │   ├── SizeChartDisplay.tsx
+│   │   │   └── LoginModal.tsx
+│   │   ├── pages/             # Page components
 │   │   │   ├── Home.tsx
 │   │   │   ├── Shop.tsx
 │   │   │   ├── ProductDetail.tsx
 │   │   │   ├── Checkout.tsx
-│   │   │   └── ...
-│   │   ├── hooks/        # Custom React hooks
-│   │   ├── lib/          # Utility functions
-│   │   ├── App.tsx       # Main App component
-│   │   └── main.tsx      # Entry point
+│   │   │   ├── Collections.tsx
+│   │   │   ├── Wishlist.tsx
+│   │   │   ├── Profile.tsx
+│   │   │   ├── About.tsx
+│   │   │   ├── ContactUs.tsx
+│   │   │   └── admin/         # Admin pages
+│   │   │       ├── Dashboard.tsx
+│   │   │       ├── Products.tsx
+│   │   │       ├── Categories.tsx
+│   │   │       ├── Orders.tsx
+│   │   │       ├── Users.tsx
+│   │   │       ├── SizeCharts.tsx
+│   │   │       ├── Analytics.tsx
+│   │   │       └── ContactUs.tsx
+│   │   ├── hooks/             # Custom React hooks
+│   │   │   ├── useAuth.ts
+│   │   │   ├── useCart.ts
+│   │   │   ├── useWishlist.ts
+│   │   │   └── use-toast.ts
+│   │   ├── lib/               # Utility functions
+│   │   │   ├── adminHelpers.ts
+│   │   │   ├── authUtils.ts
+│   │   │   └── utils.ts
+│   │   ├── App.tsx            # Main App component
+│   │   └── main.tsx           # Entry point
 │   └── index.html
-├── server/                # Backend Express application
-│   ├── routes.ts         # API routes
-│   ├── db.ts            # Database connection
-│   ├── index.ts         # Server entry point
-│   ├── sessionAuth.ts   # Authentication logic
-│   ├── emailService.ts  # Email functionality
-│   └── scripts/         # Migration scripts
-├── shared/               # Shared code between client/server
-│   └── schema.ts        # Database schema & types
-├── migrations/           # Database migration files
-├── ecosystem.config.js   # PM2 configuration
-├── drizzle.config.ts    # Drizzle ORM configuration
-├── vite.config.ts       # Vite configuration
-├── tailwind.config.ts   # Tailwind CSS configuration
-└── package.json         # Dependencies and scripts
+├── server/                     # Backend Express application
+│   ├── index.ts               # Server entry point
+│   ├── routes.ts              # API routes and endpoints
+│   ├── db.ts                  # Database connection (MySQL)
+│   ├── dbStorage.ts           # Database storage layer
+│   ├── storage.ts             # In-memory storage interface
+│   ├── sessionAuth.ts         # Authentication logic
+│   ├── emailService.ts        # Email service (Nodemailer)
+│   ├── uploadService.ts       # File upload handling
+│   ├── objectStorage.ts       # Object storage utilities
+│   ├── vite.ts                # Vite dev server integration
+│   └── scripts/               # Database and utility scripts
+│       ├── seed.ts           # Database seeding
+│       ├── update-images.ts   # Image sync script
+│       ├── activate_products.py
+│       ├── check_db.py
+│       └── ...
+├── shared/                    # Shared code between client/server
+│   └── schema.ts             # Database schema & Zod types
+├── storage/                   # File storage
+│   ├── logo/                 # Brand assets
+│   └── uploads/              # Uploaded files
+│       └── products/         # Product images (226 images)
+│           ├── boys/
+│           ├── girls/
+│           ├── men/
+│           └── women/
+├── migrations/                # Drizzle ORM migrations
+│   ├── 0000_clumsy_reaper.sql
+│   └── meta/
+├── ecosystem.config.js        # PM2 process manager config
+├── drizzle.config.ts         # Drizzle ORM configuration
+├── vite.config.ts            # Vite build configuration
+├── tailwind.config.ts        # Tailwind CSS configuration
+├── tsconfig.json             # TypeScript configuration
+├── package.json              # Dependencies and scripts
+└── .env                      # Environment variables
 ```
 
 ## 🔧 Available Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production |
+| `npm run dev` | Start development server with hot reload (Vite + Express) |
+| `npm run build` | Build for production (frontend + backend bundle) |
 | `npm start` | Run production server |
-| `npm run check` | TypeScript type checking |
-| `npm run db:push` | Push schema changes to database |
-| `npm run db:migrate` | Run database migrations |
+| `npm run check` | TypeScript type checking across entire codebase |
+| `npm run db:push` | Push schema changes to database (without migrations) |
+| `npm run db:generate` | Generate new migration files from schema changes |
+| `npm run db:migrate` | Run pending database migrations |
+| `npm run db:studio` | Open Drizzle Studio (database GUI) |
+| `npm run db:seed` | Seed database with initial data |
+| `npm run db:mark-applied` | Mark migrations as applied |
 | `npm run update-images` | Sync product images from storage to database |
 
 ## 🌐 Linux Deployment Guide
@@ -351,13 +440,30 @@ sudo ufw enable
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `DB_HOST` | MySQL host address | `127.0.0.1` | Yes |
+| `DB_HOST` | MySQL host address | `localhost` | Yes |
 | `DB_NAME` | Database name | `modfy` | Yes |
 | `DB_PASSWORD` | Database password | - | Yes |
 | `DB_PORT` | Database port | `3306` | Yes |
 | `DB_USER` | Database username | `mysql` | Yes |
 | `NODE_ENV` | Environment mode | `development` | Yes |
 | `PORT` | Application port | `3000` | Yes |
+| `HOST` | Server host address | `127.0.0.1` | Yes |
+| `SMTP_USER` | SMTP email for sending | - | Yes (for emails) |
+| `SMTP_PASS` | SMTP app password | - | Yes (for emails) |
+| `ADMIN_EMAIL` | Admin notification email | - | Yes (for emails) |
+
+### Email Configuration
+
+For order confirmations and notifications, configure SMTP settings:
+
+1. **Gmail**: Use app-specific password ([Generate here](https://myaccount.google.com/apppasswords))
+2. **Other providers**: Check SMTP settings with your provider
+
+```env
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_16_char_app_password
+ADMIN_EMAIL=admin@example.com
+```
 
 See [.env.example](.env.example) for a complete template.
 
@@ -535,14 +641,88 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Amar Nafais — project lead & full-stack development
 
+## � Database Schema
+
+The application uses MySQL with the following main tables:
+
+- **users** - Customer and admin accounts
+- **products** - Product catalog with variants and pricing
+- **categories** - Product categories and subcategories
+- **orders** - Customer orders and order history
+- **order_items** - Individual items in orders
+- **cart_items** - Shopping cart (session and user-based)
+- **wishlist_items** - Customer wishlists
+- **reviews** - Product reviews and ratings
+- **size_charts** - Size guide tables
+- **contact_messages** - Customer inquiries
+- **user_profiles** - Extended user information
+
+See [shared/schema.ts](shared/schema.ts) for complete schema definition.
+
+## 🎯 Key Features in Detail
+
+### Size-Based Pricing
+Products can have different prices for different sizes:
+```json
+{
+  "sizes": ["S", "M", "L", "XL"],
+  "sizePricing": {
+    "S": "45.00",
+    "M": "48.00",
+    "L": "52.00",
+    "XL": "55.00"
+  }
+}
+```
+
+### Hierarchical Categories
+Supports parent-child category relationships for better organization:
+```
+Men's Wear
+  ├── Underwear
+  │   ├── Briefs
+  │   ├── Boxers
+  │   └── Trunks
+  └── Vests
+```
+
+### Guest Checkout
+Customers can checkout without creating an account:
+- Session-based cart management
+- Email order confirmations
+- Optional account creation after purchase
+
+### Admin Analytics
+- Real-time sales metrics
+- Order status distribution
+- Low stock alerts
+- Revenue tracking
+- Customer growth charts
+
+## 📚 Additional Documentation
+
+For more detailed information, see:
+
+- [QUICK_START.md](QUICK_START.md) - Quick start guide with product preview
+- [DOCUMENTATION.md](DOCUMENTATION.md) - Complete documentation index
+- [ADMIN_REDESIGN.md](ADMIN_REDESIGN.md) - Admin dashboard architecture
+- [IMAGES.md](IMAGES.md) - Image management guide
+- [DATABASE_SETUP.md](DATABASE_SETUP.md) - Database configuration details
+- [CATEGORIES_README.md](CATEGORIES_README.md) - Category management
+- [server/scripts/README.md](server/scripts/README.md) - Available scripts reference
+
 ## 🙏 Acknowledgments
 
-- [React](https://reactjs.org/)
-- [Vite](https://vitejs.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- [Drizzle ORM](https://orm.drizzle.team/)
-- [Express.js](https://expressjs.com/)
+- [React](https://reactjs.org/) - UI library
+- [Vite](https://vitejs.dev/) - Build tool
+- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [shadcn/ui](https://ui.shadcn.com/) - Component library
+- [Radix UI](https://www.radix-ui.com/) - Headless UI components
+- [Drizzle ORM](https://orm.drizzle.team/) - TypeScript ORM
+- [Express.js](https://expressjs.com/) - Backend framework
+- [TanStack Query](https://tanstack.com/query) - Data fetching
+- [React Hook Form](https://react-hook-form.com/) - Form management
+- [Zod](https://zod.dev/) - Schema validation
 
 ## 📧 Support
 
