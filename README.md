@@ -92,8 +92,16 @@ DB_PORT=3306
 DB_USER=mysql
 
 # Application Configuration
-NODE_ENV=production
+NODE_ENV=development
 PORT=3000
+
+# Email Configuration (SMTP)
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+ADMIN_EMAIL=admin@example.com
+
+# Server Configuration
+HOST=127.0.0.1
 ```
 
 > ⚠️ **Security Note:** Replace `your_secure_password` with a strong, unique password in production. Never commit real credentials to version control.
