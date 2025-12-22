@@ -144,10 +144,8 @@ export const contactMessages = mysqlTable("contact_messages", {
 
 export const contactSettings = mysqlTable("contact_settings", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
-  email: text("email"),
-  phone: text("phone"),
-  address: text("address"),
-  businessHours: text("business_hours"),
+  name: text("name").notNull(),
+  value: text("value"),
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
   updated_at: datetime("updated_at").default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
 });

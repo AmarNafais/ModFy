@@ -42,7 +42,7 @@ export default function ContactUs() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.subject || !formData.message) {
       toast({
         title: "Missing Fields",
@@ -66,7 +66,7 @@ export default function ContactUs() {
         title: "Success",
         description: "Your message has been sent. We'll get back to you soon!",
       });
-      
+
       setFormData({
         name: "",
         email: "",
@@ -103,8 +103,7 @@ export default function ContactUs() {
               <Mail className="w-6 h-6 text-gray-900 mr-3" />
               <h3 className="text-lg font-medium tracking-wide">Email</h3>
             </div>
-            <p className="text-gray-600 font-light">support@modfy.com</p>
-            <p className="text-gray-600 font-light">info@modfy.com</p>
+            <p className="text-gray-600 font-light">{settings?.email || "support@modfy.com"}</p>
             <p className="text-gray-500 text-sm mt-2">We'll respond within 24 hours</p>
           </div>
 
@@ -113,18 +112,16 @@ export default function ContactUs() {
               <Phone className="w-6 h-6 text-gray-900 mr-3" />
               <h3 className="text-lg font-medium tracking-wide">Phone</h3>
             </div>
-            <p className="text-gray-600 font-light">+1 (555) 123-4567</p>
-            <p className="text-gray-500 text-sm mt-2">Monday - Friday, 9am - 6pm EST</p>
+            <p className="text-gray-600 font-light">{settings?.phone || "+1 (555) 123-4567"}</p>
+            <p className="text-gray-500 text-sm mt-2">{settings?.businessHours || "Monday - Friday, 9am - 6pm EST"}</p>
           </div>
 
           <div className="bg-white p-8 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
             <div className="flex items-center mb-4">
-              <Clock className="w-6 h-6 text-gray-900 mr-3" />
-              <h3 className="text-lg font-medium tracking-wide">Hours</h3>
+              <MapPin className="w-6 h-6 text-gray-900 mr-3" />
+              <h3 className="text-lg font-medium tracking-wide">Address</h3>
             </div>
-            <p className="text-gray-600 font-light">Monday - Friday</p>
-            <p className="text-gray-600 font-light">9:00 AM - 6:00 PM EST</p>
-            <p className="text-gray-500 text-sm mt-2">Closed on weekends</p>
+            <p className="text-gray-600 font-light">{settings?.address || "123 Fashion Street, New York, NY 10001"}</p>
           </div>
         </div>
 
@@ -187,7 +184,7 @@ export default function ContactUs() {
         {/* Contact Form */}
         <div className="max-w-2xl mx-auto bg-white p-12 border border-gray-200 rounded-lg">
           <h2 className="text-2xl font-light tracking-wide mb-8">Send us a Message</h2>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
