@@ -1232,18 +1232,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Get contact settings
   app.get("/api/admin/contact-settings", requireAdmin, async (req, res) => {
     try {
-      // Return default settings
-      res.json({
-        id: "default",
-        email: "support@modfy.com",
-        phone: "+1 (555) 123-4567",
-        address: "123 Fashion Street, New York, NY 10001",
-        businessHours: "Monday - Friday, 9am - 6pm EST",
-        instagramUrl: "https://www.instagram.com/modfyofficial",
-        facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
-        tiktokUrl: "https://www.tiktok.com/@modfy.official",
-        whatsappUrl: "https://wa.me/94777466766",
-      });
+      const [rows] = await pool.query(
+        "SELECT name, value FROM contact_settings"
+      ) as any;
+
+      if (rows.length === 0) {
+        // Return default settings if none exist
+        res.json({
+          id: "default",
+          email: "support@modfy.com",
+          phone: "+1 (555) 123-4567",
+          address: "123 Fashion Street, New York, NY 10001",
+          businessHours: "Monday - Friday, 9am - 6pm EST",
+          instagramUrl: "https://www.instagram.com/modfyofficial",
+          facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
+          tiktokUrl: "https://www.tiktok.com/@modfy.official",
+          whatsappUrl: "https://wa.me/94777466766",
+        });
+      } else {
+        // Convert kebab-case from DB to camelCase for frontend
+        const settings: any = { id: "1" };
+        const nameMap: { [key: string]: string } = {
+          'business-hours': 'businessHours',
+          'instagram-url': 'instagramUrl',
+          'facebook-url': 'facebookUrl',
+          'tiktok-url': 'tiktokUrl',
+          'whatsapp-url': 'whatsappUrl'
+        };
+        
+        rows.forEach((row: any) => {
+          const key = nameMap[row.name] || row.name;
+          settings[key] = row.value;
+        });
+        res.json(settings);
+      }
     } catch (error) {
       console.error("Error fetching contact settings:", error);
       res.status(500).json({ message: "Failed to fetch contact settings" });
@@ -1253,10 +1275,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Update contact settings
   app.post("/api/admin/contact-settings", requireAdmin, async (req, res) => {
     try {
-      const { email, phone, address, businessHours } = req.body;
+      const { email, phone, address, businessHours, whatsappUrl, instagramUrl, facebookUrl, tiktokUrl } = req.body;
 
-      // Mock implementation - in production, save to database
-      console.log("Contact settings updated:", { email, phone, address, businessHours });
+      // Map of setting names to values (using kebab-case for DB)
+      const settings = [
+        { name: 'email', value: email },
+        { name: 'phone', value: phone },
+        { name: 'address', value: address },
+        { name: 'business-hours', value: businessHours },
+        { name: 'whatsapp-url', value: whatsappUrl },
+        { name: 'instagram-url', value: instagramUrl },
+        { name: 'facebook-url', value: facebookUrl },
+        { name: 'tiktok-url', value: tiktokUrl },
+      ];
+
+      // Delete all existing settings and insert new ones
+      await pool.query("DELETE FROM contact_settings");
+      
+      for (const setting of settings) {
+        if (setting.value !== undefined && setting.value !== null) {
+          await pool.query(
+            "INSERT INTO contact_settings (name, value) VALUES (?, ?)",
+            [setting.name, setting.value]
+          );
+        }
+      }
 
       res.json({ message: "Contact settings updated successfully" });
     } catch (error) {
@@ -1268,18 +1311,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public: Get contact settings (no auth required)
   app.get("/api/contact-settings", async (req, res) => {
     try {
-      // Return public contact settings
-      res.json({
-        id: "default",
-        email: "support@modfy.com",
-        phone: "+1 (555) 123-4567",
-        address: "123 Fashion Street, New York, NY 10001",
-        businessHours: "Monday - Friday, 9am - 6pm EST",
-        instagramUrl: "https://www.instagram.com/modfyofficial",
-        facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
-        tiktokUrl: "https://www.tiktok.com/@modfy.official",
-        whatsappUrl: "https://wa.me/94777466766",
-      });
+      const [rows] = await pool.query(
+        "SELECT name, value FROM contact_settings"
+      ) as any;
+
+      if (rows.length === 0) {
+        // Return default settings if none exist
+        res.json({
+          id: "default",
+          email: "support@modfy.com",
+          phone: "+1 (555) 123-4567",
+          address: "123 Fashion Street, New York, NY 10001",
+          businessHours: "Monday - Friday, 9am - 6pm EST",
+          instagramUrl: "https://www.instagram.com/modfyofficial",
+          facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
+          tiktokUrl: "https://www.tiktok.com/@modfy.official",
+          whatsappUrl: "https://wa.me/94777466766",
+        });
+      } else {
+        // Convert kebab-case from DB to camelCase for frontend
+        const settings: any = { id: "1" };
+        const nameMap: { [key: string]: string } = {
+          'business-hours': 'businessHours',
+          'instagram-url': 'instagramUrl',
+          'facebook-url': 'facebookUrl',
+          'tiktok-url': 'tiktokUrl',
+          'whatsapp-url': 'whatsappUrl'
+        };
+        
+        rows.forEach((row: any) => {
+          const key = nameMap[row.name] || row.name;
+          settings[key] = row.value;
+        });
+        res.json(settings);
+      }
     } catch (error) {
       console.error("Error fetching contact settings:", error);
       res.status(500).json({ message: "Failed to fetch contact settings" });

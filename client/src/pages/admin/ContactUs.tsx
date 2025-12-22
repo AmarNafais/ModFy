@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,10 @@ interface ContactSettings {
   phone?: string;
   address?: string;
   businessHours?: string;
+  whatsappUrl?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  tiktokUrl?: string;
 }
 
 export default function ContactUsAdmin() {
@@ -33,10 +37,6 @@ export default function ContactUsAdmin() {
     phone: "+1 (555) 123-4567",
     address: "123 Fashion Street, New York, NY 10001",
     businessHours: "Monday - Friday, 9am - 6pm EST",
-    instagramUrl: "https://www.instagram.com/modfyofficial",
-    facebookUrl: "https://www.facebook.com/share/1BPUVhhXYR/",
-    tiktokUrl: "https://www.tiktok.com/@modfy.official",
-    whatsappUrl: "https://wa.me/1234567890",
   });
 
   // Fetch contact messages
@@ -45,14 +45,16 @@ export default function ContactUsAdmin() {
   });
 
   // Fetch contact settings
-  const { data: dbSettings } = useQuery({
+  const { data: dbSettings, refetch: refetchSettings } = useQuery({
     queryKey: ["/api/admin/contact-settings"],
-    onSuccess: (data) => {
-      if (data && data[0]) {
-        setSettings(data[0]);
-      }
-    },
   });
+
+  // Update settings when dbSettings changes
+  useEffect(() => {
+    if (dbSettings) {
+      setSettings(dbSettings);
+    }
+  }, [dbSettings]);
 
   // Delete message mutation
   const deleteMessageMutation = useMutation({
@@ -95,6 +97,7 @@ export default function ContactUsAdmin() {
         description: "Contact settings updated successfully",
       });
       setIsEditingSettings(false);
+      refetchSettings();
     },
     onError: () => {
       toast({
@@ -176,6 +179,54 @@ export default function ContactUsAdmin() {
                 placeholder="e.g., Monday - Friday, 9am - 6pm EST"
               />
             </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Social Media Links</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">WhatsApp URL</label>
+                  <input
+                    type="url"
+                    value={settings.whatsappUrl || ""}
+                    onChange={(e) => handleSettingsChange("whatsappUrl", e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none"
+                    placeholder="https://wa.me/94777466766"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Instagram URL</label>
+                  <input
+                    type="url"
+                    value={settings.instagramUrl || ""}
+                    onChange={(e) => handleSettingsChange("instagramUrl", e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none"
+                    placeholder="https://www.instagram.com/modfyofficial"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Facebook URL</label>
+                  <input
+                    type="url"
+                    value={settings.facebookUrl || ""}
+                    onChange={(e) => handleSettingsChange("facebookUrl", e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none"
+                    placeholder="https://www.facebook.com/share/1BPUVhhXYR/"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">TikTok URL</label>
+                  <input
+                    type="url"
+                    value={settings.tiktokUrl || ""}
+                    onChange={(e) => handleSettingsChange("tiktokUrl", e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none"
+                    placeholder="https://www.tiktok.com/@modfy.official"
+                  />
+                </div>
+              </div>
+            </div>
+
             <Button
               onClick={handleSaveSettings}
               disabled={updateSettingsMutation.isPending}
@@ -212,6 +263,38 @@ export default function ContactUsAdmin() {
               <div>
                 <p className="text-sm text-gray-600">Business Hours</p>
                 <p className="font-medium text-gray-900">{settings.businessHours}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isEditingSettings && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Social Media Links</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-600">WhatsApp</p>
+                <a href={settings.whatsappUrl || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                  {settings.whatsappUrl || "Not set"}
+                </a>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Instagram</p>
+                <a href={settings.instagramUrl || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                  {settings.instagramUrl || "Not set"}
+                </a>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Facebook</p>
+                <a href={settings.facebookUrl || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                  {settings.facebookUrl || "Not set"}
+                </a>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">TikTok</p>
+                <a href={settings.tiktokUrl || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                  {settings.tiktokUrl || "Not set"}
+                </a>
               </div>
             </div>
           </div>
@@ -268,13 +351,12 @@ export default function ContactUsAdmin() {
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          message.status === "unread"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : message.status === "replied"
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${message.status === "unread"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : message.status === "replied"
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
-                        }`}
+                          }`}
                       >
                         {message.status}
                       </span>
