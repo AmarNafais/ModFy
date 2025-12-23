@@ -177,6 +177,7 @@ export default function AdminProducts() {
             <ProductsTable
                 products={products as any[]}
                 categories={categories as any[]}
+                sub_categories={categories as any[]}
                 onEdit={openEditDialog}
                 onDelete={(productId) => deleteProductMutation.mutate(productId)}
                 onToggleStatus={(product) => {
