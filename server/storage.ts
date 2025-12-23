@@ -98,12 +98,12 @@ export class MemStorage implements IStorage {
   private seedData() {
     // Seed categories
     const categories = [
-      { id: "cat-1", name: "Boxer Briefs", slug: "boxer-briefs", description: "Comfortable and supportive boxer briefs", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", is_active: true, createdAt: new Date() },
-      { id: "cat-2", name: "Briefs", slug: "briefs", description: "Classic briefs for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", is_active: true, createdAt: new Date() },
-      { id: "cat-3", name: "Trunks", slug: "trunks", description: "Modern trunks with sleek design", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400", is_active: true, createdAt: new Date() },
-      { id: "cat-4", name: "Performance", slug: "performance", description: "Athletic performance underwear", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400", is_active: true, createdAt: new Date() },
-      { id: "cat-5", name: "Luxury", slug: "luxury", description: "Premium luxury innerwear collection", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", is_active: true, createdAt: new Date() },
-      { id: "cat-6", name: "Thermal", slug: "thermal", description: "Temperature-regulating thermal collection", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", is_active: true, createdAt: new Date() },
+      { id: "cat-1", name: "Boxer Briefs", slug: "boxer-briefs", description: "Comfortable and supportive boxer briefs", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", is_active: true, sort_order: 1, createdAt: new Date() },
+      { id: "cat-2", name: "Briefs", slug: "briefs", description: "Classic briefs for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", is_active: true, sort_order: 2, createdAt: new Date() },
+      { id: "cat-3", name: "Trunks", slug: "trunks", description: "Modern trunks with sleek design", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400", is_active: true, sort_order: 3, createdAt: new Date() },
+      { id: "cat-4", name: "Performance", slug: "performance", description: "Athletic performance underwear", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400", is_active: true, sort_order: 4, createdAt: new Date() },
+      { id: "cat-5", name: "Luxury", slug: "luxury", description: "Premium luxury innerwear collection", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400", is_active: true, sort_order: 5, createdAt: new Date() },
+      { id: "cat-6", name: "Thermal", slug: "thermal", description: "Temperature-regulating thermal collection", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400", is_active: true, sort_order: 6, createdAt: new Date() },
     ];
 
     categories.forEach(cat => this.categories.set(cat.id, cat));
@@ -666,7 +666,14 @@ export class MemStorage implements IStorage {
 
   // Category operations
   async getCategories(): Promise<Category[]> {
-    return Array.from(this.categories.values()).filter(cat => cat.is_active);
+    return Array.from(this.categories.values())
+      .filter(cat => cat.is_active)
+      .sort((a, b) => {
+        const aOrder = (a as any).sort_order ?? (a as any).sortOrder ?? 0;
+        const bOrder = (b as any).sort_order ?? (b as any).sortOrder ?? 0;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return (a.name || '').localeCompare(b.name || '');
+      });
   }
 
   async getCategory(id: string): Promise<Category | undefined> {

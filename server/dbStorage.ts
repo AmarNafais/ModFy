@@ -317,7 +317,7 @@ export class DatabaseStorage implements IStorage {
 
   // Category operations
   async getCategories(): Promise<Category[]> {
-    const [rows] = await this.pool.execute('SELECT * FROM categories ORDER BY name');
+    const [rows] = await this.pool.execute('SELECT * FROM categories ORDER BY sort_order, name');
     return Array.isArray(rows) ? rows as Category[] : [];
   }
 
@@ -334,8 +334,8 @@ export class DatabaseStorage implements IStorage {
   async createCategory(category: InsertCategory): Promise<Category> {
     const id = randomUUID();
     await this.pool.execute(
-      'INSERT INTO categories (id, name, slug, description, image_url, parent_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, category.name, category.slug, category.description, category.imageUrl, category.parentId || null, category.is_active ?? true]
+      'INSERT INTO categories (id, name, slug, description, image_url, parent_id, is_active, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, category.name, category.slug, category.description, category.imageUrl, category.parentId || null, category.is_active ?? true, category.sortOrder ?? 0]
     );
 
     const newCategory = await this.getCategory(id);
@@ -354,6 +354,8 @@ export class DatabaseStorage implements IStorage {
       parentId: 'parent_id',
       isActive: 'is_active',
       is_active: 'is_active',
+      sortOrder: 'sort_order',
+      sort_order: 'sort_order',
     };
 
     // Build the SET clause
