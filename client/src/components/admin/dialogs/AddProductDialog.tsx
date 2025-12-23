@@ -11,6 +11,7 @@ interface Category {
   id: string;
   name: string;
   parent_id?: string;
+  parentId?: string;
 }
 
 interface ProductFormData {
@@ -55,6 +56,8 @@ export function AddProductDialog({
 }: AddProductDialogProps) {
   const [uploading, setUploading] = useState(false);
 
+  const getParentId = (cat: Category) => cat.parent_id ?? cat.parentId ?? '';
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -75,7 +78,7 @@ export function AddProductDialog({
           const subcategory = categories.find(c => c.id === productForm.subcategoryId);
           if (subcategory) {
             subCategoryName = subcategory.name;
-            const mainCategory = categories.find(c => c.id === subcategory.parent_id);
+            const mainCategory = categories.find(c => c.id === getParentId(subcategory));
             if (mainCategory) {
               mainCategoryName = mainCategory.name;
             }
@@ -183,7 +186,7 @@ export function AddProductDialog({
                   <SelectValue placeholder="Select main category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.isArray(categories) && categories.filter((cat: any) => !cat.parent_id).map((category: any) => (
+                  {Array.isArray(categories) && categories.filter((cat: any) => !getParentId(cat)).map((category: any) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
@@ -203,7 +206,7 @@ export function AddProductDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {Array.isArray(categories) && categories
-                    .filter((cat: any) => cat.parent_id === productForm.categoryId)
+                    .filter((cat: any) => getParentId(cat) === productForm.categoryId)
                     .map((category: any) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}

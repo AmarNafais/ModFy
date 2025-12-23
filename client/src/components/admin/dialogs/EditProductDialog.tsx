@@ -11,6 +11,7 @@ interface Category {
   id: string;
   name: string;
   parent_id?: string;
+  parentId?: string;
 }
 
 interface EditProductDialogProps {
@@ -38,6 +39,8 @@ export function EditProductDialog({
 }: EditProductDialogProps) {
   const [uploading, setUploading] = useState(false);
 
+  const getParentId = (cat: Category) => cat.parent_id ?? cat.parentId ?? '';
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -58,7 +61,7 @@ export function EditProductDialog({
           const subcategory = categories.find(c => c.id === editingProduct.subcategoryId);
           if (subcategory) {
             subCategoryName = subcategory.name;
-            const mainCategory = categories.find(c => c.id === subcategory.parent_id);
+            const mainCategory = categories.find(c => c.id === getParentId(subcategory));
             if (mainCategory) {
               mainCategoryName = mainCategory.name;
             }
@@ -161,7 +164,7 @@ export function EditProductDialog({
                   <SelectValue placeholder="Select main category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.isArray(categories) && categories.filter((cat: any) => !cat.parent_id).map((category: any) => (
+                  {Array.isArray(categories) && categories.filter((cat: any) => !getParentId(cat)).map((category: any) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
@@ -181,7 +184,7 @@ export function EditProductDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {Array.isArray(categories) && categories
-                    .filter((cat: any) => cat.parent_id === editingProduct.categoryId)
+                    .filter((cat: any) => getParentId(cat) === editingProduct.categoryId)
                     .map((category: any) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
@@ -200,17 +203,6 @@ export function EditProductDialog({
                 onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
                 placeholder="e.g., Premium Cotton"
                 data-testid="input-edit-product-material"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-product-stock">Stock Quantity</Label>
-              <Input
-                id="edit-product-stock"
-                type="number"
-                value={editingProduct.stock_quantity || ''}
-                onChange={(e) => setEditingProduct({ ...editingProduct, stock_quantity: e.target.value })}
-                placeholder="50"
-                data-testid="input-edit-product-stock"
               />
             </div>
             <div>
