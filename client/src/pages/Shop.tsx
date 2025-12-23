@@ -244,7 +244,7 @@ export default function Shop() {
               </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-testid="shop-product-grid">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-testid="shop-product-grid">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
