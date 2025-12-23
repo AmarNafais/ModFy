@@ -747,6 +747,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (parent_id !== undefined) {
         updates.parentId = parent_id === '' ? null : parent_id;
       }
+      if (req.body.sort_order !== undefined || req.body.sortOrder !== undefined) {
+        updates.sortOrder = req.body.sort_order !== undefined ? parseInt(req.body.sort_order, 10) : parseInt(req.body.sortOrder, 10);
+      }
       
       const category = await storage.updateCategory(id, updates);
       
@@ -799,6 +802,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Reorder categories (bulk)
+  app.post('/api/admin/categories/reorder', requireAdmin, async (req, res) => {
+    try {
+      const { order } = req.body; // array of category ids in desired order
+      if (!Array.isArray(order)) return res.status(400).json({ message: 'Invalid payload' });
+
+      // Update each category's sort_order
+      let idx = 1;
+      for (const id of order) {
+        await storage.updateCategory(id, { sortOrder: idx });
+        idx++;
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error reordering categories:', error);
+      res.status(500).json({ message: 'Failed to reorder categories' });
     }
   });
 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, Edit, Trash2, Search } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 interface Category {
   id: string;
@@ -86,6 +86,44 @@ export function CategoriesSection({
   }, [categories, subSearchQuery, subStatusFilter]);
 
   const mainCategories = filteredMainCategories;
+  const [draggableMain, setDraggableMain] = useState(filteredMainCategories);
+
+  // keep draggableMain in sync when filters or categories change
+  useEffect(() => setDraggableMain(filteredMainCategories), [filteredMainCategories]);
+
+  const onDragStart = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+  };
+
+  const onDrop = async (e: React.DragEvent<HTMLTableRowElement>, toIndex: number) => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (isNaN(fromIndex)) return;
+    const items = Array.from(draggableMain);
+    const [moved] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, moved);
+    setDraggableMain(items);
+
+    // call reorder API
+    try {
+      const res = await fetch('/api/admin/categories/reorder', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: items.map(c => c.id) }),
+      });
+      if (!res.ok) throw new Error('Failed to reorder');
+      // reload to refresh server-ordered lists
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to reorder categories');
+    }
+  };
   const subcategories = filteredSubcategories;
 
   return (
@@ -142,8 +180,8 @@ export function CategoriesSection({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMainCategories.map((category: any) => (
-                <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
+              {draggableMain.map((category: any, idx: number) => (
+                <TableRow key={category.id} draggable onDragStart={(e) => onDragStart(e, idx)} onDragOver={onDragOver} onDrop={(e) => onDrop(e, idx)} data-testid={`row-category-${category.id}`}>
                   <TableCell className="font-medium" data-testid={`text-category-name-${category.id}`}>
                     {category.name}
                   </TableCell>
