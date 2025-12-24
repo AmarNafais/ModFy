@@ -6,8 +6,6 @@ import {
   users,
   categories,
   products,
-  collections,
-  collectionProducts,
   cartItems,
   wishlistItems,
   userProfiles,
@@ -19,8 +17,6 @@ import {
   type InsertCategory,
   type Product,
   type InsertProduct,
-  type Collection,
-  type InsertCollection,
   type CartItem,
   type InsertCartItem,
   type WishlistItem,
@@ -699,33 +695,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Collection operations
-  async getCollections(): Promise<Collection[]> {
-    const [rows] = await this.pool.execute('SELECT * FROM collections ORDER BY year DESC, name');
-    return Array.isArray(rows) ? rows as Collection[] : [];
-  }
 
-  async getCollection(id: string): Promise<Collection | undefined> {
-    const [rows] = await this.pool.execute('SELECT * FROM collections WHERE id = ?', [id]);
-    return Array.isArray(rows) && rows.length > 0 ? rows[0] as Collection : undefined;
-  }
-
-  async getCollectionBySlug(slug: string): Promise<Collection | undefined> {
-    const [rows] = await this.pool.execute('SELECT * FROM collections WHERE slug = ?', [slug]);
-    return Array.isArray(rows) && rows.length > 0 ? rows[0] as Collection : undefined;
-  }
-
-  async createCollection(collection: InsertCollection): Promise<Collection> {
-    const id = randomUUID();
-    await this.pool.execute(
-      'INSERT INTO collections (id, name, slug, description, image_url, season, year) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, collection.name, collection.slug, collection.description, collection.imageUrl, collection.season, collection.year]
-    );
-
-    const newCollection = await this.getCollection(id);
-    if (!newCollection) throw new Error("Failed to create collection");
-    return newCollection;
-  }
 
   // Cart operations
   async getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]> {

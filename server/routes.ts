@@ -143,29 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Collections routes
-  app.get("/api/collections", async (_req, res) => {
-    try {
-      const collections = await storage.getCollections();
-      res.json(collections);
-    } catch (error) {
-      console.error("Error fetching collections:", error);
-      res.status(500).json({ message: "Failed to fetch collections" });
-    }
-  });
 
-  app.get("/api/collections/:slug", async (req, res) => {
-    try {
-      const collection = await storage.getCollectionBySlug(req.params.slug);
-      if (!collection) {
-        return res.status(404).json({ message: "Collection not found" });
-      }
-      res.json(collection);
-    } catch (error) {
-      console.error("Error fetching collection:", error);
-      res.status(500).json({ message: "Failed to fetch collection" });
-    }
-  });
 
   // Products routes
   app.get("/api/products", async (req, res) => {

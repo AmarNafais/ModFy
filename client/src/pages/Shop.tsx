@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X } from "lucide-react";
+import { Search, X, LayoutGrid, List } from "lucide-react";
 import { type Category, type ProductWithCategory } from "@shared/schema";
 import ProductCard from "@/components/ProductCard";
+import { Link } from "wouter";
 
 export default function Shop() {
   // Read URL params inside useEffect to ensure we get fresh values
@@ -10,6 +11,7 @@ export default function Shop() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("name");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
@@ -231,24 +233,126 @@ export default function Shop() {
               <p className="text-sm text-gray-600 font-light">
                 Showing {products.length} product{products.length !== 1 ? 's' : ''}
               </p>
-              <select
-                className="text-sm border border-luxury-muted px-3 py-2 focus:outline-none focus:border-luxury-black"
-                data-testid="select-sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="name">Sort by Name</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest First</option>
-              </select>
+              
+              <div className="flex items-center gap-3">
+                <select
+                  className="text-sm border border-luxury-muted px-3 py-2 focus:outline-none focus:border-luxury-black"
+                  data-testid="select-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="name">Sort by Name</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="newest">Newest First</option>
+                </select>
+                
+                {/* View Toggle */}
+                <div className="flex items-center gap-1 border border-luxury-muted">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 transition-colors ${viewMode === "grid" ? "bg-luxury-black text-white" : "text-gray-600 hover:bg-gray-100"}`}
+                    aria-label="Grid view"
+                    data-testid="button-grid-view"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-2 transition-colors ${viewMode === "list" ? "bg-luxury-black text-white" : "text-gray-600 hover:bg-gray-100"}`}
+                    aria-label="List view"
+                    data-testid="button-list-view"
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-testid="shop-product-grid">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-testid="shop-product-grid">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-6" data-testid="shop-product-list">
+                {products.map((product) => {
+                  const pieces = product.piecesPerPack ?? 1;
+                  return (
+                    <Link key={product.id} href={`/products/${product.slug}`}>
+                      <a className="group cursor-pointer block bg-white border border-gray-200 hover:border-luxury-black hover:shadow-md transition-all duration-200" data-testid={`product-list-item-${product.id}`}>
+                        <div className="flex flex-col sm:flex-row gap-6 p-6">
+                          {/* Product Image */}
+                          <div className="w-full sm:w-56 h-72 sm:h-56 flex-shrink-0 overflow-hidden bg-gray-50">
+                            <img
+                              src={product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                          
+                          {/* Product Details */}
+                          <div className="flex-1 flex flex-col justify-between min-w-0">
+                            <div>
+                              {/* Category Badge */}
+                              {product.category && (
+                                <span className="inline-block text-xs text-gray-500 tracking-widest mb-2">
+                                  {product.category.name.toUpperCase()}
+                                </span>
+                              )}
+                              
+                              <h3 className="text-xl font-medium tracking-wide mb-3 group-hover:text-gray-700 transition-colors" data-testid={`product-name-${product.id}`}>
+                                {product.name.toUpperCase()}
+                              </h3>
+                              
+                              <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 mb-3 text-sm">
+                                {product.material && (
+                                  <>
+                                    <span className="text-gray-400 font-light">Material:</span>
+                                    <span className="text-gray-600 font-light" data-testid={`product-material-${product.id}`}>
+                                      {product.material}
+                                    </span>
+                                  </>
+                                )}
+                                <span className="text-gray-400 font-light">Quantity:</span>
+                                <span className="text-gray-600 font-light" data-testid={`product-pieces-per-pack-${product.id}`}>
+                                  {pieces === 1 ? '1 piece' : `${pieces} pieces per pack`}
+                                </span>
+                              </div>
+                              
+                              {product.description && (
+                                <p className="text-sm text-gray-600 font-light leading-relaxed line-clamp-2 mb-4" data-testid={`product-description-${product.id}`}>
+                                  {product.description}
+                                </p>
+                              )}
+                              
+                              {/* Sizes if available */}
+                              {product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0 && !product.hideSizes && (
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                  <span>Available sizes:</span>
+                                  <span className="font-medium">{product.sizes.join(', ')}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Price and Action */}
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                              <span className="text-2xl font-medium tracking-wide" data-testid={`product-price-${product.id}`}>
+                                LKR {product.price}
+                              </span>
+                              <span className="text-sm font-medium tracking-wide text-luxury-black group-hover:underline">
+                                VIEW DETAILS →
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
 
