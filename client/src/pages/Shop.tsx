@@ -306,14 +306,16 @@ export default function Shop() {
                                 {product.name.toUpperCase()}
                               </h3>
                               
-                              <div className="flex flex-wrap items-center gap-3 mb-3 text-sm">
+                              <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 mb-3 text-sm">
                                 {product.material && (
-                                  <span className="text-gray-600 font-light" data-testid={`product-material-${product.id}`}>
-                                    <span className="text-gray-400 mr-1">Material:</span>
-                                    {product.material}
-                                  </span>
+                                  <>
+                                    <span className="text-gray-400 font-light">Material:</span>
+                                    <span className="text-gray-600 font-light" data-testid={`product-material-${product.id}`}>
+                                      {product.material}
+                                    </span>
+                                  </>
                                 )}
-                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-400 font-light">Quantity:</span>
                                 <span className="text-gray-600 font-light" data-testid={`product-pieces-per-pack-${product.id}`}>
                                   {pieces === 1 ? '1 piece' : `${pieces} pieces per pack`}
                                 </span>
