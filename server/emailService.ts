@@ -265,9 +265,6 @@ export async function sendOrderConfirmationEmail(orderData: {
           border-bottom: 1px solid #e9ecef;
           padding: 20px 0;
           margin: 10px 0;
-          display: flex;
-          align-items: center;
-          gap: 20px;
         }
         .order-item:last-child {
           border-bottom: none;
@@ -278,12 +275,9 @@ export async function sendOrderConfirmationEmail(orderData: {
           object-fit: cover;
           border-radius: 8px;
           border: 1px solid #e9ecef;
-          margin-right: 25px;
         }
         .product-details {
-          flex: 1;
           line-height: 1.8;
-          padding-right: 15px;
         }
         .product-price {
           text-align: right;
@@ -328,18 +322,22 @@ export async function sendOrderConfirmationEmail(orderData: {
             
             <h4>Items Ordered:</h4>
             ${orderData.items.map(item => `
-              <div class="order-item">
-                <img src="${item.imageUrl}" alt="${item.productName}" class="product-image" style="margin-right: 25px;">
-                <div class="product-details" style="padding-right: 15px;">
-                  <strong style="font-size: 15px;">${item.productName}</strong><br>
-                  ${item.size ? `<span style="color: #666; font-size: 14px; display: block; margin-top: 5px;">Size: ${item.size}</span>` : ''}
-                  <span style="color: #666; font-size: 14px; display: block; margin-top: 5px;">Quantity: ${item.quantity}</span>
-                </div>
-                <div class="product-price">
-                  <strong>LKR ${(parseFloat(item.price) * item.quantity).toFixed(2)}</strong><br>
-                  <span style="color: #666; font-size: 14px;">LKR ${item.price} each</span>
-                </div>
-              </div>
+              <table class="order-item" width="100%" cellpadding="0" cellspacing="0" style="border-bottom: 1px solid #e9ecef; padding: 20px 0; margin: 10px 0;">
+                <tr>
+                  <td width="100" style="padding: 0 15px 0 0; vertical-align: top; background-color: #f5f5f5;">
+                    <img src="${item.imageUrl}" alt="${item.productName}" width="80" height="80" style="width: 80px !important; height: 80px !important; max-width: 80px; max-height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e9ecef; display: block; background-color: #f5f5f5;" border="0">
+                  </td>
+                  <td style="vertical-align: top; padding-right: 15px;">
+                    <strong style="font-size: 15px; color: #333;">${item.productName}</strong><br>
+                    ${item.size ? `<span style="color: #666; font-size: 14px; display: block; margin-top: 5px;">Size: ${item.size}</span>` : ''}
+                    <span style="color: #666; font-size: 14px; display: block; margin-top: 5px;">Quantity: ${item.quantity}</span>
+                  </td>
+                  <td width="120" style="text-align: right; vertical-align: top;">
+                    <strong style="color: #333;">LKR ${(parseFloat(item.price) * item.quantity).toFixed(2)}</strong><br>
+                    <span style="color: #666; font-size: 14px;">LKR ${item.price} each</span>
+                  </td>
+                </tr>
+              </table>
             `).join('')}
             
             <div class="total">

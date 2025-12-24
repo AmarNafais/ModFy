@@ -1103,9 +1103,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               price: String(unitPrice),
               imageUrl: (() => {
                 const firstImage = product?.images?.[0];
-                return typeof firstImage === 'string' && firstImage.startsWith('http')
-                  ? firstImage
-                  : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+                if (!firstImage) {
+                  // Use a reliable placeholder that works in email clients
+                  return 'https://via.placeholder.com/80x80/cccccc/666666?text=No+Image';
+                }
+                // If it's already a full URL, use it
+                if (typeof firstImage === 'string' && firstImage.startsWith('http')) {
+                  return firstImage;
+                }
+                // Convert relative path to absolute URL using BASE_URL
+                const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+                const imagePath = typeof firstImage === 'string' ? firstImage : '';
+                return imagePath.startsWith('/') ? `${baseUrl}${imagePath}` : `${baseUrl}/${imagePath}`;
               })(),
             };
           }),
