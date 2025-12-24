@@ -2,19 +2,15 @@ import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import path from 'path';
 
-// Lazy initialization of transporter to ensure env vars are loaded
 let transporter: Transporter | null = null;
 
 function getTransporter(): Transporter {
-  if (!transporter) {
-    console.log('Initializing email transporter...');
-    console.log('SMTP_USER:', process.env.SMTP_USER ? 'SET' : 'NOT SET');
-    console.log('SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
-    
+  if(!transporter)
+  {
     transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // true for 465, false for other ports
+      host: process.env.SMTP_HOST || 'smtp.zoho.com',
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: (process.env.SMTP_SECURE === 'true') || Number(process.env.SMTP_PORT || 465) === 465,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -172,7 +168,7 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
     const mailOptions = {
       from: {
         name: 'MODFY - Premium Innerwear',
-        address: 'amarnafais@gmail.com'
+        address: process.env.SMTP_USER || 'info@modfy.lk'
       },
       to: email,
       subject: 'Welcome to MODFY - Your Premium Journey Begins',
@@ -186,12 +182,9 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
         }
       ]
     };
-
     await getTransporter().sendMail(mailOptions);
-    console.log(`Welcome email sent successfully to ${email}`);
     return true;
   } catch (error) {
-    console.error('Error sending welcome email:', error);
     return false;
   }
 }
@@ -360,12 +353,11 @@ export async function sendOrderConfirmationEmail(orderData: {
     </html>
     `;
 
-    // Send email to customer if email is provided
     if (orderData.customerEmail) {
       const customerMailOptions = {
         from: {
           name: 'MODFY',
-          address: process.env.SMTP_USER || 'amarnafais@gmail.com'
+          address: process.env.SMTP_USER || 'info@modfy.lk'
         },
         to: orderData.customerEmail,
         subject: `Order Confirmation - ${orderData.orderNumber}`,
@@ -381,16 +373,14 @@ export async function sendOrderConfirmationEmail(orderData: {
       };
 
       await getTransporter().sendMail(customerMailOptions);
-      console.log(`Order confirmation email sent to customer: ${orderData.customerEmail}`);
     }
 
-    // Also send notification to admin
     const adminMailOptions = {
       from: {
         name: 'MODFY - Order System',
-        address: process.env.SMTP_USER || 'amarnafais@gmail.com'
+        address: process.env.SMTP_USER || 'info@modfy.lk'
       },
-      to: process.env.ADMIN_EMAIL || 'amarnafais@gmail.com',
+      to: process.env.ADMIN_EMAIL || 'info@modfy.lk',
       subject: `New Order Received - ${orderData.orderNumber}`,
       html: orderConfirmationEmailHTML,
       text: `New order received: ${orderData.orderNumber} for LKR ${orderData.totalAmount}. Customer: ${orderData.customerName}`,
@@ -402,12 +392,9 @@ export async function sendOrderConfirmationEmail(orderData: {
         }
       ]
     };
-
     await getTransporter().sendMail(adminMailOptions);
-    console.log(`Order notification email sent to admin for order ${orderData.orderNumber}`);
     return true;
   } catch (error) {
-    console.error("Failed to send order confirmation email:", error);
     return false;
   }
 }
@@ -485,7 +472,7 @@ export async function sendOrderStatusUpdateEmail(params: {
     const mailOptions = {
       from: {
         name: 'MODFY - Orders',
-        address: 'amarnafais@gmail.com'
+        address: process.env.SMTP_USER || 'info@modfy.lk'
       },
       to,
       subject: `Your Order ${orderNumber} has been ${newStatus}`,
