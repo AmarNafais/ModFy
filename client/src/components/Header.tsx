@@ -50,9 +50,6 @@ export default function Header({ onCartOpen }: HeaderProps) {
         <div className="flex items-center justify-between h-16">
           {/* Left Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/collections" data-testid="link-collections" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/collections') ? 'text-gray-900' : ''}`}>
-              CATEGORIES
-            </Link>
             <div
               className="relative"
               onMouseEnter={() => setShowCategoryMenu(true)}
@@ -216,11 +213,6 @@ export default function Header({ onCartOpen }: HeaderProps) {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-luxury-muted">
             <div className="flex flex-col space-y-4">
-              <Link href="/collections" data-testid="link-collections-mobile">
-                <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
-                  CATEGORIES
-                </a>
-              </Link>
 
               {/* Mobile Shop with Categories */}
               <div>
