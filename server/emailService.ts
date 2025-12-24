@@ -1,19 +1,30 @@
+import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import path from 'path';
 
+dotenv.config();
+
+const requiredSmtpVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'ADMIN_EMAIL'];
+const missingSmtp = requiredSmtpVars.filter(k => !process.env[k]);
+if (missingSmtp.length > 0) {
+  throw new Error(`Missing required SMTP environment variables: ${missingSmtp.join(', ')}\nPlease set them before starting the server.`);
+}
+
 let transporter: Transporter | null = null;
 
 function getTransporter(): Transporter {
-  if(!transporter)
-  {
+  if (!transporter) {
+    const port = Number(process.env.SMTP_PORT);
+    const secure = (process.env.SMTP_SECURE === 'true') || port === 465;
+
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.zoho.com',
-      port: Number(process.env.SMTP_PORT || 465),
-      secure: (process.env.SMTP_SECURE === 'true') || Number(process.env.SMTP_PORT || 465) === 465,
+      host: process.env.SMTP_HOST!,
+      port,
+      secure,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: process.env.SMTP_USER!,
+        pass: process.env.SMTP_PASS!,
       },
     });
   }
@@ -168,7 +179,7 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
     const mailOptions = {
       from: {
         name: 'MODFY - Premium Innerwear',
-        address: process.env.SMTP_USER || 'info@modfy.lk'
+        address: process.env.SMTP_USER!
       },
       to: email,
       subject: 'Welcome to MODFY - Your Premium Journey Begins',
@@ -357,7 +368,7 @@ export async function sendOrderConfirmationEmail(orderData: {
       const customerMailOptions = {
         from: {
           name: 'MODFY',
-          address: process.env.SMTP_USER || 'info@modfy.lk'
+          address: process.env.SMTP_USER!
         },
         to: orderData.customerEmail,
         subject: `Order Confirmation - ${orderData.orderNumber}`,
@@ -378,9 +389,9 @@ export async function sendOrderConfirmationEmail(orderData: {
     const adminMailOptions = {
       from: {
         name: 'MODFY - Order System',
-        address: process.env.SMTP_USER || 'info@modfy.lk'
+        address: process.env.SMTP_USER!
       },
-      to: process.env.ADMIN_EMAIL || 'info@modfy.lk',
+      to: process.env.ADMIN_EMAIL!,
       subject: `New Order Received - ${orderData.orderNumber}`,
       html: orderConfirmationEmailHTML,
       text: `New order received: ${orderData.orderNumber} for LKR ${orderData.totalAmount}. Customer: ${orderData.customerName}`,
