@@ -1,3 +1,4 @@
+import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import { randomUUID } from "crypto";
 import bcrypt from 'bcryptjs';
@@ -41,11 +42,19 @@ export class DatabaseStorage implements IStorage {
   private pool: mysql.Pool;
 
   constructor() {
+    dotenv.config();
+
+    const required = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+    const missing = required.filter(k => !process.env[k]);
+    if (missing.length > 0) {
+      throw new Error(`Missing required database environment variables: ${missing.join(', ')}\nPlease set them before starting the server.`);
+    }
+
     this.pool = mysql.createPool({
-      host: process.env.DB_HOST || '127.0.0.1',
-      user: process.env.DB_USER || 'mysql',
-      password: process.env.DB_PASSWORD || 'Complex123',
-      database: process.env.DB_NAME || 'modfy',
+      host: process.env.DB_HOST!,
+      user: process.env.DB_USER!,
+      password: process.env.DB_PASSWORD!,
+      database: process.env.DB_NAME!,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0
