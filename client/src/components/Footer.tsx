@@ -61,7 +61,15 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/shop" data-testid="link-footer-shop">
-                  <a className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">All Products</a>
+                  <a 
+                    className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors"
+                    onClick={() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      window.dispatchEvent(new Event('locationchange'));
+                    }}
+                  >
+                    All Products
+                  </a>
                 </Link>
               </li>
               {mainCategories.map((category: any) => (
@@ -72,6 +80,7 @@ export default function Footer() {
                       e.preventDefault();
                       setLocation(`/shop?categoryId=${category.id}`);
                       window.dispatchEvent(new Event('locationchange'));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors cursor-pointer"
                     data-testid={`link-footer-${category.slug}`}
@@ -95,6 +104,7 @@ export default function Footer() {
                       className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors"
                       onClick={() => {
                         window.dispatchEvent(new Event('locationchange'));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                     >
                       About Us
@@ -114,6 +124,7 @@ export default function Footer() {
                       className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors"
                       onClick={() => {
                         window.dispatchEvent(new Event('locationchange'));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                     >
                       Contact Us
