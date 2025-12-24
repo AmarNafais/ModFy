@@ -26,6 +26,11 @@ function getTransporter(): Transporter {
         user: process.env.SMTP_USER!,
         pass: process.env.SMTP_PASS!,
       },
+      // Additional TLS settings for better compatibility with services like Zoho
+      tls: {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2'
+      }
     });
   }
   return transporter;
