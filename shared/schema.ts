@@ -27,6 +27,18 @@ export const categories = mysqlTable("categories", {
   createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const collections = mysqlTable("collections", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  is_active: boolean("is_active").default(true),
+  season: text("season"),
+  year: int("year"),
+  createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const products = mysqlTable("products", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`(UUID())`),
   name: text("name").notNull(),
@@ -176,6 +188,11 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 
+export const insertCollectionSchema = createInsertSchema(collections).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
@@ -242,6 +259,9 @@ export type LoginData = z.infer<typeof loginSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type Collection = typeof collections.$inferSelect;
+export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
