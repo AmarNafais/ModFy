@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { type Collection, type ProductWithCategory } from "@shared/schema";
+import { type ProductWithCategory } from "@shared/schema";
 import ProductGrid from "@/components/ProductGrid";
 
 interface Category {
@@ -12,10 +12,6 @@ interface Category {
 }
 
 export default function Home() {
-  const { data: collections = [] } = useQuery<Collection[]>({
-    queryKey: ['/api/collections'],
-  });
-
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
@@ -60,68 +56,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Collections Grid */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
 
-            {/* Large Collection Card */}
-            {collections[0] && (
-              <div className="md:col-span-2 lg:col-span-1 lg:row-span-2">
-                <Link href={`/collections/${collections[0].slug}`}>
-                  <a>
-                    <img
-                      src={collections[0].imageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'}
-                      alt={collections[0].name}
-                      className="w-full h-96 lg:h-full object-cover mb-4"
-                    />
-                    <div className="text-center">
-                      <h3 className="text-sm font-medium tracking-wide mb-2">{collections[0].name.toUpperCase()}</h3>
-                      <p className="text-xs text-gray-600 font-light tracking-wide">{collections[0].description?.toUpperCase()}</p>
-                    </div>
-                  </a>
-                </Link>
-              </div>
-            )}
-
-            {/* Other Collection Cards */}
-            {collections.slice(1, 3).map((collection) => (
-              <div key={collection.id}>
-                <Link href={`/collections/${collection.slug}`}>
-                  <a>
-                    <img
-                      src={collection.imageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'}
-                      alt={collection.name}
-                      className="w-full h-80 object-cover mb-4"
-                    />
-                    <div className="text-center">
-                      <h3 className="text-sm font-medium tracking-wide mb-2">{collection.name.toUpperCase()}</h3>
-                      <p className="text-xs text-gray-600 font-light tracking-wide">{collection.description?.toUpperCase()}</p>
-                    </div>
-                  </a>
-                </Link>
-              </div>
-            ))}
-
-            {/* Editorial Section */}
-            <div className="md:col-span-2 lg:col-span-2 bg-luxury-gray p-8 lg:p-12 flex items-center">
-              <div>
-                <h3 className="text-2xl lg:text-3xl font-light tracking-wide mb-4">SUMMER 2024</h3>
-                <p className="text-gray-600 font-light leading-relaxed mb-6">
-                  Our latest collection combines innovative fabric technology with timeless design principles,
-                  creating innerwear that moves with you throughout your day.
-                </p>
-                <Link href="/collections/summer-2024">
-                  <a className="text-sm font-medium tracking-wide underline hover:text-gray-600 transition-colors" data-testid="link-discover-more">
-                    DISCOVER MORE
-                  </a>
-                </Link>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
 
       {/* Featured Products */}
       <ProductGrid

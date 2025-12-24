@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type Collection, type InsertCollection, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type WishlistItem, type InsertWishlistItem, type SizeChart, type InsertSizeChart, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems, type WishlistItemWithProduct } from "@shared/schema";
+import { type User, type InsertUser, type Category, type InsertCategory, type Product, type InsertProduct, type CartItem, type InsertCartItem, type Order, type InsertOrder, type OrderItem, type InsertOrderItem, type WishlistItem, type InsertWishlistItem, type SizeChart, type InsertSizeChart, type ProductWithCategory, type CartItemWithProduct, type OrderWithItems, type WishlistItemWithProduct } from "@shared/schema";
 import bcrypt from 'bcryptjs';
 import { randomUUID } from "crypto";
 
@@ -37,11 +37,7 @@ export interface IStorage {
   updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
 
-  // Collection operations
-  getCollections(): Promise<Collection[]>;
-  getCollection(id: string): Promise<Collection | undefined>;
-  getCollectionBySlug(slug: string): Promise<Collection | undefined>;
-  createCollection(collection: InsertCollection): Promise<Collection>;
+
 
   // Cart operations
   getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]>;
@@ -75,7 +71,6 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private categories: Map<string, Category>;
   private products: Map<string, Product>;
-  private collections: Map<string, Collection>;
   private cartItems: Map<string, CartItem>;
   private wishlistItems: Map<string, WishlistItem>;
   private orders: Map<string, Order>;
@@ -86,7 +81,6 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.categories = new Map();
     this.products = new Map();
-    this.collections = new Map();
     this.cartItems = new Map();
     this.wishlistItems = new Map();
     this.orders = new Map();
@@ -107,19 +101,6 @@ export class MemStorage implements IStorage {
     ];
 
     categories.forEach(cat => this.categories.set(cat.id, cat));
-
-    // Seed collections
-    const collections = [
-      { id: "col-1", name: "Essentials 2024", slug: "essentials-2024", description: "Premium basics for everyday comfort", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-2", name: "Luxury Series", slug: "luxury-series", description: "Premium comfort with luxury materials", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-3", name: "Performance Collection", slug: "performance-collection", description: "Active comfort for the modern man", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-4", name: "Summer 2024", slug: "summer-2024", description: "Breathable fabrics for warm weather", imageUrl: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600", is_active: true, season: "Summer", year: 2024, createdAt: new Date() },
-      { id: "col-5", name: "Executive Line", slug: "executive-line", description: "Professional-grade comfort for the workplace", imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-6", name: "Travel Essentials", slug: "travel-essentials", description: "Comfort that travels with you", imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600", is_active: true, season: "All Season", year: 2024, createdAt: new Date() },
-      { id: "col-7", name: "Winter Warmth", slug: "winter-warmth", description: "Thermal comfort for cold seasons", imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600", is_active: true, season: "Winter", year: 2024, createdAt: new Date() },
-    ];
-
-    collections.forEach(col => this.collections.set(col.id, col));
 
     // Seed products
     const products = [
@@ -795,34 +776,7 @@ export class MemStorage implements IStorage {
     return true;
   }
 
-  // Collection operations
-  async getCollections(): Promise<Collection[]> {
-    return Array.from(this.collections.values()).filter(col => col.is_active);
-  }
 
-  async getCollection(id: string): Promise<Collection | undefined> {
-    return this.collections.get(id);
-  }
-
-  async getCollectionBySlug(slug: string): Promise<Collection | undefined> {
-    return Array.from(this.collections.values()).find(col => col.slug === slug);
-  }
-
-  async createCollection(insertCollection: InsertCollection): Promise<Collection> {
-    const id = randomUUID();
-    const collection: Collection = {
-      ...insertCollection,
-      id,
-      description: insertCollection.description || null,
-      imageUrl: insertCollection.imageUrl || null,
-      is_active: insertCollection.is_active ?? true,
-      season: insertCollection.season || null,
-      year: insertCollection.year || null,
-      createdAt: new Date(),
-    };
-    this.collections.set(id, collection);
-    return collection;
-  }
 
   // Cart operations
   async getCartItems(sessionId?: string, userId?: string): Promise<CartItemWithProduct[]> {
