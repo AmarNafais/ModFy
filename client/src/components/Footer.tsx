@@ -1,9 +1,32 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { FaWhatsapp } from "react-icons/fa";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Footer() {
   const [settings, setSettings] = useState<any>(null);
+  const [, setLocation] = useLocation();
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['/api/categories'],
+  });
+
+  // Get main categories (without parent_id)
+  const categoryOrder = ['Men', 'Women', 'Boys', 'Girls', 'Unisex'];
+  const mainCategories = Array.isArray(categories)
+    ? categories.filter((cat: any) => !cat.parent_id).sort((a: any, b: any) => {
+        const indexA = categoryOrder.indexOf(a.name);
+        const indexB = categoryOrder.indexOf(b.name);
+        // If both are in the order array, sort by their position
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        // If only A is in the array, it comes first
+        if (indexA !== -1) return -1;
+        // If only B is in the array, it comes first
+        if (indexB !== -1) return 1;
+        // Otherwise sort alphabetically
+        return a.name.localeCompare(b.name);
+      })
+    : [];
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -33,9 +56,16 @@ export default function Footer() {
                   <a className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">About</a>
                 </Link>
               </li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Careers</a></li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Press</a></li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Stores</a></li>
+              <li>
+                <Link href="/contact" data-testid="link-footer-contact">
+                  <a className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Contact Us</a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop" data-testid="link-footer-shop-main">
+                  <a className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Shop</a>
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -48,9 +78,22 @@ export default function Footer() {
                   <a className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">All Products</a>
                 </Link>
               </li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Boxer Briefs</a></li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Briefs</a></li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Trunks</a></li>
+              {mainCategories.map((category: any) => (
+                <li key={category.id}>
+                  <a 
+                    href={`/shop?categoryId=${category.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setLocation(`/shop?categoryId=${category.id}`);
+                      window.dispatchEvent(new Event('locationchange'));
+                    }}
+                    className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors cursor-pointer"
+                    data-testid={`link-footer-${category.slug}`}
+                  >
+                    {category.name}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -58,10 +101,27 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-medium tracking-wide mb-4">HELP</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Size Guide</a></li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Shipping</a></li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Returns</a></li>
-              <li><a href="#" className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Contact</a></li>
+              <li>
+                <Link href="/contact" data-testid="link-footer-help-contact">
+                  <a className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">Contact</a>
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" data-testid="link-footer-help-about">
+                  <a className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors">About Us</a>
+                </Link>
+              </li>
+              <li>
+                <a 
+                  href={settings?.whatsappUrl || "https://wa.me/94777466766"} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors"
+                  data-testid="link-footer-whatsapp"
+                >
+                  WhatsApp Support
+                </a>
+              </li>
             </ul>
           </div>
 
