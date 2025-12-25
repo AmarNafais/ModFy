@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Package, Edit, Trash2, Search } from "lucide-react";
+import { Package, Edit, Trash2, Search, RotateCcw, FileSpreadsheet } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 
 interface Product {
@@ -44,6 +44,7 @@ interface ProductsTableProps {
   isDeleting: boolean;
   isTogglingStatus: boolean;
   addProductTrigger: React.ReactNode;
+  onFilteredCountChange?: (count: number) => void;
 }
 
 export function ProductsTable({
@@ -58,6 +59,7 @@ export function ProductsTable({
   isDeleting,
   isTogglingStatus,
   addProductTrigger,
+  onFilteredCountChange,
 }: ProductsTableProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("all");
@@ -106,30 +108,57 @@ export function ProductsTable({
     return filtered;
   }, [products, selectedCategory, selectedSubCategory, searchQuery]);
 
+  // Notify parent component of filtered count changes
+  useEffect(() => {
+    if (onFilteredCountChange) {
+      onFilteredCountChange(filteredProducts.length);
+    }
+  }, [filteredProducts, onFilteredCountChange]);
+
+  const exportToExcel = () => {
+    const headers = ['Name', 'Category', 'Subcategory', 'Price', 'Stock', 'Featured', 'Status'];
+    const rows = filteredProducts.map((product: any) => [
+      product.name,
+      product.category?.name || 'N/A',
+      product.subcategory?.name || 'N/A',
+      `LKR ${product.price}`,
+      product.stock_quantity,
+      product.is_featured ? 'Featured' : 'Regular',
+      getProductStatus(product)
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const now = new Date();
+    const timestamp = `${now.toISOString().split('T')[0]}_${now.toTimeString().split(' ')[0].replace(/:/g, '-')}`;
+    link.setAttribute('href', url);
+    link.setAttribute('download', `products_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Package className="w-5 h-5" />
-          Products Management
-        </CardTitle>
-        {addProductTrigger}
-      </CardHeader>
-      <CardContent>
+    <Card className="w-full">
+      <CardContent className="overflow-x-auto">
         {/* Category Filter */}
-        <div className="mb-6">
+        <div className="mb-6 mt-4">
           {/* <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Products</h3> */}
           <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-4">
               <Input
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-[250px]"
               />
-              {/* <Search className="h-4 w-4 text-gray-500" /> */}
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <label htmlFor="category-filter" className="text-sm font-medium text-gray-700">
                   Category:
@@ -170,42 +199,65 @@ export function ProductsTable({
                   </SelectContent>
                 </Select>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                  setSelectedSubCategory('all');
+                }}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset Filters
+              </Button>
             </div>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={exportToExcel}
+              className="flex items-center gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export to Excel
+            </Button>
           </div>
         </div>
-        <Table>
-          <TableHeader>
+        <div className="w-full overflow-auto">
+          <Table className="w-full">
+            <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Featured</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="min-w-[200px]">Name</TableHead>
+              <TableHead className="w-[150px]">Category</TableHead>
+              <TableHead className="w-[120px]">Price</TableHead>
+              <TableHead className="w-[100px]">Stock</TableHead>
+              <TableHead className="w-[120px]">Featured</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {Array.isArray(filteredProducts) && filteredProducts.map((product: any) => (
               <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
-                <TableCell className="font-medium" data-testid={`text-product-name-${product.id}`}>
+                <TableCell className="font-medium min-w-[200px]" data-testid={`text-product-name-${product.id}`}>
                   {product.name}
                 </TableCell>
-                <TableCell data-testid={`text-product-category-${product.id}`}>
+                <TableCell className="w-[150px]" data-testid={`text-product-category-${product.id}`}>
                   {product.category?.name || 'N/A'}
                 </TableCell>
-                <TableCell data-testid={`text-product-price-${product.id}`}>
+                <TableCell className="w-[120px]" data-testid={`text-product-price-${product.id}`}>
                   LKR {product.price}
                 </TableCell>
-                <TableCell data-testid={`text-product-stock-${product.id}`}>
+                <TableCell className="w-[100px]" data-testid={`text-product-stock-${product.id}`}>
                   {product.stock_quantity}
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[120px]">
                   <Badge variant={product.is_featured ? "default" : "secondary"} data-testid={`badge-featured-${product.id}`}>
                     {product.is_featured ? 'Featured' : 'Regular'}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[120px]">
                   <button
                     onClick={() => onToggleStatus(product)}
                     disabled={isTogglingStatus}
@@ -217,7 +269,7 @@ export function ProductsTable({
                     </Badge>
                   </button>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[120px]">
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
@@ -244,6 +296,7 @@ export function ProductsTable({
             ))}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   );
