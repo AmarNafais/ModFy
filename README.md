@@ -1,6 +1,6 @@
-# 🛍️ ModFy - Premium Men's Innerwear E-Commerce
+# 🛍️ ModFy - Premium Innerwear E-Commerce Platform
 
-> A modern, full-stack e-commerce platform for premium men's innerwear with elegant design, seamless shopping experience, and robust backend infrastructure.
+> A modern, full-stack e-commerce platform for premium innerwear and apparel for men, women, boys, and girls. Built with elegant design, seamless shopping experience, and robust backend infrastructure.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
@@ -13,35 +13,51 @@
 - 💳 **Checkout System** - Streamlined checkout process with order management
 - 👤 **User Authentication** - Secure session-based authentication with bcrypt password hashing
 - 📱 **Responsive Design** - Mobile-first approach with beautiful UI
-- 🔍 **Product Catalog** - Browse by categories, subcategories, and collections
+- 🔍 **Product Catalog** - Browse by categories and subcategories (Men, Women, Boys, Girls, Unisex)
+- 🎨 **View Modes** - Toggle between grid and list view in shop page
 - ❤️ **Wishlist** - Save favorite items for later shopping
 - ⭐ **Product Reviews** - Rate and review products (verified purchase badges)
 - 📦 **Order Tracking** - View order history and status
-- 👤 **User Profiles** - Manage personal information and saved addresses
+- 👤 **User Profiles** - Manage personal information and delivery addresses
 - 📐 **Size Charts** - Interactive size guides for accurate fitting
-- 🎨 **Collections** - Curated product collections and featured items
-- 📞 **Contact Form** - Easy customer support communication
+- 📞 **Contact Form** - Easy customer support communication via contact page
+- 🔎 **Smart Search & Filters** - Search products with category and sorting filters
 
 ### 👔 Admin Features
 - 📊 **Modern Dashboard** - Comprehensive analytics and statistics
   - Total revenue, orders, and customer metrics
   - Recent orders overview with status tracking
   - Quick stats for pending orders and low stock alerts
+  - Sales and performance insights with charts
 - 📦 **Product Management** - Full CRUD operations for products
   - Bulk upload and editing capabilities
   - Image management with auto-sync from storage
-  - Size and pricing variations per product
+  - Size and pricing variations per product (size-based pricing)
   - Stock quantity tracking
+  - Free size option with hide sizes toggle
+  - Multi-pack support (pieces per pack)
 - 🗂️ **Category Management** - Organize products with categories and subcategories
+  - Hierarchical category structure (parent-child relationships)
+  - Category slugs for SEO-friendly URLs
+  - Sort order customization
 - 📏 **Size Chart Management** - Create and manage size guides
+  - Dynamic table-based size charts with custom headers
+  - Assign size charts to products
 - 🛒 **Order Management** - Process and track customer orders
   - Update order status (pending, processing, shipped, delivered)
   - View customer details and delivery information
   - Payment status tracking
+  - Order items with product details
 - 👥 **Customer Management** - View and manage registered users
+  - User roles (customer/admin)
+  - Account verification status
 - 📧 **Contact Messages** - Handle customer inquiries
+  - View contact form submissions
+  - Track message status (unread/read/replied)
 - 📈 **Analytics** - Sales and performance insights
-- 🖼️ **Image Auto-Update** - Automatic product image synchronization from storage
+  - Revenue tracking and order statistics
+  - Customer growth metrics
+- 🖼️ **Image Auto-Update** - Automatic product image synchronization from storage folder
 
 ### 🔒 Security Features
 - 🔐 **Secure Authentication** - Session-based auth with secure cookies
@@ -57,24 +73,29 @@
 - **TypeScript** - Type-safe development
 - **Vite** - Lightning-fast build tool and dev server
 - **TailwindCSS** - Utility-first CSS framework
-- **Radix UI** - Accessible component primitives
-- **shadcn/ui** - Beautifully designed components
-- **TanStack Query** - Powerful data synchronization
-- **Wouter** - Minimalist routing solution
+- **Radix UI** - Accessible component primitives (15+ primitive components)
+- **shadcn/ui** - Beautifully designed components (47 components)
+- **TanStack Query** - Powerful data synchronization and caching
+- **Wouter** - Minimalist routing solution (~1.5kB)
 - **React Hook Form** - Performant form validation
 - **Zod** - TypeScript-first schema validation
+- **Lucide React** - Beautiful icon library
+- **React Icons** - Popular icons (FaWhatsapp for contact)
+- **Framer Motion** - Animation library
+- **Recharts** - Chart library for analytics
 
 ### Backend
-- **Node.js** - JavaScript runtime
+- **Node.js** - JavaScript runtime (v18+)
 - **Express.js** - Web application framework
 - **TypeScript** - Full type safety on the backend
-- **MySQL** - Relational database with full ACID compliance
+- **MySQL** - Relational database with full ACID compliance (mysql2 driver)
 - **Drizzle ORM** - Type-safe database toolkit with migrations
 - **Express Session** - Secure session management with MemoryStore
 - **bcryptjs** - Password hashing and encryption
 - **Nodemailer** - Email notifications for orders and user actions
-- **Multer** - File upload handling for product images
+- **Multer** - File upload handling for product images (v2.0+)
 - **Zod** - Runtime schema validation
+- **Google Cloud Storage** - Optional cloud storage support
 
 ### DevOps & Deployment
 - **PM2** - Production process manager
@@ -214,44 +235,54 @@ ModFy/
 ├── client/                      # Frontend React application
 │   ├── src/
 │   │   ├── components/         # Reusable UI components
-│   │   │   ├── ui/            # shadcn/ui components (30+ components)
+│   │   │   ├── ui/            # shadcn/ui components (47 components)
+│   │   │   │   ├── button.tsx, input.tsx, card.tsx
+│   │   │   │   ├── dialog.tsx, drawer.tsx, sheet.tsx
+│   │   │   │   ├── form.tsx, table.tsx, select.tsx
+│   │   │   │   ├── toast.tsx, badge.tsx, avatar.tsx
+│   │   │   │   └── ... (40+ more components)
 │   │   │   ├── admin/         # Admin-specific components
 │   │   │   │   ├── AdminLayout.tsx
 │   │   │   │   ├── AdminStats.tsx
 │   │   │   │   ├── tables/    # Data table components
 │   │   │   │   └── dialogs/   # Modal dialogs for CRUD
-│   │   │   ├── Header.tsx
-│   │   │   ├── Footer.tsx
+│   │   │   ├── Header.tsx      # Top navigation with cart, wishlist, user menu
+│   │   │   ├── Footer.tsx      # Footer with dynamic categories & contact info
 │   │   │   ├── ProductCard.tsx
 │   │   │   ├── ProductGrid.tsx
 │   │   │   ├── CartDrawer.tsx
 │   │   │   ├── ReviewSection.tsx
 │   │   │   ├── SizeChartDisplay.tsx
-│   │   │   └── LoginModal.tsx
+│   │   │   ├── LoginModal.tsx
+│   │   │   └── ObjectUploader.tsx
 │   │   ├── pages/             # Page components
-│   │   │   ├── Home.tsx
-│   │   │   ├── Shop.tsx
+│   │   │   ├── Home.tsx        # Homepage with featured products
+│   │   │   ├── Shop.tsx        # Product listing with grid/list view & filters
 │   │   │   ├── ProductDetail.tsx
 │   │   │   ├── Checkout.tsx
 │   │   │   ├── Collections.tsx
 │   │   │   ├── Wishlist.tsx
-│   │   │   ├── Profile.tsx
-│   │   │   ├── About.tsx
-│   │   │   ├── ContactUs.tsx
+│   │   │   ├── Profile.tsx     # User profile & delivery settings
+│   │   │   ├── About.tsx       # About page
+│   │   │   ├── ContactUs.tsx   # Contact form page
+│   │   │   ├── Auth.tsx        # Login/signup page
+│   │   │   ├── not-found.tsx   # 404 page
 │   │   │   └── admin/         # Admin pages
-│   │   │       ├── Dashboard.tsx
-│   │   │       ├── Products.tsx
-│   │   │       ├── Categories.tsx
-│   │   │       ├── Orders.tsx
-│   │   │       ├── Users.tsx
-│   │   │       ├── SizeCharts.tsx
-│   │   │       ├── Analytics.tsx
-│   │   │       └── ContactUs.tsx
+│   │   │       ├── Dashboard.tsx    # Admin dashboard
+│   │   │       ├── Products.tsx     # Product management
+│   │   │       ├── Categories.tsx   # Category management
+│   │   │       ├── Orders.tsx       # Order management
+│   │   │       ├── Users.tsx        # User management
+│   │   │       ├── SizeCharts.tsx   # Size chart management
+│   │   │       ├── Analytics.tsx    # Analytics & reports
+│   │   │       └── ContactUs.tsx    # Contact messages
 │   │   ├── hooks/             # Custom React hooks
-│   │   │   ├── useAuth.ts
-│   │   │   ├── useCart.ts
-│   │   │   ├── useWishlist.ts
-│   │   │   └── use-toast.ts
+│   │   │   ├── useAuth.ts      # Authentication hook
+│   │   │   ├── useCart.ts      # Shopping cart hook
+│   │   │   ├── useWishlist.ts  # Wishlist hook
+│   │   │   ├── useScrollToTop.ts  # Scroll behavior
+│   │   │   ├── use-toast.ts
+│   │   │   └── use-mobile.tsx
 │   │   ├── lib/               # Utility functions
 │   │   │   ├── adminHelpers.ts
 │   │   │   ├── authUtils.ts
@@ -261,34 +292,43 @@ ModFy/
 │   └── index.html
 ├── server/                     # Backend Express application
 │   ├── index.ts               # Server entry point
-│   ├── routes.ts              # API routes and endpoints
-│   ├── db.ts                  # Database connection (MySQL)
-│   ├── dbStorage.ts           # Database storage layer
+│   ├── routes.ts              # API routes and endpoints (50+ routes)
+│   ├── db.ts                  # Database connection (MySQL with mysql2)
+│   ├── dbStorage.ts           # Database storage layer with queries
 │   ├── storage.ts             # In-memory storage interface
-│   ├── sessionAuth.ts         # Authentication logic
+│   ├── sessionAuth.ts         # Authentication logic & middleware
 │   ├── emailService.ts        # Email service (Nodemailer)
-│   ├── uploadService.ts       # File upload handling
+│   ├── uploadService.ts       # File upload handling (Multer)
 │   ├── objectStorage.ts       # Object storage utilities
 │   ├── vite.ts                # Vite dev server integration
 │   └── scripts/               # Database and utility scripts
-│       ├── seed.ts           # Database seeding
+│       ├── seed.ts            # Database seeding
 │       ├── update-images.ts   # Image sync script
 │       ├── activate_products.py
 │       ├── check_db.py
-│       └── ...
+│       ├── convert_and_import_products.js
+│       ├── IMAGE_UPDATE_README.md
+│       └── README.md          # Scripts documentation
 ├── shared/                    # Shared code between client/server
-│   └── schema.ts             # Database schema & Zod types
+│   └── schema.ts             # Database schema & Zod validation types
 ├── storage/                   # File storage
 │   ├── logo/                 # Brand assets
 │   └── uploads/              # Uploaded files
-│       └── products/         # Product images (226 images)
-│           ├── boys/
-│           ├── girls/
-│           ├── men/
-│           └── women/
+│       ├── boys/             # Boys category products
+│       ├── briefs/           # Briefs category products
+│       ├── girls/            # Girls category products
+│       ├── men/              # Men's category products
+│       └── women/            # Women's category products
 ├── migrations/                # Drizzle ORM migrations
 │   ├── 0000_clumsy_reaper.sql
 │   └── meta/
+│       ├── _journal.json
+│       ├── 0000_snapshot.json
+│       ├── 0001_snapshot.json
+│       ├── 0002_snapshot.json
+│       ├── 0003_snapshot.json
+│       ├── 0004_snapshot.json
+│       └── 0005_snapshot.json
 ├── ecosystem.config.js        # PM2 process manager config
 ├── drizzle.config.ts         # Drizzle ORM configuration
 ├── vite.config.ts            # Vite build configuration
@@ -313,6 +353,33 @@ ModFy/
 | `npm run db:seed` | Seed database with initial data |
 | `npm run db:mark-applied` | Mark migrations as applied |
 | `npm run update-images` | Sync product images from storage to database |
+
+## 🌐 API Routes
+
+The backend provides 50+ RESTful API endpoints organized by feature:
+
+### Public Routes
+- **Authentication:** `/api/auth/signup`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/user`
+- **Products:** `/api/products`, `/api/products/:slug`, `/api/products/:productId/reviews`
+- **Categories:** `/api/categories`, `/api/categories/:slug`
+- **Cart:** `/api/cart` (GET, POST, PUT, DELETE)
+- **Wishlist:** `/api/wishlist` (GET, POST, DELETE)
+- **Orders:** `/api/orders` (POST - create order)
+- **Profile:** `/api/profile` (GET, POST - requires auth)
+- **Contact:** `/api/contact` (POST), `/api/contact-settings` (GET)
+- **Reviews:** `/api/products/:productId/reviews` (GET, POST, DELETE)
+
+### Admin Routes (require admin role)
+- **Dashboard:** `/api/admin/stats`, `/api/admin/analytics`
+- **Users:** `/api/admin/users` (GET, POST, PATCH, DELETE)
+- **Products:** `/api/admin/products` (POST, PATCH, DELETE), `/api/admin/product-types`
+- **Categories:** `/api/admin/categories` (POST, PATCH, DELETE), `/api/admin/categories/reorder`
+- **Orders:** `/api/admin/orders` (GET, PATCH, DELETE)
+- **Size Charts:** `/api/admin/size-charts` (GET, POST, PATCH, DELETE)
+- **Contact Messages:** `/api/admin/contact-messages` (GET, DELETE)
+- **Contact Settings:** `/api/admin/contact-settings` (GET, POST)
+- **Image Upload:** `/api/admin/upload-product-image`, `/api/admin/upload-category-image`
+- **Object Storage:** `/api/objects/upload`, `/objects/:objectPath`, `/public-objects/:filePath`
 
 ## 🌐 Linux Deployment Guide
 
@@ -535,35 +602,33 @@ pm2 restart modfy-server
 
 ### Image Organization
 
-Product images are stored in a hierarchical structure (all lowercase for folders and files):
+Product images are stored in a category-based structure:
 
 ```
-storage/uploads/products/
+storage/uploads/
 ├── boys/
-│   ├── cantex junior boxer/
-│   ├── junior brief/
-│   ├── pants/
-│   └── vest - boys/
+│   ├── [product-folders]/
+│   └── ...
+├── briefs/
+│   ├── [product-folders]/
+│   └── ...
 ├── girls/
-│   ├── panties - girls/
-│   └── vest - girls/
-├── mens/
-│   ├── pants/
-│   ├── underwear/
-│   ├── ultimate/
-│   └── vest/
+│   ├── [product-folders]/
+│   └── ...
+├── men/
+│   ├── [product-folders]/
+│   └── ...
 └── women/
-   ├── panties - women/
-   └── vest - women/
+    ├── [product-folders]/
+    └── ...
 ```
 
 ### Current Image Status
 
-- **Total Products:** 64
-- **Products with Images:** 47 (73%)
-- **Total Images:** 226
-- **Storage Size:** 1.2 GB
+- **Total Products:** 64+
+- **Storage Organized:** By category (boys, briefs, girls, men, women)
 - **Image Formats:** JPG, PNG
+- **Path Format:** `/storage/uploads/[category]/[product-folder]/[image.jpg]`
 
 ### Updating Product Images
 
@@ -574,25 +639,23 @@ npm run update-images
 ```
 
 This command will:
-1. Copy images from `storage/products/` to `storage/uploads/products/`
-2. Scan the uploads directory and match folders to product names
-3. Update the database with the resolved image paths
+1. Scan the storage/uploads directory for product folders
+2. Match folder names to product names in database
+3. Update product records with image paths
+4. Handle multiple images per product
 
 #### Adding New Products with Images
 
 1. **Create the folder structure:**
    ```
-   storage/uploads/products/[category]/[subcategory]/[product_name]/
+   storage/uploads/[category]/[product_name]/
    ```
 
 2. **Add image files:**
    Place JPG/PNG images in the product folder
 
 3. **Create product in database:**
-   ```sql
-   INSERT INTO products (id, name, category_id, is_active, ...)
-   VALUES (...)
-   ```
+   Use the admin panel or run database scripts
 
 4. **Run image sync:**
    ```bash
@@ -601,13 +664,14 @@ This command will:
 
 #### Image Path Format
 
-All image paths follow this pattern (lowercase):
+All image paths follow this pattern:
 ```
-/storage/uploads/products/[category]/[subcategory]/[product]/[filename]
+/storage/uploads/[category]/[product_folder]/[filename.jpg]
 
 Examples:
-/storage/uploads/products/boys/cantex junior boxer/img_3599.jpg
-/storage/uploads/products/mens/underwear/classic/img_0431.png
+/storage/uploads/boys/junior-brief/image1.jpg
+/storage/uploads/men/classic-boxer/front.png
+/storage/uploads/women/cotton-panties/photo.jpg
 ```
 
 ### Documentation
@@ -645,19 +709,60 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 The application uses MySQL with the following main tables:
 
-- **users** - Customer and admin accounts
+### Core Tables
+- **users** - Customer and admin accounts with authentication
+  - Email/password authentication with bcrypt hashing
+  - Role-based access control (customer/admin)
+  - Email verification status
+  
 - **products** - Product catalog with variants and pricing
+  - Size-based pricing support (different prices per size)
+  - Multi-image support (JSON array)
+  - Stock quantity tracking
+  - Free size option with hide sizes toggle
+  - Pieces per pack support
+  - Material, description, slug for SEO
+  
 - **categories** - Product categories and subcategories
-- **orders** - Customer orders and order history
-- **order_items** - Individual items in orders
+  - Hierarchical structure with parent-child relationships
+  - Slugs for SEO-friendly URLs
+  - Sort order customization
+  - Active/inactive status
+  
 - **cart_items** - Shopping cart (session and user-based)
-- **wishlist_items** - Customer wishlists
-- **reviews** - Product reviews and ratings
-- **size_charts** - Size guide tables
-- **contact_messages** - Customer inquiries
-- **user_profiles** - Extended user information
+  - Session ID for guest carts
+  - User ID for authenticated users
+  - Size and color selection
+  - Quantity tracking
+  
+- **orders** - Customer orders and order history
+  - Order number generation
+  - Status tracking (pending, processing, shipped, delivered)
+  - Payment status tracking
+  - Delivery address (JSON)
+  - Customer email and phone
+  
+- **order_items** - Individual items in orders
+  - Product details snapshot
+  - Size and color selection
+  - Unit and total pricing
 
-See [shared/schema.ts](shared/schema.ts) for complete schema definition.
+### Additional Tables
+- **wishlist_items** - Customer wishlists
+- **user_profiles** - Extended user information (delivery addresses, phone)
+- **reviews** - Product reviews and ratings
+  - Verified purchase badges
+  - Rating (1-5 stars)
+  - Title and comment
+- **size_charts** - Size guide tables
+  - Dynamic table data (JSON 2D array)
+  - Active/inactive status
+- **contact_messages** - Customer inquiries
+  - Status tracking (unread/read/replied)
+  - Name, email, phone, subject, message
+- **contact_settings** - Contact page settings (key-value pairs)
+
+See [shared/schema.ts](shared/schema.ts) for complete schema definition with TypeScript types.
 
 ## 🎯 Key Features in Detail
 
@@ -678,38 +783,66 @@ Products can have different prices for different sizes:
 ### Hierarchical Categories
 Supports parent-child category relationships for better organization:
 ```
-Men's Wear
+Men
   ├── Underwear
   │   ├── Briefs
   │   ├── Boxers
   │   └── Trunks
+  ├── Vests
+  └── Pants
+
+Women
+  ├── Panties
+  └── Vests
+
+Boys
+  ├── Briefs
+  ├── Vests
+  └── Pants
+
+Girls
+  ├── Panties
   └── Vests
 ```
 
 ### Guest Checkout
 Customers can checkout without creating an account:
-- Session-based cart management
+- Session-based cart management (works for both guests and logged-in users)
 - Email order confirmations
 - Optional account creation after purchase
+- Guest carts persist across sessions
 
 ### Admin Analytics
-- Real-time sales metrics
-- Order status distribution
+- Real-time sales metrics and dashboard
+- Order status distribution charts
 - Low stock alerts
-- Revenue tracking
+- Revenue tracking by period
 - Customer growth charts
+- Recent orders overview
 
 ## 📚 Additional Documentation
 
 For more detailed information, see:
 
-- [QUICK_START.md](QUICK_START.md) - Quick start guide with product preview
+- [QUICK_START.md](QUICK_START.md) - Quick start guide for development
 - [DOCUMENTATION.md](DOCUMENTATION.md) - Complete documentation index
 - [ADMIN_REDESIGN.md](ADMIN_REDESIGN.md) - Admin dashboard architecture
 - [IMAGES.md](IMAGES.md) - Image management guide
+- [IMAGE_STORAGE_ORGANIZATION.md](IMAGE_STORAGE_ORGANIZATION.md) - Storage organization
+- [IMAGE_UPLOAD.md](IMAGE_UPLOAD.md) - Image upload documentation
 - [DATABASE_SETUP.md](DATABASE_SETUP.md) - Database configuration details
-- [CATEGORIES_README.md](CATEGORIES_README.md) - Category management
+- [CATEGORIES_README.md](CATEGORIES_README.md) - Category management guide
+- [PRODUCT_IMPORT.md](PRODUCT_IMPORT.md) - Product import documentation
+- [PRODUCTS_READY.md](PRODUCTS_READY.md) - Products status and readiness
 - [server/scripts/README.md](server/scripts/README.md) - Available scripts reference
+- [server/scripts/IMAGE_UPDATE_README.md](server/scripts/IMAGE_UPDATE_README.md) - Image update scripts
+
+### Analysis & Reports
+- [ANALYSIS_SUMMARY.md](ANALYSIS_SUMMARY.md) - Project analysis summary
+- [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) - Codebase cleanup summary
+- [IMPORT_COMPLETION_REPORT.md](IMPORT_COMPLETION_REPORT.md) - Import completion report
+- [PRODUCTS_NOT_SHOWING_FIX.md](PRODUCTS_NOT_SHOWING_FIX.md) - Troubleshooting guide
+- [ENV_FIX_INSTRUCTIONS.md](ENV_FIX_INSTRUCTIONS.md) - Environment setup fixes
 
 ## 🙏 Acknowledgments
 
