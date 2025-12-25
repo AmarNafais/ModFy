@@ -18,8 +18,8 @@ const dbConfig = {
 };
 
 // Product folder structure
-const PRODUCTS_BASE_PATH = 'c:\\Users\\nabee\\Desktop\\Amar Projects\\ModFy\\storage\\uploads\\products';
-const OUTPUT_BASE_PATH = 'c:\\Users\\nabee\\Desktop\\Amar Projects\\ModFy\\storage\\uploads\\products';
+const PRODUCTS_BASE_PATH = 'c:\\Users\\nabee\\Desktop\\Amar Projects\\ModFy\\storage\\uploads';
+const OUTPUT_BASE_PATH = 'c:\\Users\\nabee\\Desktop\\Amar Projects\\ModFy\\storage\\uploads';
 
 // Category mappings based on folder structure
 const CATEGORY_MAPPINGS = {
@@ -253,12 +253,11 @@ function groupImagesByProduct(files, outputBasePath) {
       };
     }
 
-    // Store relative path from uploads folder
-    const relativeOutputPath = join(
-      'products',
-      dirname(file.relativePath),
-      file.name.replace(/\.[^.]+$/i, '.png')
-    ).replace(/\\/g, '/');
+    // Store path as storage/uploads/[main category]/...
+    const mainCategory = productInfo.mainCategory ? productInfo.mainCategory.toLowerCase() : '';
+    const subPath = dirname(file.relativePath);
+    const outputPath = mainCategory ? join('storage/uploads', mainCategory, subPath, file.name.replace(/\.[^.]+$/i, '.png')) : join('storage/uploads', subPath, file.name.replace(/\.[^.]+$/i, '.png'));
+    const relativeOutputPath = outputPath.replace(/\\/g, '/');
 
     products[productKey].images.push(relativeOutputPath);
   }

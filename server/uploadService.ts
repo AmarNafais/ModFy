@@ -12,29 +12,13 @@ if (!fs.existsSync(baseUploadDir)) {
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req: Request, file: Express.Multer.File, cb) => {
-    // Get category, subcategory, and product name from request body
-    const categoryName = req.body.categoryName || 'uncategorized';
-    const subcategoryName = req.body.subcategoryName || '';
+    // Always save product images under storage/uploads/men/<product>
     const productName = req.body.productName || 'unnamed';
-    
-    // Sanitize folder names
-    const sanitizedCategory = categoryName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     const sanitizedProduct = productName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    
-    // Create directory path: storage/uploads/category/subcategory/product-name/ or storage/uploads/category/product-name/
-    let uploadPath;
-    if (subcategoryName) {
-      const sanitizedSubcategory = subcategoryName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-      uploadPath = path.join(baseUploadDir, sanitizedCategory, sanitizedSubcategory, sanitizedProduct);
-    } else {
-      uploadPath = path.join(baseUploadDir, sanitizedCategory, sanitizedProduct);
-    }
-    
-    // Create directory if it doesn't exist
+    const uploadPath = path.join(baseUploadDir, 'men', sanitizedProduct);
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
-    
     cb(null, uploadPath);
   },
   filename: (req: Request, file: Express.Multer.File, cb) => {
