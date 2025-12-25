@@ -219,14 +219,27 @@ export default function Header({ onCartOpen }: HeaderProps) {
 
               {/* Mobile Shop with Categories */}
               <div>
-                <button
-                  onClick={() => setShowCategoryMenu(!showCategoryMenu)}
-                  className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors w-full text-left flex items-center justify-between"
-                  data-testid="button-shop-mobile"
-                >
-                  SHOP
-                  <span className="text-xs">{showCategoryMenu ? '▼' : '▶'}</span>
-                </button>
+                <div className="flex items-center justify-between">
+                  <Link href="/shop">
+                    <a
+                      className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors flex-1"
+                      data-testid="link-shop-mobile"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setShowCategoryMenu(false);
+                      }}
+                    >
+                      SHOP
+                    </a>
+                  </Link>
+                  <button
+                    onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+                    className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors px-2"
+                    data-testid="button-categories-toggle-mobile"
+                  >
+                    {showCategoryMenu ? '▼' : '▶'}
+                  </button>
+                </div>
 
                 {showCategoryMenu && (
                   <div className="mt-2 pl-4 space-y-3">
