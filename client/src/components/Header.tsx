@@ -131,17 +131,17 @@ export default function Header({ onCartOpen }: HeaderProps) {
           </div>
 
           {/* Right Navigation */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors p-0 h-auto"
+                    className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors p-0 h-auto flex items-center"
                     data-testid="button-user-menu"
                   >
-                    <User size={18} />
+                    <User size={18} className="flex-shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -172,17 +172,17 @@ export default function Header({ onCartOpen }: HeaderProps) {
               </DropdownMenu>
             ) : (
               <Link href="/auth">
-                <button className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors" data-testid="link-login">
-                  <User size={18} />
+                <button className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors flex items-center" data-testid="link-login">
+                  <User size={18} className="flex-shrink-0" />
                 </button>
               </Link>
             )}
             <Link href="/wishlist">
               <button
-                className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
+                className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative flex items-center"
                 data-testid="button-wishlist"
               >
-                <Heart size={18} />
+                <Heart size={18} className="flex-shrink-0" />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-luxury-black text-luxury-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {wishlistCount}
@@ -191,11 +191,11 @@ export default function Header({ onCartOpen }: HeaderProps) {
               </button>
             </Link>
             <button
-              className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative"
+              className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors relative flex items-center"
               onClick={onCartOpen}
               data-testid="button-cart"
             >
-              <ShoppingBag size={18} />
+              <ShoppingBag size={18} className="flex-shrink-0" />
               {itemCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-luxury-black text-luxury-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {itemCount}
