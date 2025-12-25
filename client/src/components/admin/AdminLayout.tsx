@@ -11,9 +11,12 @@ import {
     ChevronDown,
     Ruler,
     Mail,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import Header from "@/components/Header";
 
 interface NavItem {
     label: string;
@@ -78,6 +81,8 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
     const [expandedItems, setExpandedItems] = useState<string[]>(["Products"]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     const toggleExpanded = (label: string) => {
         setExpandedItems((prev) =>
@@ -88,54 +93,70 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Sidebar */}
-            <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-white">
-                <div className="flex h-full flex-col">
-                    {/* Logo */}
-                    <div className="flex h-16 items-center border-b px-6">
-                        <Link href="/">
-                            <a className="flex items-center gap-2">
-                                <img
-                                    src="/storage/logo/logo.png"
-                                    alt="Modfy Logo"
-                                    className="h-10 w-auto"
-                                />
-                            </a>
-                        </Link>
-                    </div>
+        <>
+            <Header onCartOpen={() => setIsCartOpen(true)} />
+            <div className="min-h-screen bg-gray-50 pt-16">
+                {/* Sidebar */}
+                <aside className={cn(
+                    "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r bg-white transition-[width] duration-200 ease-in-out",
+                    isCollapsed ? "w-16" : "w-64"
+                )}>
+                    <div className="flex h-full flex-col relative">
+                        {/* Toggle Button - Vertically Centered */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsCollapsed(!isCollapsed)}
+                            className="h-8 w-8 absolute right-2 top-1/2 -translate-y-1/2 z-10"
+                        >
+                            {isCollapsed ? (
+                                <ChevronRight className="h-4 w-4" />
+                            ) : (
+                                <ChevronLeft className="h-4 w-4" />
+                            )}
+                        </Button>
 
-                    {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto p-4">
-                        <ul className="space-y-1">
-                            {navItems.map((item) => (
-                                <NavItemComponent
-                                    key={item.label}
-                                    item={item}
-                                    expanded={expandedItems.includes(item.label)}
-                                    onToggle={() => toggleExpanded(item.label)}
-                                />
-                            ))}
-                        </ul>
-                    </nav>
+                        {/* Navigation */}
+                        <nav className="flex-1 overflow-y-auto p-4">
+                            <ul className="space-y-1">
+                                {navItems.map((item) => (
+                                    <NavItemComponent
+                                        key={item.label}
+                                        item={item}
+                                        expanded={expandedItems.includes(item.label)}
+                                        onToggle={() => toggleExpanded(item.label)}
+                                        isCollapsed={isCollapsed}
+                                    />
+                                ))}
+                            </ul>
+                        </nav>
 
-                    {/* Settings */}
-                    <div className="border-t p-4">
-                        <Link href="/admin/settings">
-                            <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <Settings className="h-4 w-4" />
-                                <span>Settings</span>
-                            </a>
-                        </Link>
+                        {/* Settings */}
+                        <div className="border-t p-4">
+                            <Link href="/admin/settings">
+                                <a className={cn(
+                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-gray-100",
+                                    isCollapsed && "justify-center"
+                                )}
+                                title={isCollapsed ? "Settings" : undefined}
+                                >
+                                    <Settings className={cn("h-4 w-4", isCollapsed && "scale-125")} />
+                                    {!isCollapsed && <span>Settings</span>}
+                                </a>
+                            </Link>
+                        </div>
                     </div>
+                </aside>
+
+                {/* Main Content */}
+                <div className={cn(
+                    "transition-[margin] duration-200 ease-in-out",
+                    isCollapsed ? "ml-16" : "ml-64"
+                )}>
+                    <main className="min-h-screen p-8">{children}</main>
                 </div>
-            </aside>
-
-            {/* Main Content */}
-            <div className="ml-64">
-                <main className="min-h-screen p-8">{children}</main>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -144,6 +165,7 @@ interface NavItemComponentProps {
     expanded?: boolean;
     onToggle?: () => void;
     isSubItem?: boolean;
+    isCollapsed?: boolean;
 }
 
 function NavItemComponent({
@@ -151,22 +173,25 @@ function NavItemComponent({
     expanded,
     onToggle,
     isSubItem = false,
+    isCollapsed = false,
 }: NavItemComponentProps) {
     const [isActive] = useRoute(item.href);
     const hasSubItems = item.subItems && item.subItems.length > 0;
 
-    if (hasSubItems) {
+    if (hasSubItems && !isCollapsed) {
         return (
             <li>
                 <button
                     onClick={onToggle}
                     className={cn(
-                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100",
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-gray-100",
                         isActive && "bg-primary/10 text-primary"
                     )}
                 >
                     <div className="flex items-center gap-3">
-                        {item.icon}
+                        <span className={cn(isCollapsed && "scale-125")}>
+                            {item.icon}
+                        </span>
                         <span>{item.label}</span>
                     </div>
                     <ChevronDown
@@ -183,6 +208,7 @@ function NavItemComponent({
                                 key={subItem.label}
                                 item={subItem}
                                 isSubItem
+                                isCollapsed={isCollapsed}
                             />
                         ))}
                     </ul>
@@ -196,13 +222,17 @@ function NavItemComponent({
             <Link href={item.href}>
                 <a
                     className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100",
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-gray-100",
                         isActive && "bg-primary/10 text-primary font-medium",
-                        isSubItem && "text-xs"
+                        isSubItem && "text-sm",
+                        isCollapsed && "justify-center"
                     )}
+                    title={isCollapsed ? item.label : undefined}
                 >
-                    {item.icon}
-                    <span>{item.label}</span>
+                    <span className={cn(isCollapsed && "scale-125")}>
+                        {item.icon}
+                    </span>
+                    {!isCollapsed && <span>{item.label}</span>}
                 </a>
             </Link>
         </li>
