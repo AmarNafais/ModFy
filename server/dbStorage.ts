@@ -638,7 +638,6 @@ export class DatabaseStorage implements IStorage {
             process.cwd(),
             'storage',
             'uploads',
-            'products',
             categorySlug,
             subcategorySlug,
             productFolder
@@ -789,7 +788,6 @@ export class DatabaseStorage implements IStorage {
             process.cwd(),
             'storage',
             'uploads',
-            'products',
             product.category_slug,
             product.subcategory_slug,
             productFolder

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const PRODUCTS_DIR = path.join(process.cwd(), 'storage', 'uploads', 'products');
+const UPLOADS_DIR = path.join(process.cwd(), 'storage', 'uploads');
 
 function scanAllImages() {
   let totalImages = 0;
@@ -32,7 +32,7 @@ function scanAllImages() {
     }
   }
   
-  scanDir(PRODUCTS_DIR);
+  scanDir(UPLOADS_DIR);
   
   console.log(`\n📊 Total: ${Object.keys(productMap).length} folders with ${totalImages} images`);
 }
