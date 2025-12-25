@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type ProductWithCategory } from "@shared/schema";
 import ProductCard from "./ProductCard";
+import { Link } from "wouter";
 
 interface ProductGridProps {
   categoryId?: string;
@@ -15,7 +16,7 @@ export default function ProductGrid({ categoryId, is_featured, title, showViewAl
     ...(is_featured !== undefined && { is_featured }),
     is_active: true,
   };
-  
+
   const { data: products = [], isLoading } = useQuery<ProductWithCategory[]>({
     queryKey: ['/api/products', params],
     enabled: true,
@@ -57,12 +58,14 @@ export default function ProductGrid({ categoryId, is_featured, title, showViewAl
 
         {showViewAll && (
           <div className="text-center mt-12">
-            <button
-              className="bg-luxury-black text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors"
-              data-testid="button-view-all"
-            >
-              VIEW ALL PRODUCTS
-            </button>
+            <Link href="/shop">
+              <a
+                className="bg-luxury-black text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors inline-block"
+                data-testid="button-view-all"
+              >
+                VIEW ALL PRODUCTS
+              </a>
+            </Link>
           </div>
         )}
       </div>
