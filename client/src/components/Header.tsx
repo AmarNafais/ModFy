@@ -219,10 +219,10 @@ export default function Header({ onCartOpen }: HeaderProps) {
 
               {/* Mobile Shop with Categories */}
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <Link href="/shop">
                     <a
-                      className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors flex-1"
+                      className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors"
                       data-testid="link-shop-mobile"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
@@ -234,7 +234,7 @@ export default function Header({ onCartOpen }: HeaderProps) {
                   </Link>
                   <button
                     onClick={() => setShowCategoryMenu(!showCategoryMenu)}
-                    className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors px-2"
+                    className="text-xs hover:text-gray-600 transition-colors"
                     data-testid="button-categories-toggle-mobile"
                   >
                     {showCategoryMenu ? '▼' : '▶'}
