@@ -47,7 +47,7 @@ export default function Home() {
             </div>
             <div className="order-1 lg:order-2">
               <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=800"
+                src="/storage/images/hero.png"
                 alt="Male model showcasing premium men's innerwear"
                 className="w-full h-96 lg:h-[600px] object-cover"
               />
