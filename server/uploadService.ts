@@ -9,17 +9,17 @@ if (!fs.existsSync(baseUploadDir)) {
   fs.mkdirSync(baseUploadDir, { recursive: true });
 }
 
-// Configure storage
+// Create temporary upload directory
+const tempUploadDir = path.join(process.cwd(), 'storage', 'temp');
+if (!fs.existsSync(tempUploadDir)) {
+  fs.mkdirSync(tempUploadDir, { recursive: true });
+}
+
+// Configure storage - use temporary location first
 const storage = multer.diskStorage({
   destination: (req: Request, file: Express.Multer.File, cb) => {
-    // Always save product images under storage/uploads/men/<product>
-    const productName = req.body.productName || 'unnamed';
-    const sanitizedProduct = productName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    const uploadPath = path.join(baseUploadDir, 'men', sanitizedProduct);
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
+    // Save to temp directory first
+    cb(null, tempUploadDir);
   },
   filename: (req: Request, file: Express.Multer.File, cb) => {
     // Generate unique filename: timestamp-originalname
@@ -96,6 +96,46 @@ export async function deleteProductImages(categoryName: string, productName: str
   if (fs.existsSync(productDir)) {
     fs.rmSync(productDir, { recursive: true, force: true });
   }
+}
+
+// Helper function to move uploaded file to correct location
+export function moveUploadedFile(
+  tempFilePath: string, 
+  categoryName: string, 
+  subcategoryName: string, 
+  productName: string
+): string {
+  // Sanitize folder names
+  const sanitizedMainCategory = categoryName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const sanitizedSubcategory = subcategoryName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const sanitizedProduct = productName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  
+  // Create target directory path
+  const targetDir = path.join(baseUploadDir, sanitizedMainCategory, sanitizedSubcategory, sanitizedProduct);
+  
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true });
+  }
+  
+  // Get filename from temp path
+  const filename = path.basename(tempFilePath);
+  const targetPath = path.join(targetDir, filename);
+  
+  // Move file from temp to target location (this removes it from temp)
+  fs.renameSync(tempFilePath, targetPath);
+  
+  // Clean up temp directory if empty
+  try {
+    const tempFiles = fs.readdirSync(tempUploadDir);
+    if (tempFiles.length === 0) {
+      // Temp directory is empty, we can leave it (it's harmless)
+    }
+  } catch (err) {
+    // Ignore cleanup errors
+  }
+  
+  return targetPath;
 }
 
 // Helper function to get image URL from file path

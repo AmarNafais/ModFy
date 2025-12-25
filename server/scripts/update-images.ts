@@ -69,7 +69,7 @@ async function ensureProductFolderStructure(connection: any) {
     // Check if folder exists, create if not
     if (!fs.existsSync(fullPath)) {
       fs.mkdirSync(fullPath, { recursive: true });
-      console.log(`✅ Created: ${categoryFolder}/${subcategoryFolder}/${productFolder}`);
+      console.log(`✅ Created: ${mainCategoryFolder}/${subcategoryFolder}/${productFolder}`);
       createdFolders++;
     } else {
       existingFolders++;
@@ -269,7 +269,24 @@ async function updateProductImages() {
     `);
     
     for (const product of allProducts as any[]) {
-      let images = JSON.parse(product.images);
+      let images;
+      try {
+        images = JSON.parse(product.images);
+      } catch (e) {
+        // If parsing fails, it might be a single string path
+        if (typeof product.images === 'string' && product.images.trim()) {
+          images = [product.images];
+        } else {
+          console.log(`⚠️  Skipping product ${product.name} - invalid images format`);
+          continue;
+        }
+      }
+      
+      // Ensure images is an array
+      if (!Array.isArray(images)) {
+        images = [images];
+      }
+      
       let hasIncorrect = false;
       let newImages = [];
       
@@ -281,12 +298,6 @@ async function updateProductImages() {
         // If not starting with PATH_PREFIX, add it
         if (!fixedPath.startsWith(PATH_PREFIX + '/')) {
           fixedPath = `${PATH_PREFIX}/${fixedPath.replace(/^\/+/, '')}`;
-          hasIncorrect = true;
-        }
-            .replace(/^\/storage\/uploads\//, '')
-            .replace(/^\/storage\//, '')
-            .replace(/^uploads\//, '')
-            .replace(/^\/+/, '')}`;
           hasIncorrect = true;
         }
 

@@ -6,7 +6,7 @@ import { sessionConfig, requireAuth, addUserToRequest } from "./sessionAuth";
 import { sendWelcomeEmail, sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from "./emailService";
 import pool from "./db";
 import { ObjectStorageService } from "./objectStorage";
-import { upload, categoryUpload, getImageUrl } from "./uploadService";
+import { upload, categoryUpload, getImageUrl, moveUploadedFile } from "./uploadService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
@@ -634,8 +634,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
+      // Get category info from request body
+      const categoryName = req.body.categoryName || 'uncategorized';
+      const subcategoryName = req.body.subcategoryName || 'general';
+      const productName = req.body.productName || 'unnamed';
+
+      // Move file from temp to correct location
+      const finalPath = moveUploadedFile(
+        req.file.path,
+        categoryName,
+        subcategoryName,
+        productName
+      );
+
       // Get the image URL
-      const imageUrl = getImageUrl(req.file.path);
+      const imageUrl = getImageUrl(finalPath);
       
       res.status(200).json({ 
         success: true,
