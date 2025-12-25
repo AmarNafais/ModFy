@@ -267,6 +267,18 @@ async function main(): Promise<number> {
       return 1;
     }
     
+    // Step 4: Update images
+    console.log('\n🖼️  Updating images from storage...');
+    try {
+      const { stdout, stderr } = await execAsync('npm run update-images');
+      if (stdout) console.log(stdout);
+      if (stderr && !stderr.includes('npm warn')) console.error(stderr);
+      printColored('✅ Images updated successfully', Colors.GREEN);
+    } catch (error) {
+      printColored(`❌ Image update failed: ${error instanceof Error ? error.message : String(error)}`, Colors.RED);
+      console.log('   You can manually run: npm run update-images');
+    }
+    
     // Cleanup
     console.log('\n🧹 Cleaning up...');
     if (fs.existsSync(dumpFile)) {
