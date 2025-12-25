@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ShoppingBag, Trash2, Search } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Trash2, Search, RotateCcw } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 
 interface Order {
   id: string;
@@ -26,9 +26,10 @@ interface OrdersTableProps {
   onDeleteOrder?: (orderId: string) => void;
   getStatusBadgeVariant: (status: string) => "default" | "secondary" | "destructive" | "outline";
   getPaymentBadgeVariant: (status: string) => "default" | "secondary" | "destructive" | "outline";
+  onFilteredCountChange?: (count: number) => void;
 }
 
-export function OrdersTable({ orders, onStatusChange, onDeleteOrder, getStatusBadgeVariant, getPaymentBadgeVariant }: OrdersTableProps) {
+export function OrdersTable({ orders, onStatusChange, onDeleteOrder, getStatusBadgeVariant, getPaymentBadgeVariant, onFilteredCountChange }: OrdersTableProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentFilter, setPaymentFilter] = useState<string>("all");
@@ -61,63 +62,66 @@ export function OrdersTable({ orders, onStatusChange, onDeleteOrder, getStatusBa
     return filtered;
   }, [orders, searchQuery, statusFilter, paymentFilter]);
 
+  // Notify parent of filtered count
+  useEffect(() => {
+    if (onFilteredCountChange) {
+      onFilteredCountChange(filteredOrders.length);
+    }
+  }, [filteredOrders, onFilteredCountChange]);
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShoppingBag className="w-5 h-5" />
-          Orders Management
-        </CardTitle>
-      </CardHeader>
       <CardContent>
-        <div className="mb-6">
-          {/* <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Orders</h3> */}
+        <div className="mb-6 mt-4">
           <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex items-center gap-2">
-              {/* <Search className="h-4 w-4 text-gray-500" /> */}
-              <Input
-                placeholder="Search orders..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-[250px]"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-                  Status:
-                </label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger id="status-filter" className="w-[150px]">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="shipped">Shipped</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search orders..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-[250px] pl-9"
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <label htmlFor="payment-filter" className="text-sm font-medium text-gray-700">
-                  Payment:
-                </label>
-                <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-                  <SelectTrigger id="payment-filter" className="w-[150px]">
-                    <SelectValue placeholder="All Payments" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Payments</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="refunded">Refunded</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All Payments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payments</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setPaymentFilter('all');
+                }}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Button>
             </div>
           </div>
         </div>

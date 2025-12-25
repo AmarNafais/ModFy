@@ -112,6 +112,15 @@ export default function AdminUsers() {
                         deleteUserMutation.mutate(userId);
                     }
                 }}
+                onFilteredCountChange={setFilteredCount}
+                addUserTrigger={
+                    <AddUserDialog
+                        open={isUserDialogOpen}
+                        onOpenChange={setIsUserDialogOpen}
+                        onSubmit={(userData) => createUserMutation.mutate(userData)}
+                        isLoading={createUserMutation.isPending}
+                    />
+                }
             />
 
             <EditUserDialog

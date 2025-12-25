@@ -82,6 +82,7 @@ export default function AdminOrders() {
                 }}
                 getStatusBadgeVariant={getStatusBadgeVariant}
                 getPaymentBadgeVariant={getPaymentBadgeVariant}
+                onFilteredCountChange={setFilteredCount}
             />
         </div>
     );
