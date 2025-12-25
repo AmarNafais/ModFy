@@ -101,22 +101,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r bg-white transition-all duration-300",
                     isCollapsed ? "w-16" : "w-64"
                 )}>
-                    <div className="flex h-full flex-col">
-                        {/* Toggle Button */}
-                        <div className="flex items-center justify-end p-2 border-b">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setIsCollapsed(!isCollapsed)}
-                                className="h-8 w-8"
-                            >
-                                {isCollapsed ? (
-                                    <ChevronRight className="h-4 w-4" />
-                                ) : (
-                                    <ChevronLeft className="h-4 w-4" />
-                                )}
-                            </Button>
-                        </div>
+                    <div className="flex h-full flex-col relative">
+                        {/* Toggle Button - Vertically Centered */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsCollapsed(!isCollapsed)}
+                            className="h-8 w-8 absolute right-2 top-1/2 -translate-y-1/2 z-10"
+                        >
+                            {isCollapsed ? (
+                                <ChevronRight className="h-4 w-4" />
+                            ) : (
+                                <ChevronLeft className="h-4 w-4" />
+                            )}
+                        </Button>
 
                         {/* Navigation */}
                         <nav className="flex-1 overflow-y-auto p-4">
