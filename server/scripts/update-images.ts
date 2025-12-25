@@ -15,12 +15,71 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Source of truth (staging), and target (uploads)
-const STAGING_DIR = path.join(process.cwd(), 'storage', 'products');
+// Source directory (where product images are stored)
+// Structure: storage/uploads/products/[category]/[subcategory]/[product-folder]/[images]
 const UPLOADS_DIR = path.join(process.cwd(), 'storage', 'uploads', 'products');
 
-// URLs always point to uploads; if staging is missing we still try uploads directly.
+// URL path prefix for accessing images
 const PATH_PREFIX = '/storage/uploads/products';
+
+// Helper function to sanitize folder names
+function sanitizeFolderName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\-_()]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+}
+
+// Helper function to ensure folder structure exists
+async function ensureProductFolderStructure(connection: any) {
+  console.log('🔧 Checking and creating folder structure...\n');
+  
+  // Get all products with their categories and subcategories
+  const [products] = await connection.execute(`
+    SELECT 
+      p.id, 
+      p.name,
+      c.slug as category_slug,
+      c.name as category_name,
+      sc.slug as subcategory_slug,
+      sc.name as subcategory_name
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN categories sc ON p.subcategory_id = sc.id
+    WHERE p.is_active = 1
+  `);
+  
+  let createdFolders = 0;
+  let existingFolders = 0;
+  
+  for (const product of products as any[]) {
+    if (!product.category_slug || !product.subcategory_slug) {
+      console.log(`⚠️  Skipping ${product.name} - missing category or subcategory`);
+      continue;
+    }
+    
+    // Build folder path based on database structure
+    const categoryFolder = product.category_slug; // e.g., 'boys', 'men', 'women'
+    const subcategoryFolder = product.subcategory_slug; // e.g., 'pants', 'underwear', 'vest'
+    const productFolder = sanitizeFolderName(product.name); // e.g., 'apple-v-cut'
+    
+    const fullPath = path.join(UPLOADS_DIR, categoryFolder, subcategoryFolder, productFolder);
+    
+    // Check if folder exists, create if not
+    if (!fs.existsSync(fullPath)) {
+      fs.mkdirSync(fullPath, { recursive: true });
+      console.log(`✅ Created: ${categoryFolder}/${subcategoryFolder}/${productFolder}`);
+      createdFolders++;
+    } else {
+      existingFolders++;
+    }
+  }
+  
+  console.log(`\n📊 Folder Structure Status:`);
+  console.log(`   • Existing folders: ${existingFolders}`);
+  console.log(`   • Created folders: ${createdFolders}\n`);
+}
 
 async function updateProductImages() {
   const connection = await pool.getConnection();
@@ -30,36 +89,47 @@ async function updateProductImages() {
     console.log('║   PRODUCT IMAGE UPDATE UTILITY        ║');
     console.log('╚════════════════════════════════════════╝\n');
 
-    console.log('📁 Preparing uploads from staging...\n');
+    console.log('📁 Scanning uploads folder for product images...\n');
 
-    if (!fs.existsSync(STAGING_DIR)) {
-      console.error(`❌ Staging folder missing: ${STAGING_DIR}\n   Expected source images in storage/products.`);
-      return;
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      console.log(`⚠️  Uploads folder missing, creating: ${UPLOADS_DIR}`);
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     }
 
-    // Ensure uploads exists and mirror staging into uploads before scanning
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    // Ensure all product folders exist based on database
+    await ensureProductFolderStructure(connection);
 
-    // Simple recursive copy (overwrite newer)
-    const copyDir = (src: string, dest: string) => {
-      const entries = fs.readdirSync(src, { withFileTypes: true });
-      for (const entry of entries) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-        if (entry.isDirectory()) {
-          fs.mkdirSync(destPath, { recursive: true });
-          copyDir(srcPath, destPath);
-        } else {
-          fs.copyFileSync(srcPath, destPath);
-        }
-      }
-    };
-
-    copyDir(STAGING_DIR, UPLOADS_DIR);
-
-    console.log('📁 Scanning storage folder structure...\n');
+    console.log('📁 Reading image folder structure...\n');
     const productMap = scanProductsFolder();
     console.log(`✅ Found ${Object.keys(productMap).length} product folders with images\n`);
+
+    // Get all active products from database for cleanup
+    const [activeProducts] = await connection.execute(`
+      SELECT 
+        p.id,
+        p.name,
+        c.slug as category_slug,
+        sc.slug as subcategory_slug
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories sc ON p.subcategory_id = sc.id
+      WHERE p.is_active = 1
+    `);
+    
+    const validProductFolders = new Set<string>();
+    const productNamesMap = new Map<string, string>(); // Map folder path to product name for logging
+    
+    for (const product of activeProducts as any[]) {
+      if (product.category_slug && product.subcategory_slug) {
+        const productFolder = sanitizeFolderName(product.name);
+        const relativePath = `${product.category_slug}/${product.subcategory_slug}/${productFolder}`;
+        const normalizedPath = relativePath.toLowerCase();
+        validProductFolders.add(normalizedPath);
+        productNamesMap.set(normalizedPath, product.name);
+      }
+    }
+    
+    console.log(`📋 Active products in database: ${validProductFolders.size}`);
 
     console.log('🔄 Matching database products with image folders...\n');
     
@@ -81,7 +151,6 @@ async function updateProductImages() {
       const productName = dbProduct.name.toLowerCase()
         .replace(/[\s-_]+/g, ' ')
         .replace(/\(|\)/g, '')
-        .replace(/v cut/gi, '')
         .trim();
       
       // Try to find the best matching folder
@@ -93,18 +162,29 @@ async function updateProductImages() {
         const folderName = folderPath.split('/').pop() || '';
         const category = folderPath.split('/')[0] || '';
         
+        // Normalize folder name for comparison
+        const normalizedFolderName = folderName.replace(/[\s-_\(\)]+/g, ' ').trim();
+        
         let score = 0;
         
-        // Exact match bonus
-        if (folderName.replace(/[\s-_]+/g, ' ') === productName) {
+        // Exact match bonus (after normalization)
+        if (normalizedFolderName === productName) {
           score += 100;
+        }
+        
+        // Very close match (contains all words)
+        const pWords = productName.split(' ').filter((w: string) => w.length > 2);
+        const fWords = normalizedFolderName.split(' ').filter((w: string) => w.length > 2);
+        const matchedWords = pWords.filter(pw => fWords.some(fw => fw.includes(pw) || pw.includes(fw)));
+        if (matchedWords.length === pWords.length && matchedWords.length > 0) {
+          score += 80;
         }
         
         // Category match bonus
         if (productName.includes('boys') && category === 'boys') score += 25;
         if (productName.includes('girls') && category === 'girls') score += 25;
         if (productName.includes('mens') || productName.includes('cantex mens')) {
-          if (category === 'mens') score += 25;
+          if (category === 'men') score += 25;
         }
         if ((productName.includes('women') || (!productName.includes('boys') && !productName.includes('girls') && !productName.includes('mens') && (productName.includes('panties') || productName.includes('feyolina')))) && category === 'women') {
           score += 25;
@@ -158,7 +238,7 @@ async function updateProductImages() {
         const normalizedImages = images.map(img => {
           // Ensure paths are rooted at PATH_PREFIX
           if (!img.startsWith(PATH_PREFIX + '/')) {
-            const cleaned = img.replace(/^\/storage\//, '').replace(/^uploads\/products\//, '').replace(/^products\//, '');
+            const cleaned = img.replace(/^\/storage\/uploads\/products\//, '').replace(/^\/storage\/uploads\//, '').replace(/^\/storage\//, '').replace(/^uploads\//, '');
             return `${PATH_PREFIX}/${cleaned.replace(/^\/+/, '')}`;
           }
           return img;
@@ -199,18 +279,21 @@ async function updateProductImages() {
         if (!fixedPath.startsWith(PATH_PREFIX + '/')) {
           // Normalize any prior storage roots
           fixedPath = `${PATH_PREFIX}/${fixedPath
-            .replace(/^\/storage\/products\//, '')
             .replace(/^\/storage\/uploads\/products\//, '')
+            .replace(/^\/storage\/products\//, '')
+            .replace(/^\/storage\/uploads\//, '')
+            .replace(/^\/storage\//, '')
+            .replace(/^uploads\//, '')
             .replace(/^\/+/, '')}`;
           hasIncorrect = true;
         }
         
-        // Normalize to lowercase for case-insensitive filesystem
+        // Keep original casing for file paths (don't lowercase)
         const pathParts = fixedPath.split('/');
         const normalizedPath = pathParts.map((part, idx) => {
-          // Keep /storage/uploads/products as-is, lowercase everything after
-          if (idx <= 3) return part;
-          return part.toLowerCase();
+          // Keep /storage/uploads as-is, preserve casing for category/subcategory/product folders
+          if (idx <= 2) return part;
+          return part;
         }).join('/');
         
         if (normalizedPath !== fixedPath) {
@@ -237,6 +320,47 @@ async function updateProductImages() {
     console.log(`🔧 Image paths normalized: ${normalized}`);
     console.log(`❌ Failed to update: ${failed}\n`);
     
+    // Cleanup orphaned folders (folders without matching products in database)
+    console.log('\n🗑️  Cleaning up orphaned folders...\n');
+    console.log(`📋 Valid product folders in database: ${validProductFolders.size}`);
+    console.log(`📁 Scanned folders on disk: ${Object.keys(productMap).length}\n`);
+    
+    let removedFolders = 0;
+    let checkedFolders = 0;
+    
+    for (const [folderKey, value] of Object.entries(productMap)) {
+      // Normalize folder path for comparison
+      const normalizedFolderPath = value.folder.toLowerCase();
+      checkedFolders++;
+      
+      // Check if this folder corresponds to an active product
+      const isValid = validProductFolders.has(normalizedFolderPath);
+      
+      if (!isValid) {
+        const fullPath = path.join(UPLOADS_DIR, value.folder);
+        
+        console.log(`❌ Orphaned folder detected: ${value.folder}`);
+        console.log(`   Path: ${normalizedFolderPath}`);
+        console.log(`   Not matching any product in database`);
+        
+        try {
+          if (fs.existsSync(fullPath)) {
+            fs.rmSync(fullPath, { recursive: true, force: true });
+            console.log(`   🗑️  Removed successfully\n`);
+            removedFolders++;
+          }
+        } catch (error) {
+          console.error(`   ❌ Failed to remove:`, error);
+        }
+      }
+    }
+    
+    if (removedFolders > 0) {
+      console.log(`\n✅ Removed ${removedFolders} orphaned folder(s)\n`);
+    } else {
+      console.log(`✅ No orphaned folders found\n`);
+    }
+    
     // Final verification
     const [withImages] = await connection.execute(`
       SELECT COUNT(*) as count FROM products 
@@ -252,11 +376,58 @@ async function updateProductImages() {
     console.log(`   • Active products with images: ${(withImages as any[])[0]?.count || 0}`);
     console.log(`   • Total images: ${(totalImages as any[])[0]?.total || 0}\n`);
     
+    // Verify folder structure integrity
+    console.log('🔍 Verifying folder structure integrity...\n');
+    await verifyFolderStructure(connection);
+    
   } catch (error) {
     console.error('❌ Error:', error);
   } finally {
     connection.release();
     await pool.end();
+  }
+}
+
+async function verifyFolderStructure(connection: any) {
+  const [products] = await connection.execute(`
+    SELECT 
+      p.id, 
+      p.name,
+      c.slug as category_slug,
+      sc.slug as subcategory_slug
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN categories sc ON p.subcategory_id = sc.id
+    WHERE p.is_active = 1
+  `);
+  
+  let missingFolders = 0;
+  let validFolders = 0;
+  
+  for (const product of products as any[]) {
+    if (!product.category_slug || !product.subcategory_slug) continue;
+    
+    const categoryFolder = product.category_slug;
+    const subcategoryFolder = product.subcategory_slug;
+    const productFolder = sanitizeFolderName(product.name);
+    
+    const fullPath = path.join(UPLOADS_DIR, categoryFolder, subcategoryFolder, productFolder);
+    
+    if (!fs.existsSync(fullPath)) {
+      console.log(`⚠️  Missing folder: ${categoryFolder}/${subcategoryFolder}/${productFolder}`);
+      missingFolders++;
+    } else {
+      validFolders++;
+    }
+  }
+  
+  console.log(`📊 Structure Verification:`);
+  console.log(`   • Valid folders: ${validFolders}`);
+  console.log(`   • Missing folders: ${missingFolders}`);
+  if (missingFolders === 0) {
+    console.log(`   ✅ All product folders exist!\n`);
+  } else {
+    console.log(`   ⚠️  Run script again to create missing folders\n`);
   }
 }
 
@@ -273,8 +444,8 @@ function scanProductsFolder() {
     
     if (imageFiles.length > 0) {
       // Found a product folder with images
-      // Normalize all paths to lowercase for case-insensitive filesystem compatibility
-      const images = imageFiles.map(img => `${PATH_PREFIX}/${relativePath.toLowerCase()}/${img}`);
+      // Keep original path structure (no lowercase conversion to preserve actual file paths)
+      const images = imageFiles.map(img => `${PATH_PREFIX}/${relativePath}/${img}`);
       
       // Use folder path as unique key to avoid collisions
       const folderKey = relativePath.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
@@ -287,6 +458,7 @@ function scanProductsFolder() {
     
     const folders = items.filter(f => {
       const fullPath = path.join(dir, f);
+      // Don't skip any folders - we want all subdirectories
       return fs.statSync(fullPath).isDirectory();
     });
     

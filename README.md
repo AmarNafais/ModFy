@@ -260,7 +260,7 @@ ModFy/
 │   │   │   ├── Shop.tsx        # Product listing with grid/list view & filters
 │   │   │   ├── ProductDetail.tsx
 │   │   │   ├── Checkout.tsx
-│   │   │   ├── Collections.tsx
+│   │   │   ├── Categories.tsx  # Browse categories page
 │   │   │   ├── Wishlist.tsx
 │   │   │   ├── Profile.tsx     # User profile & delivery settings
 │   │   │   ├── About.tsx       # About page
@@ -314,11 +314,12 @@ ModFy/
 ├── storage/                   # File storage
 │   ├── logo/                 # Brand assets
 │   └── uploads/              # Uploaded files
-│       ├── boys/             # Boys category products
-│       ├── briefs/           # Briefs category products
-│       ├── girls/            # Girls category products
-│       ├── men/              # Men's category products
-│       └── women/            # Women's category products
+│       └── products/         # Product images organized by category
+│           ├── boys/         # Boys category products
+│           ├── girls/        # Girls category products
+│           ├── men/          # Men's category products
+│           ├── unisex/       # Unisex category products
+│           └── women/        # Women's category products
 ├── migrations/                # Drizzle ORM migrations
 │   ├── 0000_clumsy_reaper.sql
 │   └── meta/
@@ -605,30 +606,39 @@ pm2 restart modfy-server
 Product images are stored in a category-based structure:
 
 ```
-storage/uploads/
+storage/uploads/products/
 ├── boys/
-│   ├── [product-folders]/
-│   └── ...
-├── briefs/
-│   ├── [product-folders]/
+│   ├── [subcategory]/
+│   │   ├── [product-folder]/
+│   │   │   ├── image1.jpg
+│   │   │   └── image2.jpg
+│   │   └── ...
 │   └── ...
 ├── girls/
-│   ├── [product-folders]/
+│   ├── [subcategory]/
+│   │   └── [product-folder]/
 │   └── ...
 ├── men/
-│   ├── [product-folders]/
+│   ├── [subcategory]/
+│   │   └── [product-folder]/
+│   └── ...
+├── unisex/
+│   ├── [subcategory]/
+│   │   └── [product-folder]/
 │   └── ...
 └── women/
-    ├── [product-folders]/
+    ├── [subcategory]/
+    │   └── [product-folder]/
     └── ...
 ```
 
 ### Current Image Status
 
-- **Total Products:** 64+
-- **Storage Organized:** By category (boys, briefs, girls, men, women)
+- **Total Products:** 29 (with images)
+- **Total Images:** 118
+- **Storage Organized:** 3-level structure (category/subcategory/product)
 - **Image Formats:** JPG, PNG
-- **Path Format:** `/storage/uploads/[category]/[product-folder]/[image.jpg]`
+- **Path Format:** `/storage/uploads/products/[category]/[subcategory]/[product-folder]/[image.jpg]`
 
 ### Updating Product Images
 
@@ -648,7 +658,7 @@ This command will:
 
 1. **Create the folder structure:**
    ```
-   storage/uploads/[category]/[product_name]/
+   storage/uploads/products/[category]/[subcategory]/[product-folder]/
    ```
 
 2. **Add image files:**
@@ -666,12 +676,12 @@ This command will:
 
 All image paths follow this pattern:
 ```
-/storage/uploads/[category]/[product_folder]/[filename.jpg]
+/storage/uploads/products/[category]/[subcategory]/[product-folder]/[filename.jpg]
 
 Examples:
-/storage/uploads/boys/junior-brief/image1.jpg
-/storage/uploads/men/classic-boxer/front.png
-/storage/uploads/women/cotton-panties/photo.jpg
+/storage/uploads/products/men/underwear/classic-boxer/front.jpg
+/storage/uploads/products/women/panties/cotton-briefs/image1.jpg
+/storage/uploads/products/boys/underwear/junior-brief/photo.jpg
 ```
 
 ### Documentation

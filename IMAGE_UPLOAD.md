@@ -7,16 +7,27 @@ Product images can now be uploaded directly through the admin panel instead of u
 ```
 storage/
   uploads/
-    {category-name}/
-      {product-name}/
-        image-file-1.jpg
-        image-file-2.png
-        ...
+    products/
+      {category}/           # e.g., boys, girls, men, women, unisex
+        {subcategory}/      # e.g., pants, underwear, vest, panties
+          {product-folder}/ # e.g., cargo-pants, apple-v-cut
+            image-file-1.jpg
+            image-file-2.png
+            ...
+```
+
+**Example:**
+```
+storage/uploads/products/
+  men/underwear/apple-v-cut/img-1654--1.png
+  women/panties/fit-shorts-(black)/img-1654--2.png
+  boys/vest/boys-vest-(with-sleeve)/img-1654--1.png
 ```
 
 Images are automatically organized by:
-- **Category**: Sanitized category name (e.g., "Boxer Briefs" → "boxer-briefs")
-- **Product**: Sanitized product name (e.g., "Classic White Tee" → "classic-white-tee")
+- **Category**: Main category (e.g., "Men" → "men")
+- **Subcategory**: Product type (e.g., "Underwear" → "underwear")
+- **Product Folder**: Sanitized product name (e.g., "Apple V Cut" → "apple-v-cut")
 
 ## Features
 

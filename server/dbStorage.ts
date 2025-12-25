@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import { randomUUID } from "crypto";
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
 import {
   users,
   categories,
@@ -590,7 +592,7 @@ export class DatabaseStorage implements IStorage {
         productData.name || null, 
         productData.slug || null, 
         productData.description || null, 
-        productData.price || null, 
+        productData.price || '0.00', 
         productData.categoryId || null, 
         productData.subcategoryId || null, 
         productData.material || null, 
@@ -605,6 +607,53 @@ export class DatabaseStorage implements IStorage {
         productData.piecesPerPack || 1
       ]
     );
+
+    // Create image folder for the new product
+    if (productData.categoryId && productData.subcategoryId && productData.name) {
+      try {
+        // Get category and subcategory slugs
+        const [categories] = await this.pool.execute(
+          'SELECT slug FROM categories WHERE id = ?',
+          [productData.categoryId]
+        );
+        const [subcategories] = await this.pool.execute(
+          'SELECT slug FROM categories WHERE id = ?',
+          [productData.subcategoryId]
+        );
+        
+        const categorySlug = (categories as any[])[0]?.slug;
+        const subcategorySlug = (subcategories as any[])[0]?.slug;
+        
+        if (categorySlug && subcategorySlug) {
+          const sanitizeFolderName = (name: string) => {
+            return name
+              .toLowerCase()
+              .replace(/[^a-z0-9\s\-_()]/g, '')
+              .replace(/\s+/g, '-')
+              .trim();
+          };
+          
+          const productFolder = sanitizeFolderName(productData.name);
+          const folderPath = path.join(
+            process.cwd(),
+            'storage',
+            'uploads',
+            'products',
+            categorySlug,
+            subcategorySlug,
+            productFolder
+          );
+          
+          if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath, { recursive: true });
+            console.log(`📁 Created image folder: ${categorySlug}/${subcategorySlug}/${productFolder}`);
+          }
+        }
+      } catch (folderError) {
+        console.error('Error creating image folder:', folderError);
+        // Don't throw - product creation should succeed even if folder creation fails
+      }
+    }
 
     const newProduct = await this.getProduct(id);
     if (!newProduct) throw new Error("Failed to create product");
@@ -622,37 +671,50 @@ export class DatabaseStorage implements IStorage {
     }
     if (updates.sizePricing) {
       updated_data.size_pricing = typeof updates.sizePricing === 'object' ? JSON.stringify(updates.sizePricing) : updates.sizePricing;
+      delete updated_data.sizePricing; // Remove camelCase key to avoid duplication
     }
     if (updates.hideSizes !== undefined) {
       updated_data.hide_sizes = Boolean(updates.hideSizes);
+      delete updated_data.hideSizes; // Remove camelCase key to avoid duplication
     }
     if (updates.images) {
       updated_data.images = Array.isArray(updates.images) ? JSON.stringify(updates.images) : updates.images;
     }
 
-    // Map camelCase to snake_case for database columns
-    const columnMapping: Record<string, string> = {
-      categoryId: 'category_id',
-      subcategoryId: 'subcategory_id',
-      sizePricing: 'size_pricing',
-      hideSizes: 'hide_sizes',
-      sizeChartId: 'size_chart_id',
-      stockQuantity: 'stock_quantity',
-      stock_quantity: 'stock_quantity',
-      piecesPerPack: 'pieces_per_pack',
-      isActive: 'is_active',
-      is_active: 'is_active',
-      isFeatured: 'is_featured',
-      is_featured: 'is_featured',
-      createdAt: 'created_at',
-      updatedAt: 'updated_at',
-      updated_at: 'updated_at'
-    };
+    // Map camelCase keys to snake_case and remove original camelCase keys to avoid duplication
+    if (updates.categoryId !== undefined) {
+      updated_data.category_id = updates.categoryId;
+      delete updated_data.categoryId;
+    }
+    if (updates.subcategoryId !== undefined) {
+      updated_data.subcategory_id = updates.subcategoryId;
+      delete updated_data.subcategoryId;
+    }
+    if (updates.sizeChartId !== undefined) {
+      updated_data.size_chart_id = updates.sizeChartId;
+      delete updated_data.sizeChartId;
+    }
+    if (updates.stockQuantity !== undefined) {
+      updated_data.stock_quantity = updates.stockQuantity;
+      delete updated_data.stockQuantity;
+    }
+    if (updates.piecesPerPack !== undefined) {
+      updated_data.pieces_per_pack = updates.piecesPerPack;
+      delete updated_data.piecesPerPack;
+    }
+    if (updates.isActive !== undefined) {
+      updated_data.is_active = updates.isActive;
+      delete updated_data.isActive;
+    }
+    if (updates.isFeatured !== undefined) {
+      updated_data.is_featured = updates.isFeatured;
+      delete updated_data.isFeatured;
+    }
 
     // Build the SET clause
     const setClause = Object.keys(updated_data)
       .filter(key => updated_data[key] !== undefined)
-      .map(key => `${columnMapping[key] || key} = ?`)
+      .map(key => `${key} = ?`)
       .join(', ');
 
     const values = Object.keys(updated_data)
@@ -677,15 +739,74 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log(`Starting deletion of product: ${id}`);
       
+      // Get product details before deletion to remove image folder
+      const [productRows] = await this.pool.execute(`
+        SELECT 
+          p.name,
+          c.slug as category_slug,
+          sc.slug as subcategory_slug
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN categories sc ON p.subcategory_id = sc.id
+        WHERE p.id = ?
+      `, [id]);
+      
+      const product = (productRows as any[])[0];
+      
+      if (product) {
+        console.log(`Product details:`, {
+          name: product.name,
+          category_slug: product.category_slug,
+          subcategory_slug: product.subcategory_slug
+        });
+      } else {
+        console.log(`⚠️  Product not found before deletion`);
+      }
+      
       // Delete related records
       await this.pool.execute('DELETE FROM cart_items WHERE product_id = ?', [id]);
       await this.pool.execute('DELETE FROM wishlist_items WHERE product_id = ?', [id]);
-      await this.pool.execute('DELETE FROM collection_products WHERE product_id = ?', [id]);
       await this.pool.execute('DELETE FROM order_items WHERE product_id = ?', [id]);
+      await this.pool.execute('DELETE FROM reviews WHERE product_id = ?', [id]);
       
       // Delete the product
       const [result] = await this.pool.execute('DELETE FROM products WHERE id = ?', [id]);
       const resultObj = result as any;
+      
+      // Remove product image folder if it exists
+      if (resultObj.affectedRows > 0 && product && product.category_slug && product.subcategory_slug) {
+        try {
+          const sanitizeFolderName = (name: string) => {
+            return name
+              .toLowerCase()
+              .replace(/[^a-z0-9\s\-_()]/g, '')
+              .replace(/\s+/g, '-')
+              .trim();
+          };
+          
+          const productFolder = sanitizeFolderName(product.name);
+          const folderPath = path.join(
+            process.cwd(),
+            'storage',
+            'uploads',
+            'products',
+            product.category_slug,
+            product.subcategory_slug,
+            productFolder
+          );
+          
+          console.log(`Attempting to remove folder: ${folderPath}`);
+          
+          if (fs.existsSync(folderPath)) {
+            fs.rmSync(folderPath, { recursive: true, force: true });
+            console.log(`🗑️  Removed image folder: ${product.category_slug}/${product.subcategory_slug}/${productFolder}`);
+          } else {
+            console.log(`⚠️  Folder not found: ${folderPath}`);
+          }
+        } catch (folderError) {
+          console.error('Error removing image folder:', folderError);
+        }
+      }
       
       console.log(`Product deletion result: ${resultObj.affectedRows} rows affected`);
       return resultObj.affectedRows > 0;
