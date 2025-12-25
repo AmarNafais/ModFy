@@ -16,11 +16,11 @@ const pool = mysql.createPool({
 });
 
 // Source directory (where product images are stored)
-// Structure: storage/uploads/products/[category]/[subcategory]/[product-folder]/[images]
-const UPLOADS_DIR = path.join(process.cwd(), 'storage', 'uploads', 'products');
+// Structure: storage/uploads/[main category]/[subcategory]/[product-folder]/[images]
+const UPLOADS_DIR = path.join(process.cwd(), 'storage', 'uploads');
 
 // URL path prefix for accessing images
-const PATH_PREFIX = '/storage/uploads/products';
+const PATH_PREFIX = '/storage/uploads';
 
 // Helper function to sanitize folder names
 function sanitizeFolderName(name: string): string {
@@ -60,11 +60,11 @@ async function ensureProductFolderStructure(connection: any) {
     }
     
     // Build folder path based on database structure
-    const categoryFolder = product.category_slug; // e.g., 'boys', 'men', 'women'
+    const mainCategoryFolder = product.category_slug ? product.category_slug.toLowerCase() : '';
     const subcategoryFolder = product.subcategory_slug; // e.g., 'pants', 'underwear', 'vest'
     const productFolder = sanitizeFolderName(product.name); // e.g., 'apple-v-cut'
     
-    const fullPath = path.join(UPLOADS_DIR, categoryFolder, subcategoryFolder, productFolder);
+    const fullPath = path.join(UPLOADS_DIR, mainCategoryFolder, subcategoryFolder, productFolder);
     
     // Check if folder exists, create if not
     if (!fs.existsSync(fullPath)) {
@@ -238,9 +238,14 @@ async function updateProductImages() {
         const normalizedImages = images.map(img => {
           // Ensure paths are rooted at PATH_PREFIX
           if (!img.startsWith(PATH_PREFIX + '/')) {
-            const cleaned = img.replace(/^\/storage\/uploads\/products\//, '').replace(/^\/storage\/uploads\//, '').replace(/^\/storage\//, '').replace(/^uploads\//, '');
+            const cleaned = img.replace(/^\/storage\/uploads\/products\//, '')
+              .replace(/^\/storage\/uploads\//, '')
+              .replace(/^\/storage\//, '')
+              .replace(/^uploads\//, '');
             return `${PATH_PREFIX}/${cleaned.replace(/^\/+/, '')}`;
           }
+          // If path starts with old products prefix, replace it
+          // No longer needed: all paths use /storage/uploads/[main category]
           return img;
         });
         
@@ -270,24 +275,24 @@ async function updateProductImages() {
       
       for (const imgPath of images) {
         let fixedPath = imgPath;
-        
-        if (!imgPath.startsWith('/')) {
-          fixedPath = `${PATH_PREFIX}/${imgPath}`;
+        // Remove any legacy references to storage/uploads/products/
+        fixedPath = fixedPath.replace(/^\/storage\/uploads\/products\//, '')
+        fixedPath = fixedPath.replace(/^\/storage\/products\//, '')
+        // If not starting with PATH_PREFIX, add it
+        if (!fixedPath.startsWith(PATH_PREFIX + '/')) {
+          fixedPath = `${PATH_PREFIX}/${fixedPath.replace(/^\/+/, '')}`;
           hasIncorrect = true;
         }
-
-        if (!fixedPath.startsWith(PATH_PREFIX + '/')) {
-          // Normalize any prior storage roots
-          fixedPath = `${PATH_PREFIX}/${fixedPath
-            .replace(/^\/storage\/uploads\/products\//, '')
-            .replace(/^\/storage\/products\//, '')
             .replace(/^\/storage\/uploads\//, '')
             .replace(/^\/storage\//, '')
             .replace(/^uploads\//, '')
             .replace(/^\/+/, '')}`;
           hasIncorrect = true;
         }
-        
+
+        // If path starts with old products prefix, replace it
+        // No longer needed: all paths use /storage/uploads/[main category]
+
         // Keep original casing for file paths (don't lowercase)
         const pathParts = fixedPath.split('/');
         const normalizedPath = pathParts.map((part, idx) => {
@@ -407,11 +412,11 @@ async function verifyFolderStructure(connection: any) {
   for (const product of products as any[]) {
     if (!product.category_slug || !product.subcategory_slug) continue;
     
-    const categoryFolder = product.category_slug;
+    const mainCategoryFolder = product.category_slug ? product.category_slug.toLowerCase() : '';
     const subcategoryFolder = product.subcategory_slug;
     const productFolder = sanitizeFolderName(product.name);
     
-    const fullPath = path.join(UPLOADS_DIR, categoryFolder, subcategoryFolder, productFolder);
+    const fullPath = path.join(UPLOADS_DIR, mainCategoryFolder, subcategoryFolder, productFolder);
     
     if (!fs.existsSync(fullPath)) {
       console.log(`⚠️  Missing folder: ${categoryFolder}/${subcategoryFolder}/${productFolder}`);
