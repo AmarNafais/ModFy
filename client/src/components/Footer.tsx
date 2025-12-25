@@ -48,7 +48,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
 
           {/* ModFy Info */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-sm font-medium tracking-wide mb-4">MODFY</h3>
             <p className="text-sm text-gray-600 font-light leading-relaxed">
               ModFy is a local manufacturer and distributor of high-quality innerwear and apparel for men, women, and kids. We focus on delivering everyday essentials that combine comfort, durability, and modern design — all at prices that remain affordable for families.
@@ -56,7 +56,7 @@ export default function Footer() {
           </div>
 
           {/* Shop */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-sm font-medium tracking-wide mb-4">SHOP</h3>
             <ul className="space-y-2">
               <li>
@@ -93,7 +93,7 @@ export default function Footer() {
           </div>
 
           {/* About and Help */}
-          <div className="space-y-8">
+          <div className="space-y-8 text-center md:text-left">
             {/* About */}
             <div>
               <h3 className="text-sm font-medium tracking-wide mb-4">ABOUT</h3>
@@ -136,7 +136,7 @@ export default function Footer() {
           </div>
 
           {/* Get In Touch */}
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="text-sm font-medium tracking-wide mb-4">GET IN TOUCH</h3>
             
             {/* Contact Info */}
@@ -170,7 +170,7 @@ export default function Footer() {
             {/* Social Media */}
             <div>
               <p className="text-xs font-medium text-gray-800 mb-2 uppercase tracking-wide">Follow Us</p>
-              <div className="flex gap-3">
+              <div className="flex gap-3 justify-center md:justify-start">
                 <a 
                   href={settings?.instagramUrl || "https://www.instagram.com/modfyofficial"} 
                   target="_blank" 
