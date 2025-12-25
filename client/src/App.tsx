@@ -7,7 +7,7 @@ import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import Shop from "@/pages/Shop";
 import ProductDetail from "@/pages/ProductDetail";
-import Collections from "@/pages/Collections";
+import Categories from "@/pages/Categories";
 import About from "@/pages/About";
 import ContactUs from "@/pages/ContactUs";
 import Auth from "@/pages/Auth";
@@ -39,14 +39,14 @@ function Router() {
           <Shop />
         </Layout>
       </Route>
-      <Route path="/collections">
+      <Route path="/categories">
         <Layout>
-          <Collections />
+          <Categories />
         </Layout>
       </Route>
-      <Route path="/collections/:slug">
+      <Route path="/categories/:slug">
         <Layout>
-          <Collections />
+          <Categories />
         </Layout>
       </Route>
       <Route path="/products/:slug">
