@@ -304,8 +304,7 @@ ModFy/
 │   └── scripts/               # Database and utility scripts
 │       ├── seed.ts            # Database seeding
 │       ├── update-images.ts   # Image sync script
-│       ├── activate_products.py
-│       ├── check_db.py
+│       ├── sync-db-from-live.ts  # Database sync from live server
 │       ├── convert_and_import_products.js
 │       ├── IMAGE_UPDATE_README.md
 │       └── README.md          # Scripts documentation
@@ -354,6 +353,41 @@ ModFy/
 | `npm run db:seed` | Seed database with initial data |
 | `npm run db:mark-applied` | Mark migrations as applied |
 | `npm run update-images` | Sync product images from storage to database |
+| `npm run sync-db` | Sync database from live server to local (development) |
+
+## 🔄 Database Sync Script
+
+For development, you can sync your local database with the live production database:
+
+### Prerequisites
+
+1. Configure live server credentials in `.env`:
+
+```env
+# Live Server Configuration
+LIVE_SSH_HOST=root@your-server-ip
+LIVE_SSH_PASS=your_ssh_password
+LIVE_DB_NAME=modfy
+LIVE_DB_USER=mysql
+LIVE_DB_PASS=your_live_db_password
+```
+
+2. Ensure XAMPP/MySQL is running locally
+
+### Running the Sync
+
+```bash
+npm run sync-db
+```
+
+This script will:
+1. 📤 Export database from live server via SSH
+2. 📥 Import to local XAMPP MySQL database
+3. 🔍 Verify the import
+4. 🖼️ Automatically sync product images from storage
+5. 🧹 Cleanup temporary files
+
+**Note:** This operation will **drop and recreate** your local database. Make sure you have backups if needed.
 
 ## 🌐 API Routes
 
@@ -519,6 +553,11 @@ sudo ufw enable
 | `SMTP_USER` | SMTP email for sending | - | Yes (for emails) |
 | `SMTP_PASS` | SMTP app password | - | Yes (for emails) |
 | `ADMIN_EMAIL` | Admin notification email | - | Yes (for emails) |
+| `LIVE_SSH_HOST` | Live server SSH connection | - | No (for sync script) |
+| `LIVE_SSH_PASS` | Live server SSH password | - | No (for sync script) |
+| `LIVE_DB_NAME` | Live database name | - | No (for sync script) |
+| `LIVE_DB_USER` | Live database username | - | No (for sync script) |
+| `LIVE_DB_PASS` | Live database password | - | No (for sync script) |
 
 ### Email Configuration
 
