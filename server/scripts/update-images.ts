@@ -103,6 +103,34 @@ async function updateProductImages() {
     const productMap = scanProductsFolder();
     console.log(`✅ Found ${Object.keys(productMap).length} product folders with images\n`);
 
+    // Get all active products from database for cleanup
+    const [activeProducts] = await connection.execute(`
+      SELECT 
+        p.id,
+        p.name,
+        c.slug as category_slug,
+        sc.slug as subcategory_slug
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories sc ON p.subcategory_id = sc.id
+      WHERE p.is_active = 1
+    `);
+    
+    const validProductFolders = new Set<string>();
+    const productNamesMap = new Map<string, string>(); // Map folder path to product name for logging
+    
+    for (const product of activeProducts as any[]) {
+      if (product.category_slug && product.subcategory_slug) {
+        const productFolder = sanitizeFolderName(product.name);
+        const relativePath = `${product.category_slug}/${product.subcategory_slug}/${productFolder}`;
+        const normalizedPath = relativePath.toLowerCase();
+        validProductFolders.add(normalizedPath);
+        productNamesMap.set(normalizedPath, product.name);
+      }
+    }
+    
+    console.log(`📋 Active products in database: ${validProductFolders.size}`);
+
     console.log('🔄 Matching database products with image folders...\n');
     
     const [dbProducts] = await connection.execute(
@@ -291,6 +319,47 @@ async function updateProductImages() {
     console.log(`📸 Products updated with images: ${updated}`);
     console.log(`🔧 Image paths normalized: ${normalized}`);
     console.log(`❌ Failed to update: ${failed}\n`);
+    
+    // Cleanup orphaned folders (folders without matching products in database)
+    console.log('\n🗑️  Cleaning up orphaned folders...\n');
+    console.log(`📋 Valid product folders in database: ${validProductFolders.size}`);
+    console.log(`📁 Scanned folders on disk: ${Object.keys(productMap).length}\n`);
+    
+    let removedFolders = 0;
+    let checkedFolders = 0;
+    
+    for (const [folderKey, value] of Object.entries(productMap)) {
+      // Normalize folder path for comparison
+      const normalizedFolderPath = value.folder.toLowerCase();
+      checkedFolders++;
+      
+      // Check if this folder corresponds to an active product
+      const isValid = validProductFolders.has(normalizedFolderPath);
+      
+      if (!isValid) {
+        const fullPath = path.join(UPLOADS_DIR, value.folder);
+        
+        console.log(`❌ Orphaned folder detected: ${value.folder}`);
+        console.log(`   Path: ${normalizedFolderPath}`);
+        console.log(`   Not matching any product in database`);
+        
+        try {
+          if (fs.existsSync(fullPath)) {
+            fs.rmSync(fullPath, { recursive: true, force: true });
+            console.log(`   🗑️  Removed successfully\n`);
+            removedFolders++;
+          }
+        } catch (error) {
+          console.error(`   ❌ Failed to remove:`, error);
+        }
+      }
+    }
+    
+    if (removedFolders > 0) {
+      console.log(`\n✅ Removed ${removedFolders} orphaned folder(s)\n`);
+    } else {
+      console.log(`✅ No orphaned folders found\n`);
+    }
     
     // Final verification
     const [withImages] = await connection.execute(`
