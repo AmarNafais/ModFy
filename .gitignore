@@ -45,3 +45,7 @@ cookies.txt
 # Uploaded files
 storage/uploads/*
 storage/products/*
+
+# Deploy Keys 
+github_actions
+github_actions.pub
