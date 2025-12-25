@@ -22,6 +22,65 @@ const UPLOADS_DIR = path.join(process.cwd(), 'storage', 'uploads', 'products');
 // URL path prefix for accessing images
 const PATH_PREFIX = '/storage/uploads/products';
 
+// Helper function to sanitize folder names
+function sanitizeFolderName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\-_()]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+}
+
+// Helper function to ensure folder structure exists
+async function ensureProductFolderStructure(connection: any) {
+  console.log('🔧 Checking and creating folder structure...\n');
+  
+  // Get all products with their categories and subcategories
+  const [products] = await connection.execute(`
+    SELECT 
+      p.id, 
+      p.name,
+      c.slug as category_slug,
+      c.name as category_name,
+      sc.slug as subcategory_slug,
+      sc.name as subcategory_name
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN categories sc ON p.subcategory_id = sc.id
+    WHERE p.is_active = 1
+  `);
+  
+  let createdFolders = 0;
+  let existingFolders = 0;
+  
+  for (const product of products as any[]) {
+    if (!product.category_slug || !product.subcategory_slug) {
+      console.log(`⚠️  Skipping ${product.name} - missing category or subcategory`);
+      continue;
+    }
+    
+    // Build folder path based on database structure
+    const categoryFolder = product.category_slug; // e.g., 'boys', 'men', 'women'
+    const subcategoryFolder = product.subcategory_slug; // e.g., 'pants', 'underwear', 'vest'
+    const productFolder = sanitizeFolderName(product.name); // e.g., 'apple-v-cut'
+    
+    const fullPath = path.join(UPLOADS_DIR, categoryFolder, subcategoryFolder, productFolder);
+    
+    // Check if folder exists, create if not
+    if (!fs.existsSync(fullPath)) {
+      fs.mkdirSync(fullPath, { recursive: true });
+      console.log(`✅ Created: ${categoryFolder}/${subcategoryFolder}/${productFolder}`);
+      createdFolders++;
+    } else {
+      existingFolders++;
+    }
+  }
+  
+  console.log(`\n📊 Folder Structure Status:`);
+  console.log(`   • Existing folders: ${existingFolders}`);
+  console.log(`   • Created folders: ${createdFolders}\n`);
+}
+
 async function updateProductImages() {
   const connection = await pool.getConnection();
   
@@ -33,9 +92,12 @@ async function updateProductImages() {
     console.log('📁 Scanning uploads folder for product images...\n');
 
     if (!fs.existsSync(UPLOADS_DIR)) {
-      console.error(`❌ Uploads folder missing: ${UPLOADS_DIR}\n   Expected images in storage/uploads/products/[category]/[subcategory]/[product-folder].`);
-      return;
+      console.log(`⚠️  Uploads folder missing, creating: ${UPLOADS_DIR}`);
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     }
+
+    // Ensure all product folders exist based on database
+    await ensureProductFolderStructure(connection);
 
     console.log('📁 Reading image folder structure...\n');
     const productMap = scanProductsFolder();
@@ -245,11 +307,58 @@ async function updateProductImages() {
     console.log(`   • Active products with images: ${(withImages as any[])[0]?.count || 0}`);
     console.log(`   • Total images: ${(totalImages as any[])[0]?.total || 0}\n`);
     
+    // Verify folder structure integrity
+    console.log('🔍 Verifying folder structure integrity...\n');
+    await verifyFolderStructure(connection);
+    
   } catch (error) {
     console.error('❌ Error:', error);
   } finally {
     connection.release();
     await pool.end();
+  }
+}
+
+async function verifyFolderStructure(connection: any) {
+  const [products] = await connection.execute(`
+    SELECT 
+      p.id, 
+      p.name,
+      c.slug as category_slug,
+      sc.slug as subcategory_slug
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    LEFT JOIN categories sc ON p.subcategory_id = sc.id
+    WHERE p.is_active = 1
+  `);
+  
+  let missingFolders = 0;
+  let validFolders = 0;
+  
+  for (const product of products as any[]) {
+    if (!product.category_slug || !product.subcategory_slug) continue;
+    
+    const categoryFolder = product.category_slug;
+    const subcategoryFolder = product.subcategory_slug;
+    const productFolder = sanitizeFolderName(product.name);
+    
+    const fullPath = path.join(UPLOADS_DIR, categoryFolder, subcategoryFolder, productFolder);
+    
+    if (!fs.existsSync(fullPath)) {
+      console.log(`⚠️  Missing folder: ${categoryFolder}/${subcategoryFolder}/${productFolder}`);
+      missingFolders++;
+    } else {
+      validFolders++;
+    }
+  }
+  
+  console.log(`📊 Structure Verification:`);
+  console.log(`   • Valid folders: ${validFolders}`);
+  console.log(`   • Missing folders: ${missingFolders}`);
+  if (missingFolders === 0) {
+    console.log(`   ✅ All product folders exist!\n`);
+  } else {
+    console.log(`   ⚠️  Run script again to create missing folders\n`);
   }
 }
 
