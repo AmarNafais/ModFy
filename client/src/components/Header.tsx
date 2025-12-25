@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Search, User, ShoppingBag, Menu, LogOut, Heart } from "lucide-react";
+import { Search, User, ShoppingBag, Menu, LogOut, Heart, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -116,11 +116,6 @@ export default function Header({ onCartOpen }: HeaderProps) {
             <Link href="/contact" data-testid="link-contact" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/contact') ? 'text-gray-900' : ''}`}>
               CONTACT
             </Link>
-            {(user as any)?.role === 'admin' && (
-              <Link href="/admin" data-testid="link-admin" className={`text-sm font-light tracking-wide hover:text-gray-600 transition-colors ${is_active('/admin') ? 'text-gray-900' : ''}`}>
-                ADMIN
-              </Link>
-            )}
           </div>
 
           {/* Brand Logo */}
@@ -158,6 +153,17 @@ export default function Header({ onCartOpen }: HeaderProps) {
                       Profile
                     </DropdownMenuItem>
                   </Link>
+                  {(user as any)?.role === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <Link href="/admin">
+                        <DropdownMenuItem data-testid="button-admin">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          Admin
+                        </DropdownMenuItem>
+                      </Link>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={logout}
@@ -300,13 +306,6 @@ export default function Header({ onCartOpen }: HeaderProps) {
                   CONTACT
                 </a>
               </Link>
-              {(user as any)?.role === 'admin' && (
-                <Link href="/admin" data-testid="link-admin-mobile">
-                  <a className="text-sm font-light tracking-wide hover:text-gray-600 transition-colors">
-                    ADMIN
-                  </a>
-                </Link>
-              )}
             </div>
           </div>
         )}
