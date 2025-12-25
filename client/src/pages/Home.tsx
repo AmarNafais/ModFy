@@ -113,9 +113,9 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <img
-                src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=700"
+                src="/storage/images/home.png"
                 alt="ModFy minimalist retail interior with clean design"
-                className="w-full h-96 lg:h-[500px] object-cover"
+                className="w-full h-96 lg:h-[500px] object-contain"
               />
             </div>
             <div className="max-w-lg">
