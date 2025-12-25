@@ -15,11 +15,11 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Source of truth (staging), and target (uploads)
-const STAGING_DIR = path.join(process.cwd(), 'storage', 'products');
+// Source directory (where product images are stored)
+// Structure: storage/uploads/products/[category]/[subcategory]/[product-folder]/[images]
 const UPLOADS_DIR = path.join(process.cwd(), 'storage', 'uploads', 'products');
 
-// URLs always point to uploads; if staging is missing we still try uploads directly.
+// URL path prefix for accessing images
 const PATH_PREFIX = '/storage/uploads/products';
 
 async function updateProductImages() {
@@ -30,34 +30,14 @@ async function updateProductImages() {
     console.log('║   PRODUCT IMAGE UPDATE UTILITY        ║');
     console.log('╚════════════════════════════════════════╝\n');
 
-    console.log('📁 Preparing uploads from staging...\n');
+    console.log('📁 Scanning uploads folder for product images...\n');
 
-    if (!fs.existsSync(STAGING_DIR)) {
-      console.error(`❌ Staging folder missing: ${STAGING_DIR}\n   Expected source images in storage/products.`);
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      console.error(`❌ Uploads folder missing: ${UPLOADS_DIR}\n   Expected images in storage/uploads/products/[category]/[subcategory]/[product-folder].`);
       return;
     }
 
-    // Ensure uploads exists and mirror staging into uploads before scanning
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-
-    // Simple recursive copy (overwrite newer)
-    const copyDir = (src: string, dest: string) => {
-      const entries = fs.readdirSync(src, { withFileTypes: true });
-      for (const entry of entries) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-        if (entry.isDirectory()) {
-          fs.mkdirSync(destPath, { recursive: true });
-          copyDir(srcPath, destPath);
-        } else {
-          fs.copyFileSync(srcPath, destPath);
-        }
-      }
-    };
-
-    copyDir(STAGING_DIR, UPLOADS_DIR);
-
-    console.log('📁 Scanning storage folder structure...\n');
+    console.log('📁 Reading image folder structure...\n');
     const productMap = scanProductsFolder();
     console.log(`✅ Found ${Object.keys(productMap).length} product folders with images\n`);
 
@@ -81,7 +61,6 @@ async function updateProductImages() {
       const productName = dbProduct.name.toLowerCase()
         .replace(/[\s-_]+/g, ' ')
         .replace(/\(|\)/g, '')
-        .replace(/v cut/gi, '')
         .trim();
       
       // Try to find the best matching folder
@@ -93,18 +72,29 @@ async function updateProductImages() {
         const folderName = folderPath.split('/').pop() || '';
         const category = folderPath.split('/')[0] || '';
         
+        // Normalize folder name for comparison
+        const normalizedFolderName = folderName.replace(/[\s-_\(\)]+/g, ' ').trim();
+        
         let score = 0;
         
-        // Exact match bonus
-        if (folderName.replace(/[\s-_]+/g, ' ') === productName) {
+        // Exact match bonus (after normalization)
+        if (normalizedFolderName === productName) {
           score += 100;
+        }
+        
+        // Very close match (contains all words)
+        const pWords = productName.split(' ').filter((w: string) => w.length > 2);
+        const fWords = normalizedFolderName.split(' ').filter((w: string) => w.length > 2);
+        const matchedWords = pWords.filter(pw => fWords.some(fw => fw.includes(pw) || pw.includes(fw)));
+        if (matchedWords.length === pWords.length && matchedWords.length > 0) {
+          score += 80;
         }
         
         // Category match bonus
         if (productName.includes('boys') && category === 'boys') score += 25;
         if (productName.includes('girls') && category === 'girls') score += 25;
         if (productName.includes('mens') || productName.includes('cantex mens')) {
-          if (category === 'mens') score += 25;
+          if (category === 'men') score += 25;
         }
         if ((productName.includes('women') || (!productName.includes('boys') && !productName.includes('girls') && !productName.includes('mens') && (productName.includes('panties') || productName.includes('feyolina')))) && category === 'women') {
           score += 25;
@@ -158,7 +148,7 @@ async function updateProductImages() {
         const normalizedImages = images.map(img => {
           // Ensure paths are rooted at PATH_PREFIX
           if (!img.startsWith(PATH_PREFIX + '/')) {
-            const cleaned = img.replace(/^\/storage\//, '').replace(/^uploads\/products\//, '').replace(/^products\//, '');
+            const cleaned = img.replace(/^\/storage\/uploads\/products\//, '').replace(/^\/storage\/uploads\//, '').replace(/^\/storage\//, '').replace(/^uploads\//, '');
             return `${PATH_PREFIX}/${cleaned.replace(/^\/+/, '')}`;
           }
           return img;
@@ -199,18 +189,21 @@ async function updateProductImages() {
         if (!fixedPath.startsWith(PATH_PREFIX + '/')) {
           // Normalize any prior storage roots
           fixedPath = `${PATH_PREFIX}/${fixedPath
-            .replace(/^\/storage\/products\//, '')
             .replace(/^\/storage\/uploads\/products\//, '')
+            .replace(/^\/storage\/products\//, '')
+            .replace(/^\/storage\/uploads\//, '')
+            .replace(/^\/storage\//, '')
+            .replace(/^uploads\//, '')
             .replace(/^\/+/, '')}`;
           hasIncorrect = true;
         }
         
-        // Normalize to lowercase for case-insensitive filesystem
+        // Keep original casing for file paths (don't lowercase)
         const pathParts = fixedPath.split('/');
         const normalizedPath = pathParts.map((part, idx) => {
-          // Keep /storage/uploads/products as-is, lowercase everything after
-          if (idx <= 3) return part;
-          return part.toLowerCase();
+          // Keep /storage/uploads as-is, preserve casing for category/subcategory/product folders
+          if (idx <= 2) return part;
+          return part;
         }).join('/');
         
         if (normalizedPath !== fixedPath) {
@@ -273,8 +266,8 @@ function scanProductsFolder() {
     
     if (imageFiles.length > 0) {
       // Found a product folder with images
-      // Normalize all paths to lowercase for case-insensitive filesystem compatibility
-      const images = imageFiles.map(img => `${PATH_PREFIX}/${relativePath.toLowerCase()}/${img}`);
+      // Keep original path structure (no lowercase conversion to preserve actual file paths)
+      const images = imageFiles.map(img => `${PATH_PREFIX}/${relativePath}/${img}`);
       
       // Use folder path as unique key to avoid collisions
       const folderKey = relativePath.toLowerCase().replace(/[\s-_]+/g, ' ').trim();
@@ -287,6 +280,7 @@ function scanProductsFolder() {
     
     const folders = items.filter(f => {
       const fullPath = path.join(dir, f);
+      // Don't skip any folders - we want all subdirectories
       return fs.statSync(fullPath).isDirectory();
     });
     
