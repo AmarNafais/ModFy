@@ -13,6 +13,7 @@ export default function AdminProducts() {
     const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
+    const [filteredCount, setFilteredCount] = useState(0);
 
     const [productForm, setProductForm] = useState({
         name: '',
@@ -167,12 +168,28 @@ export default function AdminProducts() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-                <p className="text-muted-foreground">
-                    Manage your product catalog
-                </p>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+                    <span className="text-2xl font-semibold text-black">
+                        ({filteredCount || products.length}{filteredCount < products.length ? ` / ${products.length}` : ''})
+                    </span>
+                </div>
+                <AddProductDialog
+                    open={isProductDialogOpen}
+                    onOpenChange={setIsProductDialogOpen}
+                    productForm={productForm}
+                    setProductForm={setProductForm as any}
+                    categories={categories as any[]}
+                    sizeCharts={sizeCharts as any[]}
+                    removeImage={removeImage}
+                    onSubmit={() => createProductMutation.mutate(productForm)}
+                    isPending={createProductMutation.isPending}
+                />
             </div>
+            <p className="text-muted-foreground">
+                Manage your product catalog
+            </p>
 
             <ProductsTable
                 products={products as any[]}
@@ -192,19 +209,7 @@ export default function AdminProducts() {
                 getProductStatusBadgeVariant={getProductStatusBadgeVariant}
                 isDeleting={deleteProductMutation.isPending}
                 isTogglingStatus={toggleProductStatusMutation.isPending}
-                addProductTrigger={
-                    <AddProductDialog
-                        open={isProductDialogOpen}
-                        onOpenChange={setIsProductDialogOpen}
-                        productForm={productForm}
-                        setProductForm={setProductForm as any}
-                        categories={categories as any[]}
-                        sizeCharts={sizeCharts as any[]}
-                        removeImage={removeImage}
-                        onSubmit={() => createProductMutation.mutate(productForm)}
-                        isPending={createProductMutation.isPending}
-                    />
-                }
+                onFilteredCountChange={setFilteredCount}
             />
 
             <EditProductDialog
