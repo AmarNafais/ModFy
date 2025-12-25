@@ -29,8 +29,8 @@ export default function Home() {
       <section className="min-h-screen flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="order-2 lg:order-1">
-              <div className="max-w-lg">
+            <div className="order-2 lg:order-1 text-center lg:text-left">
+              <div className="max-w-lg mx-auto lg:mx-0">
                 <h2 className="text-4xl lg:text-5xl font-light tracking-wide mb-6 leading-tight">
                   Redefining<br />
                   Men's Comfort
@@ -118,7 +118,7 @@ export default function Home() {
                 className="w-full h-96 lg:h-[500px] object-contain"
               />
             </div>
-            <div className="max-w-lg">
+            <div className="max-w-lg mx-auto lg:mx-0 text-center lg:text-left">
               <h2 className="text-3xl font-light tracking-wide mb-6">CRAFTED FOR EVERYDAY LIFE</h2>
               <p className="text-gray-600 font-light leading-relaxed mb-6">
                 At ModFy, we focus on creating comfortable, reliable innerwear made with quality materials and thoughtful design. Every piece is developed to suit daily wear, balancing durability, fit, and comfort.
