@@ -150,12 +150,22 @@ NODE_ENV=development
 PORT=3000
 
 # Email Configuration (SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
 SMTP_USER=your_email@gmail.com
 SMTP_PASS=your_app_password
 ADMIN_EMAIL=admin@example.com
 
 # Server Configuration
 HOST=127.0.0.1
+
+# Live Server Configuration (for database sync script)
+LIVE_SSH_HOST=root@your-server-ip
+LIVE_SSH_PASS=your_ssh_root_password
+LIVE_DB_NAME=modfy
+LIVE_DB_USER=mysql
+LIVE_DB_PASS=your_live_db_password
 ```
 
 > ⚠️ **Security Note:** Replace `your_secure_password` with a strong, unique password in production. Never commit real credentials to version control.
