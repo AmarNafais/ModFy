@@ -363,7 +363,7 @@ export default function Shop() {
             <p className="text-gray-600 font-light">Products you've recently looked at</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.slice(0, 4).map((product) => (
               <ProductCard key={`recent-${product.id}`} product={product} />
             ))}
