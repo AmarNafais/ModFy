@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Package, Edit, Trash2, Search, RotateCcw } from "lucide-react";
+import { Package, Edit, Trash2, Search, RotateCcw, FileSpreadsheet } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 
 interface Product {
@@ -115,71 +115,112 @@ export function ProductsTable({
     }
   }, [filteredProducts, onFilteredCountChange]);
 
+  const exportToExcel = () => {
+    const headers = ['Name', 'Category', 'Subcategory', 'Price', 'Stock', 'Featured', 'Status'];
+    const rows = filteredProducts.map((product: any) => [
+      product.name,
+      product.category?.name || 'N/A',
+      product.subcategory?.name || 'N/A',
+      `LKR ${product.price}`,
+      product.stock_quantity,
+      product.is_featured ? 'Featured' : 'Regular',
+      getProductStatus(product)
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const now = new Date();
+    const timestamp = `${now.toISOString().split('T')[0]}_${now.toTimeString().split(' ')[0].replace(/:/g, '-')}`;
+    link.setAttribute('href', url);
+    link.setAttribute('download', `products_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Card className="w-full">
       <CardContent className="overflow-x-auto">
         {/* Category Filter */}
         <div className="mb-6 mt-4">
           {/* <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Products</h3> */}
-          <div className="flex flex-wrap items-center gap-4">
-            <Input
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-[250px]"
-            />
-            <div className="flex items-center gap-2">
-              <label htmlFor="category-filter" className="text-sm font-medium text-gray-700">
-                Category:
-              </label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category-filter" className="w-[200px]">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Filter</SelectItem>
-                  {Array.isArray(mainCategories) && mainCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="subcategory-filter" className="text-sm font-medium text-gray-700">
-                Sub Category:
-              </label>
-              <Select 
-                value={selectedSubCategory} 
-                onValueChange={setSelectedSubCategory}
-                disabled={selectedCategory === "all"}
+          <div className="flex flex-wrap items-center gap-4 justify-between">
+            <div className="flex flex-wrap items-center gap-4">
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-[250px]"
+              />
+              <div className="flex items-center gap-2">
+                <label htmlFor="category-filter" className="text-sm font-medium text-gray-700">
+                  Category:
+                </label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger id="category-filter" className="w-[200px]">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Filter</SelectItem>
+                    {Array.isArray(mainCategories) && mainCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="subcategory-filter" className="text-sm font-medium text-gray-700">
+                  Sub Category:
+                </label>
+                <Select 
+                  value={selectedSubCategory} 
+                  onValueChange={setSelectedSubCategory}
+                  disabled={selectedCategory === "all"}
+                >
+                  <SelectTrigger id="subcategory-filter" className="w-[200px]">
+                    <SelectValue placeholder={selectedCategory === "all" ? "Select a category first" : "All Sub Categories"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Filter</SelectItem>
+                    {Array.isArray(subCategories) && subCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                  setSelectedSubCategory('all');
+                }}
+                className="flex items-center gap-2"
               >
-                <SelectTrigger id="subcategory-filter" className="w-[200px]">
-                  <SelectValue placeholder={selectedCategory === "all" ? "Select a category first" : "All Sub Categories"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Filter</SelectItem>
-                  {Array.isArray(subCategories) && subCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <RotateCcw className="h-4 w-4" />
+                Reset Filters
+              </Button>
             </div>
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-                setSelectedSubCategory('all');
-              }}
+              onClick={exportToExcel}
               className="flex items-center gap-2"
             >
-              <RotateCcw className="h-4 w-4" />
-              Reset Filters
+              <FileSpreadsheet className="h-4 w-4" />
+              Export to Excel
             </Button>
           </div>
         </div>
