@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import Header from "@/components/Header";
 
 interface NavItem {
     label: string;
@@ -78,6 +79,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
     const [expandedItems, setExpandedItems] = useState<string[]>(["Products"]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     const toggleExpanded = (label: string) => {
         setExpandedItems((prev) =>
@@ -88,54 +90,44 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Sidebar */}
-            <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-white">
-                <div className="flex h-full flex-col">
-                    {/* Logo */}
-                    <div className="flex h-16 items-center border-b px-6">
-                        <Link href="/">
-                            <a className="flex items-center gap-2">
-                                <img
-                                    src="/storage/logo/logo.png"
-                                    alt="Modfy Logo"
-                                    className="h-10 w-auto"
-                                />
-                            </a>
-                        </Link>
-                    </div>
+        <>
+            <Header onCartOpen={() => setIsCartOpen(true)} />
+            <div className="min-h-screen bg-gray-50 pt-16">
+                {/* Sidebar */}
+                <aside className="fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r bg-white">
+                    <div className="flex h-full flex-col">
+                        {/* Navigation */}
+                        <nav className="flex-1 overflow-y-auto p-4">
+                            <ul className="space-y-1">
+                                {navItems.map((item) => (
+                                    <NavItemComponent
+                                        key={item.label}
+                                        item={item}
+                                        expanded={expandedItems.includes(item.label)}
+                                        onToggle={() => toggleExpanded(item.label)}
+                                    />
+                                ))}
+                            </ul>
+                        </nav>
 
-                    {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto p-4">
-                        <ul className="space-y-1">
-                            {navItems.map((item) => (
-                                <NavItemComponent
-                                    key={item.label}
-                                    item={item}
-                                    expanded={expandedItems.includes(item.label)}
-                                    onToggle={() => toggleExpanded(item.label)}
-                                />
-                            ))}
-                        </ul>
-                    </nav>
-
-                    {/* Settings */}
-                    <div className="border-t p-4">
-                        <Link href="/admin/settings">
-                            <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <Settings className="h-4 w-4" />
-                                <span>Settings</span>
-                            </a>
-                        </Link>
+                        {/* Settings */}
+                        <div className="border-t p-4">
+                            <Link href="/admin/settings">
+                                <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <Settings className="h-4 w-4" />
+                                    <span>Settings</span>
+                                </a>
+                            </Link>
+                        </div>
                     </div>
+                </aside>
+
+                {/* Main Content */}
+                <div className="ml-64">
+                    <main className="min-h-screen p-8">{children}</main>
                 </div>
-            </aside>
-
-            {/* Main Content */}
-            <div className="ml-64">
-                <main className="min-h-screen p-8">{children}</main>
             </div>
-        </div>
+        </>
     );
 }
 
