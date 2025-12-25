@@ -12,6 +12,7 @@ export default function AdminUsers() {
     const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
     const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<any>(null);
+    const [filteredCount, setFilteredCount] = useState(0);
 
     const { data: users = [] } = useQuery({
         queryKey: ["/api/admin/users"],
@@ -80,14 +81,18 @@ export default function AdminUsers() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-                <p className="text-muted-foreground">
-                    Manage user accounts
-                </p>
-            </div>
-
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+                        <span className="text-2xl font-semibold text-black">
+                            ({filteredCount || users.length}{filteredCount < users.length ? ` / ${users.length}` : ''})
+                        </span>
+                    </div>
+                    <p className="text-muted-foreground">
+                        Manage user accounts
+                    </p>
+                </div>
                 <AddUserDialog
                     open={isUserDialogOpen}
                     onOpenChange={setIsUserDialogOpen}

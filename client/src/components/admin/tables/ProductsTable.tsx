@@ -150,55 +150,54 @@ export function ProductsTable({
       <CardContent className="overflow-x-auto">
         {/* Category Filter */}
         <div className="mb-6 mt-4">
-          {/* <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Products</h3> */}
           <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex flex-wrap items-center gap-4">
-              <Input
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-[250px]"
-              />
-              <div className="flex items-center gap-2">
-                <label htmlFor="category-filter" className="text-sm font-medium text-gray-700">
-                  Category:
-                </label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger id="category-filter" className="w-[200px]">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Filter</SelectItem>
-                    {Array.isArray(mainCategories) && mainCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Box */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-[250px] pl-9"
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <label htmlFor="subcategory-filter" className="text-sm font-medium text-gray-700">
-                  Sub Category:
-                </label>
-                <Select 
-                  value={selectedSubCategory} 
-                  onValueChange={setSelectedSubCategory}
-                  disabled={selectedCategory === "all"}
-                >
-                  <SelectTrigger id="subcategory-filter" className="w-[200px]">
-                    <SelectValue placeholder={selectedCategory === "all" ? "Select a category first" : "All Sub Categories"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Filter</SelectItem>
-                    {Array.isArray(subCategories) && subCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              
+              {/* Category Filter */}
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {Array.isArray(mainCategories) && mainCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Subcategory Filter */}
+              <Select 
+                value={selectedSubCategory} 
+                onValueChange={setSelectedSubCategory}
+                disabled={selectedCategory === "all"}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={selectedCategory === "all" ? "Select category first" : "All Subcategories"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subcategories</SelectItem>
+                  {Array.isArray(subCategories) && subCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Reset Button */}
               <Button
                 variant="outline"
                 size="sm"
@@ -210,18 +209,23 @@ export function ProductsTable({
                 className="flex items-center gap-2"
               >
                 <RotateCcw className="h-4 w-4" />
-                Reset Filters
+                Reset
               </Button>
             </div>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={exportToExcel}
-              className="flex items-center gap-2"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              Export to Excel
-            </Button>
+            
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {addProductTrigger}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={exportToExcel}
+                className="flex items-center gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Export to Excel
+              </Button>
+            </div>
           </div>
         </div>
         <div className="w-full overflow-auto">
