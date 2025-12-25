@@ -305,9 +305,11 @@ ModFy/
 │       ├── seed.ts            # Database seeding
 │       ├── update-images.ts   # Image sync script
 │       ├── sync-db-from-live.ts  # Database sync from live server
-│       ├── convert_and_import_products.js
-│       ├── IMAGE_UPDATE_README.md
-│       └── README.md          # Scripts documentation
+│       ├── mark-migrations-applied.ts  # Mark migrations as applied
+│       ├── convert_and_import_products.js  # Product import
+│       ├── check-db-structure.ts  # Database structure checker
+│       ├── scan-all-images.ts  # Scan all product images
+│       └── [migration scripts]  # Various migration utilities
 ├── shared/                    # Shared code between client/server
 │   └── schema.ts             # Database schema & Zod validation types
 ├── storage/                   # File storage
@@ -320,22 +322,17 @@ ModFy/
 │           ├── unisex/       # Unisex category products
 │           └── women/        # Women's category products
 ├── migrations/                # Drizzle ORM migrations
-│   ├── 0000_clumsy_reaper.sql
-│   └── meta/
-│       ├── _journal.json
-│       ├── 0000_snapshot.json
-│       ├── 0001_snapshot.json
-│       ├── 0002_snapshot.json
-│       ├── 0003_snapshot.json
-│       ├── 0004_snapshot.json
-│       └── 0005_snapshot.json
 ├── ecosystem.config.js        # PM2 process manager config
 ├── drizzle.config.ts         # Drizzle ORM configuration
 ├── vite.config.ts            # Vite build configuration
 ├── tailwind.config.ts        # Tailwind CSS configuration
 ├── tsconfig.json             # TypeScript configuration
+├── postcss.config.js         # PostCSS configuration
+├── components.json           # shadcn/ui components config
 ├── package.json              # Dependencies and scripts
-└── .env                      # Environment variables
+├── .env                      # Environment variables (not in git)
+├── .env.example              # Environment template
+└── .gitignore                # Git ignore rules
 ```
 
 ## 🔧 Available Scripts
@@ -723,13 +720,6 @@ Examples:
 /storage/uploads/products/boys/underwear/junior-brief/photo.jpg
 ```
 
-### Documentation
-
-For detailed image management instructions, see:
-- [IMAGES.md](IMAGES.md) - Quick reference guide
-- [server/scripts/IMAGE_UPDATE_README.md](server/scripts/IMAGE_UPDATE_README.md) - Complete technical documentation
-- [DOCUMENTATION.md](DOCUMENTATION.md) - Master documentation index
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -869,25 +859,7 @@ Customers can checkout without creating an account:
 - Customer growth charts
 - Recent orders overview
 
-## 📚 Additional Documentation
 
-For more detailed information, see:
-
-- [QUICK_START.md](QUICK_START.md) - Quick start guide for development
-- [DOCUMENTATION.md](DOCUMENTATION.md) - Complete documentation index
-- [ADMIN_REDESIGN.md](ADMIN_REDESIGN.md) - Admin dashboard architecture
-- [IMAGES.md](IMAGES.md) - Image management guide
-- [IMAGE_STORAGE_ORGANIZATION.md](IMAGE_STORAGE_ORGANIZATION.md) - Storage organization
-- [IMAGE_UPLOAD.md](IMAGE_UPLOAD.md) - Image upload documentation
-- [DATABASE_SETUP.md](DATABASE_SETUP.md) - Database configuration details
-- [CATEGORIES_README.md](CATEGORIES_README.md) - Category management guide
-- [PRODUCT_IMPORT.md](PRODUCT_IMPORT.md) - Product import documentation
-- [PRODUCTS_READY.md](PRODUCTS_READY.md) - Products status and readiness
-- [server/scripts/README.md](server/scripts/README.md) - Available scripts reference
-- [server/scripts/IMAGE_UPDATE_README.md](server/scripts/IMAGE_UPDATE_README.md) - Image update scripts
-
-### Analysis & Reports
-- [ANALYSIS_SUMMARY.md](ANALYSIS_SUMMARY.md) - Project analysis summary
 - [CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md) - Codebase cleanup summary
 - [IMPORT_COMPLETION_REPORT.md](IMPORT_COMPLETION_REPORT.md) - Import completion report
 - [PRODUCTS_NOT_SHOWING_FIX.md](PRODUCTS_NOT_SHOWING_FIX.md) - Troubleshooting guide
