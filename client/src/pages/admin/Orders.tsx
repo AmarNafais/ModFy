@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { OrdersTable } from "@/components/admin/tables";
 import { getStatusBadgeVariant, getPaymentBadgeVariant } from "@/lib/adminHelpers";
 
 export default function AdminOrders() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
+    const [filteredCount, setFilteredCount] = useState(0);
 
     const { data: orders = [] } = useQuery({
         queryKey: ["/api/admin/orders"],
@@ -56,11 +58,18 @@ export default function AdminOrders() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-                <p className="text-muted-foreground">
-                    View and manage customer orders
-                </p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+                        <span className="text-2xl font-semibold text-black">
+                            ({filteredCount || orders.length}{filteredCount < orders.length ? ` / ${orders.length}` : ''})
+                        </span>
+                    </div>
+                    <p className="text-muted-foreground">
+                        View and manage customer orders
+                    </p>
+                </div>
             </div>
 
             <OrdersTable
@@ -73,6 +82,7 @@ export default function AdminOrders() {
                 }}
                 getStatusBadgeVariant={getStatusBadgeVariant}
                 getPaymentBadgeVariant={getPaymentBadgeVariant}
+                onFilteredCountChange={setFilteredCount}
             />
         </div>
     );

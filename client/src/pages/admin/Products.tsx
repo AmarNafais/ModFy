@@ -175,17 +175,6 @@ export default function AdminProducts() {
                         ({filteredCount || products.length}{filteredCount < products.length ? ` / ${products.length}` : ''})
                     </span>
                 </div>
-                <AddProductDialog
-                    open={isProductDialogOpen}
-                    onOpenChange={setIsProductDialogOpen}
-                    productForm={productForm}
-                    setProductForm={setProductForm as any}
-                    categories={categories as any[]}
-                    sizeCharts={sizeCharts as any[]}
-                    removeImage={removeImage}
-                    onSubmit={() => createProductMutation.mutate(productForm)}
-                    isPending={createProductMutation.isPending}
-                />
             </div>
             <p className="text-muted-foreground">
                 Manage your product catalog
@@ -210,6 +199,19 @@ export default function AdminProducts() {
                 isDeleting={deleteProductMutation.isPending}
                 isTogglingStatus={toggleProductStatusMutation.isPending}
                 onFilteredCountChange={setFilteredCount}
+                addProductTrigger={
+                    <AddProductDialog
+                        open={isProductDialogOpen}
+                        onOpenChange={setIsProductDialogOpen}
+                        productForm={productForm}
+                        setProductForm={setProductForm as any}
+                        categories={categories as any[]}
+                        sizeCharts={sizeCharts as any[]}
+                        removeImage={removeImage}
+                        onSubmit={() => createProductMutation.mutate(productForm)}
+                        isPending={createProductMutation.isPending}
+                    />
+                }
             />
 
             <EditProductDialog

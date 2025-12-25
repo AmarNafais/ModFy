@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Search, Ruler } from "lucide-react";
+import { Edit, Trash2, Search, RotateCcw } from "lucide-react";
 import { useState, useMemo } from "react";
 import type { SizeChart } from "@shared/schema";
 
@@ -11,9 +11,11 @@ interface SizeChartsTableProps {
     sizeCharts: SizeChart[];
     onEdit: (sizeChart: SizeChart) => void;
     onDelete: (id: string) => void;
+    createSizeChartTrigger?: React.ReactNode;
+    onFilteredCountChange?: (count: number) => void;
 }
 
-export function SizeChartsTable({ sizeCharts, onEdit, onDelete }: SizeChartsTableProps) {
+export function SizeChartsTable({ sizeCharts, onEdit, onDelete, createSizeChartTrigger, onFilteredCountChange }: SizeChartsTableProps) {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -38,33 +40,30 @@ export function SizeChartsTable({ sizeCharts, onEdit, onDelete }: SizeChartsTabl
         return filtered;
     }, [sizeCharts, searchQuery, statusFilter]);
 
+    // Notify parent of filtered count
+    useMemo(() => {
+        if (onFilteredCountChange) {
+            onFilteredCountChange(filteredSizeCharts.length);
+        }
+    }, [filteredSizeCharts, onFilteredCountChange]);
+
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Ruler className="w-5 h-5" />
-                    Size Charts Management
-                </CardTitle>
-            </CardHeader>
             <CardContent>
-                <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Size Charts</h3>
+                <div className="mb-6 mt-4">
                     <div className="flex flex-wrap items-center gap-4 justify-between">
-                        <div className="flex items-center gap-2">
-                            {/* <Search className="h-4 w-4 text-gray-500" /> */}
-                            <Input
-                                placeholder="Search size charts..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-[250px]"
-                            />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-                                Status:
-                            </label>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Search size charts..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-[250px] pl-9"
+                                />
+                            </div>
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger id="status-filter" className="w-[150px]">
+                                <SelectTrigger className="w-[150px]">
                                     <SelectValue placeholder="All Status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -73,7 +72,24 @@ export function SizeChartsTable({ sizeCharts, onEdit, onDelete }: SizeChartsTabl
                                     <SelectItem value="inactive">Inactive</SelectItem>
                                 </SelectContent>
                             </Select>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setStatusFilter('all');
+                                }}
+                                className="flex items-center gap-2"
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                                Reset
+                            </Button>
                         </div>
+                        {createSizeChartTrigger && (
+                            <div className="flex items-center gap-2">
+                                {createSizeChartTrigger}
+                            </div>
+                        )}
                     </div>
                 </div>
                 <Table>

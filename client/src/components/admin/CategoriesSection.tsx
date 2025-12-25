@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, Edit, Trash2, Search } from "lucide-react";
+import { Edit, Trash2, Search, RotateCcw } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 
 interface Category {
@@ -22,6 +22,7 @@ interface CategoriesSectionProps {
   isDeleting: boolean;
   addCategoryTrigger: React.ReactNode;
   addSubcategoryTrigger: React.ReactNode;
+  onFilteredCountChange?: (count: number) => void;
 }
 
 export function CategoriesSection({
@@ -31,6 +32,7 @@ export function CategoriesSection({
   isDeleting,
   addCategoryTrigger,
   addSubcategoryTrigger,
+  onFilteredCountChange,
 }: CategoriesSectionProps) {
   const [mainSearchQuery, setMainSearchQuery] = useState<string>("");
   const [mainStatusFilter, setMainStatusFilter] = useState<string>("all");
@@ -91,6 +93,14 @@ export function CategoriesSection({
   // keep draggableMain in sync when filters or categories change
   useEffect(() => setDraggableMain(filteredMainCategories), [filteredMainCategories]);
 
+  // Notify parent of filtered count
+  useEffect(() => {
+    if (onFilteredCountChange) {
+      const totalFiltered = filteredMainCategories.length + filteredSubcategories.length;
+      onFilteredCountChange(totalFiltered);
+    }
+  }, [filteredMainCategories, filteredSubcategories, onFilteredCountChange]);
+
   const onDragStart = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
     e.dataTransfer.setData('text/plain', String(index));
   };
@@ -128,45 +138,49 @@ export function CategoriesSection({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Package className="w-5 h-5" />
-          Product Types (Categories)
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-8">
+      <CardContent className="space-y-8 pt-6">
         {/* Main Categories Table */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">Main Categories</h3>
-            {addCategoryTrigger}
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Main Categories</h3>
           </div>
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-4 justify-between">
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="Search main categories..."
-                  value={mainSearchQuery}
-                  onChange={(e) => setMainSearchQuery(e.target.value)}
-                  className="w-[250px]"
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label htmlFor="main-status-filter" className="text-sm font-medium text-gray-700">
-                    Status:
-                  </label>
-                  <Select value={mainStatusFilter} onValueChange={setMainStatusFilter}>
-                    <SelectTrigger id="main-status-filter" className="w-[120px]">
-                      <SelectValue placeholder="All Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search main categories..."
+                    value={mainSearchQuery}
+                    onChange={(e) => setMainSearchQuery(e.target.value)}
+                    className="w-[250px] pl-9"
+                  />
                 </div>
+                <Select value={mainStatusFilter} onValueChange={setMainStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMainSearchQuery('');
+                    setMainStatusFilter('all');
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                {addCategoryTrigger}
               </div>
             </div>
           </div>
@@ -222,38 +236,51 @@ export function CategoriesSection({
           </Table>
         </div>
 
+        {/* Divider */}
+        <div className="border-t border-gray-200"></div>
+
         {/* Subcategories Table */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">Subcategories</h3>
-            {addSubcategoryTrigger}
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Subcategories</h3>
           </div>
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-4 justify-between">
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="Search subcategories..."
-                  value={subSearchQuery}
-                  onChange={(e) => setSubSearchQuery(e.target.value)}
-                  className="w-[250px]"
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label htmlFor="sub-status-filter" className="text-sm font-medium text-gray-700">
-                    Status:
-                  </label>
-                  <Select value={subStatusFilter} onValueChange={setSubStatusFilter}>
-                    <SelectTrigger id="sub-status-filter" className="w-[120px]">
-                      <SelectValue placeholder="All Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search subcategories..."
+                    value={subSearchQuery}
+                    onChange={(e) => setSubSearchQuery(e.target.value)}
+                    className="w-[250px] pl-9"
+                  />
                 </div>
+                <Select value={subStatusFilter} onValueChange={setSubStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSubSearchQuery('');
+                    setSubStatusFilter('all');
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                {addSubcategoryTrigger}
               </div>
             </div>
           </div>

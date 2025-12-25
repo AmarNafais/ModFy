@@ -13,6 +13,7 @@ export default function AdminCategories() {
     const [isSubcategoryDialogOpen, setIsSubcategoryDialogOpen] = useState(false);
     const [isEditCategoryDialogOpen, setIsEditCategoryDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<any>(null);
+    const [filteredCount, setFilteredCount] = useState(0);
 
     const [categoryForm, setCategoryForm] = useState({
         name: '',
@@ -94,11 +95,18 @@ export default function AdminCategories() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-                <p className="text-muted-foreground">
-                    Manage product categories and subcategories
-                </p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+                        <span className="text-2xl font-semibold text-black">
+                            ({filteredCount || categories.length}{filteredCount < categories.length ? ` / ${categories.length}` : ''})
+                        </span>
+                    </div>
+                    <p className="text-muted-foreground">
+                        Manage product categories and subcategories
+                    </p>
+                </div>
             </div>
 
             <CategoriesSection
@@ -109,6 +117,7 @@ export default function AdminCategories() {
                 }}
                 onDelete={(categoryId) => deleteCategoryMutation.mutate(categoryId)}
                 isDeleting={deleteCategoryMutation.isPending}
+                onFilteredCountChange={setFilteredCount}
                 addCategoryTrigger={
                     <AddCategoryDialog
                         open={isCategoryDialogOpen}

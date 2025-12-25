@@ -14,6 +14,7 @@ export default function AdminSizeCharts() {
     const [isSizeChartDialogOpen, setIsSizeChartDialogOpen] = useState(false);
     const [editingSizeChart, setEditingSizeChart] = useState<any>(null);
     const [sizeChartMode, setSizeChartMode] = useState<"create" | "edit">("create");
+    const [filteredCount, setFilteredCount] = useState(0);
 
     const { data: sizeCharts = [] } = useQuery({
         queryKey: ["/api/admin/size-charts"],
@@ -118,20 +119,28 @@ export default function AdminSizeCharts() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Size Charts</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold tracking-tight">Size Charts</h1>
+                        <span className="text-2xl font-semibold text-black">
+                            ({filteredCount || sizeCharts.length}{filteredCount < sizeCharts.length ? ` / ${sizeCharts.length}` : ''})
+                        </span>
+                    </div>
                     <p className="text-muted-foreground">
                         Manage size charts for your products
                     </p>
                 </div>
-                <Button onClick={handleCreateSizeChart}>
-                    <Plus className="w-4 h-4 mr-2" /> Create Size Chart
-                </Button>
             </div>
 
             <SizeChartsTable
                 sizeCharts={sizeCharts as any[]}
                 onEdit={handleEditSizeChart}
                 onDelete={handleDeleteSizeChart}
+                onFilteredCountChange={setFilteredCount}
+                createSizeChartTrigger={
+                    <Button onClick={handleCreateSizeChart}>
+                        <Plus className="w-4 h-4 mr-2" /> Create Size Chart
+                    </Button>
+                }
             />
 
             <SizeChartDialog

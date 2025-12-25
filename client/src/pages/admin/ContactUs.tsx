@@ -123,9 +123,16 @@ export default function ContactUsAdmin() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Contact Us Management</h1>
-        <p className="text-gray-600 mt-2">Manage contact messages and configure contact information</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">Contact Us Management</h1>
+            <span className="text-2xl font-semibold text-black">
+              ({messages.length})
+            </span>
+          </div>
+          <p className="text-muted-foreground mt-2">Manage contact messages and configure contact information</p>
+        </div>
       </div>
 
       {/* Contact Settings */}
