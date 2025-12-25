@@ -98,7 +98,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="min-h-screen bg-gray-50 pt-16">
                 {/* Sidebar */}
                 <aside className={cn(
-                    "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r bg-white transition-all duration-300",
+                    "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r bg-white transition-[width] duration-200 ease-in-out",
                     isCollapsed ? "w-16" : "w-64"
                 )}>
                     <div className="flex h-full flex-col relative">
@@ -135,7 +135,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         <div className="border-t p-4">
                             <Link href="/admin/settings">
                                 <a className={cn(
-                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100",
+                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-gray-100",
                                     isCollapsed && "justify-center"
                                 )}
                                 title={isCollapsed ? "Settings" : undefined}
@@ -150,7 +150,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
                 {/* Main Content */}
                 <div className={cn(
-                    "transition-all duration-300",
+                    "transition-[margin] duration-200 ease-in-out",
                     isCollapsed ? "ml-16" : "ml-64"
                 )}>
                     <main className="min-h-screen p-8">{children}</main>
@@ -184,7 +184,7 @@ function NavItemComponent({
                 <button
                     onClick={onToggle}
                     className={cn(
-                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100",
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-gray-100",
                         isActive && "bg-primary/10 text-primary"
                     )}
                 >
@@ -222,9 +222,9 @@ function NavItemComponent({
             <Link href={item.href}>
                 <a
                     className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100",
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-base text-gray-700 hover:bg-gray-100",
                         isActive && "bg-primary/10 text-primary font-medium",
-                        isSubItem && "text-xs",
+                        isSubItem && "text-sm",
                         isCollapsed && "justify-center"
                     )}
                     title={isCollapsed ? item.label : undefined}
