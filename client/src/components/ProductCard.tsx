@@ -9,7 +9,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const pieces = product.piecesPerPack ?? 1;
   return (
     <Link href={`/products/${product.slug}`} data-testid={`product-card-${product.id}`}>
-      <a className="group cursor-pointer block">
+      <a className="group cursor-pointer flex flex-col justify-between h-full border-2 border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
         <div className="aspect-[3/4] overflow-hidden mb-4">
           <img
             src={product.images?.[0] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'}
