@@ -151,7 +151,7 @@ export async function sendWelcomeEmail(userData: WelcomeEmailData): Promise<bool
           </ul>
           
           <div style="text-align: center; margin: 40px 0;">
-            <a href="https://your-domain.replit.app/shop" class="cta-button">Explore Our Collection</a>
+            <a href="https://www.modfy.lk/" class="cta-button">Explore Our Collection</a>
           </div>
           
           <p>We're thrilled to have you as part of the MODFY family. If you have any questions or need assistance, our customer service team is here to help.</p>
@@ -312,7 +312,7 @@ export async function sendOrderConfirmationEmail(orderData: {
         <div class="content">
           <h1>Order Confirmation - ${orderData.orderNumber}</h1>
           
-          <p>Hi ${orderData.customerName},</p>
+          <p>Hi ModFy</p>
           
           <p>A new order has been received! Details below:</p>
           
@@ -360,7 +360,7 @@ export async function sendOrderConfirmationEmail(orderData: {
         
         <div style="background: #f8f9fa; padding: 30px 20px; text-align: center; color: #888; font-size: 14px;">
           <p>© 2024 MODFY. All rights reserved.</p>
-          <p>Premium Men's Innerwear - Comfort Redefined</p>
+          <p>Premium Innerwear - Comfort Redefined</p>
         </div>
       </div>
     </body>
