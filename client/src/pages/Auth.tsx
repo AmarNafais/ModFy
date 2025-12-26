@@ -105,7 +105,7 @@ export default function Auth() {
           <div className="flex justify-center mb-4">
             <img src="/storage/logo/logo.svg" alt="ModFy" className="h-12" />
           </div>
-          <p className="text-sm text-gray-600">Premium Men's Innerwear</p>
+          <p className="text-sm text-gray-600">Premium Innerwear</p>
         </div>
 
         <Card className="border border-gray-200 shadow-sm">
