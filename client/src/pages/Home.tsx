@@ -36,7 +36,7 @@ export default function Home() {
                   Men's Comfort
                 </h2>
                 <p className="text-gray-600 font-light text-lg leading-relaxed mb-8">
-                  Premium innerwear crafted with precision and designed for the modern man who values both comfort and sophistication.
+                  Premium innerwear crafted with precision for men, women, and kids, delivering comfort, quality, and style for every stage of life.
                 </p>
                 <Link href="/shop">
                   <a className="bg-luxury-black text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors inline-block" data-testid="button-explore-collection">
