@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { type ProductWithCategory } from "@shared/schema";
 import ProductGrid from "@/components/ProductGrid";
+import { MessageCircle } from "lucide-react";
 
 interface Category {
   id: string;
@@ -12,9 +14,25 @@ interface Category {
 }
 
 export default function Home() {
+  const [settings, setSettings] = useState<any>(null);
+
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
+
+  // Fetch contact settings for WhatsApp link
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/api/contact-settings");
+        const data = await response.json();
+        setSettings(data);
+      } catch (error) {
+        console.error("Failed to fetch contact settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const { data: featuredProducts = [] } = useQuery<ProductWithCategory[]>({
     queryKey: ['/api/products', { is_featured: true, is_active: true }],
@@ -136,27 +154,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
+      {/* Wholesale Inquiry Section */}
       <section className="py-16 bg-luxury-gray">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-light tracking-wide mb-4">STAY CONNECTED</h2>
+          <h2 className="text-2xl font-light tracking-wide mb-4">WHOLESALE INQUIRIES</h2>
           <p className="text-gray-600 font-light mb-8 max-w-2xl mx-auto">
-            Be the first to discover new collections, exclusive offers, and insights into the world of premium men's innerwear.
+            Looking to purchase in bulk? Contact us for wholesale inquiries and get competitive prices on large orders. We offer special rates for retailers and businesses.
           </p>
-          <div className="max-w-md mx-auto flex">
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              className="flex-1 px-4 py-3 text-sm border border-luxury-muted focus:outline-none focus:border-luxury-black transition-colors"
-              data-testid="input-newsletter-email"
-            />
-            <button
-              className="bg-luxury-black text-white px-6 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors"
-              data-testid="button-newsletter-subscribe"
+          {settings?.whatsappUrl ? (
+            <a
+              href={settings.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-green-600 text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-green-700 transition-colors"
+              data-testid="button-wholesale-whatsapp"
             >
-              SUBSCRIBE
-            </button>
-          </div>
+              <MessageCircle className="w-5 h-5" />
+              CONTACT US ON WHATSAPP
+            </a>
+          ) : (
+            <Link href="/contact">
+              <a className="inline-flex items-center gap-2 bg-luxury-black text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-gray-800 transition-colors">
+                CONTACT US
+              </a>
+            </Link>
+          )}
         </div>
       </section>
     </div>
