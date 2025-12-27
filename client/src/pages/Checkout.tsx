@@ -153,7 +153,7 @@ export default function Checkout() {
 
       // Generate WhatsApp message
       const whatsappMessage = `Hi! I'd like to place an order:\n\n*Order Number:* ${order.orderNumber}\n*Total:* LKR ${total.toFixed(2)}\n*Delivery Address:*\n${data.fullName}\n${data.addressLine1}${data.addressLine2 ? '\n' + data.addressLine2 : ''}\n${data.city}, ${data.postalCode}\n*Phone:* ${data.phoneNumber}${data.notes ? '\n\n*Notes:* ' + data.notes : ''}`;
-      
+
       // Use WhatsApp URL from settings if available
       let whatsappUrl = settings?.whatsappUrl;
       if (whatsappUrl) {
@@ -169,7 +169,7 @@ export default function Checkout() {
 
       toast({
         title: "Order placed successfully!",
-        description: whatsappUrl 
+        description: whatsappUrl
           ? `Your order ${order.orderNumber} has been created. Click to contact us on WhatsApp.`
           : `Your order ${order.orderNumber} has been created.`,
       });

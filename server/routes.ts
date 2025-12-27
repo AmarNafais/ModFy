@@ -1210,6 +1210,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get random reviews for homepage
+  app.get("/api/reviews/random", async (req, res) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 6, 20);
+      const [rows] = await pool.execute(
+        `SELECT r.*, u.first_name, u.last_name, p.name as product_name, p.slug as product_slug
+         FROM reviews r
+         LEFT JOIN users u ON r.user_id = u.id
+         LEFT JOIN products p ON r.product_id = p.id
+         WHERE r.rating >= 3
+         ORDER BY RAND()
+         LIMIT ${limit}`
+      );
+      
+      if (!Array.isArray(rows)) {
+        return res.json([]);
+      }
+      
+      const reviews = rows.map((row: any) => ({
+        id: row.id,
+        productId: row.product_id,
+        productName: row.product_name,
+        productSlug: row.product_slug,
+        rating: row.rating,
+        title: row.title,
+        comment: row.comment,
+        isVerifiedPurchase: Boolean(row.is_verified_purchase),
+        createdAt: row.created_at,
+        user: {
+          firstName: row.first_name || 'Guest',
+          lastName: row.last_name || 'User'
+        }
+      }));
+      
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching random reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
   // Contact Us routes
   // Public: Submit contact form
   app.post("/api/contact", async (req, res) => {
