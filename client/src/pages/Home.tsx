@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { type ProductWithCategory } from "@shared/schema";
 import ProductGrid from "@/components/ProductGrid";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Star, Quote } from "lucide-react";
 
 interface Category {
   id: string;
@@ -11,6 +11,22 @@ interface Category {
   description?: string;
   image_url?: string;
   slug: string;
+}
+
+interface Review {
+  id: string;
+  productId: string;
+  productName: string;
+  productSlug: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+  isVerifiedPurchase: boolean;
+  createdAt: string;
+  user: {
+    firstName: string;
+    lastName: string;
+  };
 }
 
 export default function Home() {
@@ -36,6 +52,16 @@ export default function Home() {
 
   const { data: featuredProducts = [] } = useQuery<ProductWithCategory[]>({
     queryKey: ['/api/products', { is_featured: true, is_active: true }],
+  });
+
+  // Fetch random reviews for homepage
+  const { data: reviews = [] } = useQuery<Review[]>({
+    queryKey: ['/api/reviews/random'],
+    queryFn: async () => {
+      const response = await fetch('/api/reviews/random?limit=6');
+      if (!response.ok) throw new Error('Failed to fetch reviews');
+      return response.json();
+    },
   });
 
   // Filter only main categories (no parent_id)
@@ -151,6 +177,71 @@ export default function Home() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Customer Reviews Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-light tracking-wide mb-4">WHAT OUR CUSTOMERS SAY</h2>
+            <p className="text-gray-600 font-light max-w-2xl mx-auto">
+              Real experiences from our valued customers
+            </p>
+          </div>
+
+          {reviews && reviews.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {reviews.map((review) => (
+                <div key={review.id} className="bg-white border border-gray-200 p-6 rounded-lg hover:shadow-md transition-shadow">
+                  <div className="flex items-center mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
+                          }`}
+                      />
+                    ))}
+                  </div>
+
+                  {review.title && (
+                    <h3 className="text-lg font-medium mb-2">{review.title}</h3>
+                  )}
+
+                  {review.comment && (
+                    <div className="relative mb-4">
+                      <Quote className="absolute -top-2 -left-2 w-6 h-6 text-gray-200" />
+                      <p className="text-gray-600 font-light text-sm leading-relaxed pl-4">
+                        {review.comment}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="text-sm">
+                      <p className="font-medium text-gray-900">
+                        {review.user.firstName} {review.user.lastName}
+                      </p>
+                      {review.isVerifiedPurchase && (
+                        <p className="text-xs text-green-600">Verified Purchase</p>
+                      )}
+                    </div>
+                    {review.productName && (
+                      <Link href={`/products/${review.productSlug}`}>
+                        <a className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+                          View Product →
+                        </a>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500 font-light">No reviews available yet. Be the first to leave a review!</p>
+            </div>
+          )}
         </div>
       </section>
 

@@ -15,17 +15,17 @@ export default function Footer() {
   const categoryOrder = ['Men', 'Women', 'Boys', 'Girls', 'Unisex'];
   const mainCategories = Array.isArray(categories)
     ? categories.filter((cat: any) => !cat.parent_id).sort((a: any, b: any) => {
-        const indexA = categoryOrder.indexOf(a.name);
-        const indexB = categoryOrder.indexOf(b.name);
-        // If both are in the order array, sort by their position
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        // If only A is in the array, it comes first
-        if (indexA !== -1) return -1;
-        // If only B is in the array, it comes first
-        if (indexB !== -1) return 1;
-        // Otherwise sort alphabetically
-        return a.name.localeCompare(b.name);
-      })
+      const indexA = categoryOrder.indexOf(a.name);
+      const indexB = categoryOrder.indexOf(b.name);
+      // If both are in the order array, sort by their position
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      // If only A is in the array, it comes first
+      if (indexA !== -1) return -1;
+      // If only B is in the array, it comes first
+      if (indexB !== -1) return 1;
+      // Otherwise sort alphabetically
+      return a.name.localeCompare(b.name);
+    })
     : [];
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/shop" data-testid="link-footer-shop">
-                  <a 
+                  <a
                     className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors"
                     onClick={() => {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -74,7 +74,7 @@ export default function Footer() {
               </li>
               {mainCategories.map((category: any) => (
                 <li key={category.id}>
-                  <a 
+                  <a
                     href={`/shop?categoryId=${category.id}`}
                     onClick={(e) => {
                       e.preventDefault();
@@ -100,7 +100,7 @@ export default function Footer() {
               <ul className="space-y-2">
                 <li>
                   <Link href="/about" data-testid="link-footer-about">
-                    <a 
+                    <a
                       className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors"
                       onClick={() => {
                         window.dispatchEvent(new Event('locationchange'));
@@ -120,7 +120,7 @@ export default function Footer() {
               <ul className="space-y-2">
                 <li>
                   <Link href="/contact" data-testid="link-footer-help-contact">
-                    <a 
+                    <a
                       className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors"
                       onClick={() => {
                         window.dispatchEvent(new Event('locationchange'));
@@ -138,12 +138,12 @@ export default function Footer() {
           {/* Get In Touch */}
           <div className="text-center md:text-left">
             <h3 className="text-sm font-medium tracking-wide mb-4">GET IN TOUCH</h3>
-            
+
             {/* Contact Info */}
             <div className="space-y-3 mb-4">
               {settings?.email && (
                 <div>
-                  <a 
+                  <a
                     href={`mailto:${settings.email}`}
                     className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors block"
                   >
@@ -154,7 +154,7 @@ export default function Footer() {
 
               {settings?.phone && (
                 <div>
-                  <a 
+                  <a
                     href={`tel:${settings.phone.replace(/\s/g, '')}`}
                     className="text-sm text-gray-600 font-light hover:text-luxury-black transition-colors block"
                   >
@@ -178,9 +178,9 @@ export default function Footer() {
                 <p className="text-xs font-medium text-gray-800 mb-2 uppercase tracking-wide">Follow Us</p>
                 <div className="flex gap-3 justify-center md:justify-start">
                   {settings?.instagramUrl && (
-                    <a 
-                      href={settings.instagramUrl} 
-                      target="_blank" 
+                    <a
+                      href={settings.instagramUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-600 hover:text-luxury-black transition-colors"
                       data-testid="link-footer-instagram"
@@ -192,9 +192,9 @@ export default function Footer() {
                     </a>
                   )}
                   {settings?.facebookUrl && (
-                    <a 
-                      href={settings.facebookUrl} 
-                      target="_blank" 
+                    <a
+                      href={settings.facebookUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-600 hover:text-luxury-black transition-colors"
                       data-testid="link-footer-facebook"
@@ -206,9 +206,9 @@ export default function Footer() {
                     </a>
                   )}
                   {settings?.tiktokUrl && (
-                    <a 
-                      href={settings.tiktokUrl} 
-                      target="_blank" 
+                    <a
+                      href={settings.tiktokUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-600 hover:text-luxury-black transition-colors"
                       data-testid="link-footer-tiktok"
@@ -220,9 +220,9 @@ export default function Footer() {
                     </a>
                   )}
                   {settings?.whatsappUrl && (
-                    <a 
-                      href={settings.whatsappUrl} 
-                      target="_blank" 
+                    <a
+                      href={settings.whatsappUrl}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-600 hover:text-luxury-black transition-colors"
                       data-testid="link-footer-whatsapp"
