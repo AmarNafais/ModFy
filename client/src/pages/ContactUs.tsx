@@ -98,88 +98,106 @@ export default function ContactUs() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16">
           {/* Contact Info Cards */}
-          <div className="bg-white p-8 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-            <div className="flex items-center mb-4">
-              <Mail className="w-6 h-6 text-gray-900 mr-3" />
-              <h3 className="text-lg font-medium tracking-wide">Email</h3>
+          {settings?.email && (
+            <div className="bg-white p-8 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <Mail className="w-6 h-6 text-gray-900 mr-3" />
+                <h3 className="text-lg font-medium tracking-wide">Email</h3>
+              </div>
+              <p className="text-gray-600 font-light">{settings.email}</p>
+              <p className="text-gray-500 text-sm mt-2">We'll respond within 24 hours</p>
             </div>
-            <p className="text-gray-600 font-light">{settings?.email || "support@modfy.com"}</p>
-            <p className="text-gray-500 text-sm mt-2">We'll respond within 24 hours</p>
-          </div>
+          )}
 
-          <div className="bg-white p-8 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-            <div className="flex items-center mb-4">
-              <Phone className="w-6 h-6 text-gray-900 mr-3" />
-              <h3 className="text-lg font-medium tracking-wide">Phone</h3>
+          {settings?.phone && (
+            <div className="bg-white p-8 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <Phone className="w-6 h-6 text-gray-900 mr-3" />
+                <h3 className="text-lg font-medium tracking-wide">Phone</h3>
+              </div>
+              <p className="text-gray-600 font-light">{settings.phone}</p>
+              {settings?.businessHours && (
+                <p className="text-gray-500 text-sm mt-2">{settings.businessHours}</p>
+              )}
             </div>
-            <p className="text-gray-600 font-light">{settings?.phone || "+1 (555) 123-4567"}</p>
-            <p className="text-gray-500 text-sm mt-2">{settings?.businessHours || "Monday - Friday, 9am - 6pm EST"}</p>
-          </div>
+          )}
 
-          <div className="bg-white p-8 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-            <div className="flex items-center mb-4">
-              <MapPin className="w-6 h-6 text-gray-900 mr-3" />
-              <h3 className="text-lg font-medium tracking-wide">Address</h3>
+          {settings?.address && (
+            <div className="bg-white p-8 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <MapPin className="w-6 h-6 text-gray-900 mr-3" />
+                <h3 className="text-lg font-medium tracking-wide">Address</h3>
+              </div>
+              <p className="text-gray-600 font-light whitespace-pre-line">{settings.address}</p>
             </div>
-            <p className="text-gray-600 font-light">{settings?.address || "123 Fashion Street, New York, NY 10001"}</p>
-          </div>
+          )}
         </div>
 
         {/* Social Media Links */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-light tracking-wide mb-8 text-center">Follow Us</h2>
-          <div className="flex justify-center gap-8">
-            <a
-              href={settings?.instagramUrl || "https://www.instagram.com/modfyofficial"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center group"
-            >
-              <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
-                <Instagram className="w-6 h-6 text-gray-900 group-hover:text-pink-600 transition-colors" />
-              </div>
-              <p className="text-sm text-gray-600 mt-3 font-light">Instagram</p>
-            </a>
+        {(settings?.instagramUrl || settings?.facebookUrl || settings?.tiktokUrl || settings?.whatsappUrl) && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-light tracking-wide mb-8 text-center">Follow Us</h2>
+            <div className="flex justify-center gap-8">
+              {settings?.instagramUrl && (
+                <a
+                  href={settings.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center group"
+                >
+                  <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
+                    <Instagram className="w-6 h-6 text-gray-900 group-hover:text-pink-600 transition-colors" />
+                  </div>
+                  <p className="text-sm text-gray-600 mt-3 font-light">Instagram</p>
+                </a>
+              )}
 
-            <a
-              href={settings?.facebookUrl || "https://www.facebook.com/share/1BPUVhhXYR/"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center group"
-            >
-              <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
-                <Facebook className="w-6 h-6 text-gray-900 group-hover:text-blue-600 transition-colors" />
-              </div>
-              <p className="text-sm text-gray-600 mt-3 font-light">Facebook</p>
-            </a>
+              {settings?.facebookUrl && (
+                <a
+                  href={settings.facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center group"
+                >
+                  <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
+                    <Facebook className="w-6 h-6 text-gray-900 group-hover:text-blue-600 transition-colors" />
+                  </div>
+                  <p className="text-sm text-gray-600 mt-3 font-light">Facebook</p>
+                </a>
+              )}
 
-            <a
-              href={settings?.tiktokUrl || "https://www.tiktok.com/@modfy.official"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center group"
-            >
-              <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
-                <svg className="w-6 h-6 text-gray-900 group-hover:text-black transition-colors" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.1 1.82 2.9 2.9 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-.44-.05z" />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-600 mt-3 font-light">TikTok</p>
-            </a>
+              {settings?.tiktokUrl && (
+                <a
+                  href={settings.tiktokUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center group"
+                >
+                  <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
+                    <svg className="w-6 h-6 text-gray-900 group-hover:text-black transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.1 1.82 2.9 2.9 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-.44-.05z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-3 font-light">TikTok</p>
+                </a>
+              )}
 
-            <a
-              href={settings?.whatsappUrl || "https://wa.me/94777466766"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center group"
-            >
-              <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
-                <MessageCircle className="w-6 h-6 text-gray-900 group-hover:text-green-600 transition-colors" />
-              </div>
-              <p className="text-sm text-gray-600 mt-3 font-light">WhatsApp</p>
-            </a>
+              {settings?.whatsappUrl && (
+                <a
+                  href={settings.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center group"
+                >
+                  <div className="w-16 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:shadow-md group-hover:border-gray-300 transition-all">
+                    <MessageCircle className="w-6 h-6 text-gray-900 group-hover:text-green-600 transition-colors" />
+                  </div>
+                  <p className="text-sm text-gray-600 mt-3 font-light">WhatsApp</p>
+                </a>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Contact Form */}
         <div className="max-w-2xl mx-auto bg-white p-12 border border-gray-200 rounded-lg">

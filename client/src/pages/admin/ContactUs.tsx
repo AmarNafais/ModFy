@@ -33,10 +33,10 @@ export default function ContactUsAdmin() {
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [settings, setSettings] = useState<ContactSettings>({
     id: "1",
-    email: "support@modfy.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Fashion Street, New York, NY 10001",
-    businessHours: "Monday - Friday, 9am - 6pm EST",
+    email: "",
+    phone: "",
+    address: "",
+    businessHours: "",
   });
 
   // Fetch contact messages

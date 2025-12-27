@@ -37,6 +37,21 @@ export default function Checkout() {
   const { cartItems, total, clearCart } = useCart();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+
+  // Fetch contact settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/api/contact-settings");
+        const data = await response.json();
+        setSettings(data);
+      } catch (error) {
+        console.error("Failed to fetch contact settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Fetch user profile for prefilling (optional - no auth required)
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -138,17 +153,32 @@ export default function Checkout() {
 
       // Generate WhatsApp message
       const whatsappMessage = `Hi! I'd like to place an order:\n\n*Order Number:* ${order.orderNumber}\n*Total:* LKR ${total.toFixed(2)}\n*Delivery Address:*\n${data.fullName}\n${data.addressLine1}${data.addressLine2 ? '\n' + data.addressLine2 : ''}\n${data.city}, ${data.postalCode}\n*Phone:* ${data.phoneNumber}${data.notes ? '\n\n*Notes:* ' + data.notes : ''}`;
-      const whatsappNumber = "+94771234567"; // Replace with actual business WhatsApp number
-      const whatsappUrl = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodeURIComponent(whatsappMessage)}`;
+      
+      // Use WhatsApp URL from settings if available
+      let whatsappUrl = settings?.whatsappUrl;
+      if (whatsappUrl) {
+        // Extract phone number from whatsappUrl if it's in wa.me format
+        if (whatsappUrl.includes('wa.me/')) {
+          whatsappUrl = `${whatsappUrl}?text=${encodeURIComponent(whatsappMessage)}`;
+        }
+      } else {
+        // Fallback if no settings available
+        console.warn('WhatsApp URL not configured in contact settings');
+        whatsappUrl = null;
+      }
 
       toast({
         title: "Order placed successfully!",
-        description: `Your order ${order.orderNumber} has been created. Click to contact us on WhatsApp.`,
+        description: whatsappUrl 
+          ? `Your order ${order.orderNumber} has been created. Click to contact us on WhatsApp.`
+          : `Your order ${order.orderNumber} has been created.`,
       });
 
-      // Redirect to WhatsApp after a short delay
+      // Redirect to WhatsApp if available, otherwise just go home
       setTimeout(() => {
-        window.open(whatsappUrl, '_blank');
+        if (whatsappUrl) {
+          window.open(whatsappUrl, '_blank');
+        }
         setLocation("/");
       }, 2000);
 
